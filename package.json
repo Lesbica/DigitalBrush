@@ -39,7 +39,8 @@
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "server": "node server/server.js",
-    "migrate": "node server/scripts/migrate.js"
+    "migrate": "node server/scripts/migrate.js",
+    "test:api": "node --test --test-concurrency=1 --test-reporter=spec server/tests/*.test.js"
   },
   "eslintConfig": {
     "extends": [

@@ -92,6 +92,7 @@ app.use((err, req, res, next) => {
 });
 
 app.locals.sessionMiddleware = sessionMiddleware;
+app.locals.sessionStore = sessionStore;
 app.locals.corsOrigin = CORS_ORIGIN;
 app.locals.sessionCookieName = SESSION_COOKIE_NAME;
 
