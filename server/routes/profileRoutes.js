@@ -1,12 +1,13 @@
 const express = require('express');
 const db = require('../config/db');
-const { uploadMemory } = require('../config/multerConfig');
+const { imageUpload, withImageUpload, detectImageMime } = require('../config/multerConfig');
 const auth = require('../middleware/authMiddleware');
 const AdmZip = require('adm-zip');
+const { loadUserPayload, toSessionUser } = require('../utils/userProfile');
 
 const router = express.Router();
 
-router.post('/update-profile', auth, uploadMemory.single('profileImage'), async (req, res) => {
+router.post('/update-profile', auth, withImageUpload(imageUpload.single('profileImage')), async (req, res) => {
     // 1. Отримуємо ID користувача
     const userId = req.session.user?.Creator_ID || req.session.user?.id;
     if (!userId) {
@@ -16,6 +17,33 @@ router.post('/update-profile', auth, uploadMemory.single('profileImage'), async 
     try {
         // 2. Отримуємо дані з фронтенду
         const { username, email, description, instagram, behance, tiktok, styleTags, languageTags } = req.body;
+
+        // Валідація (ТЗ: біо до 500 символів)
+        if (username !== undefined && String(username).trim().length > 50) {
+            return res.status(400).json({ success: false, message: 'Username is too long (max 50)' });
+        }
+        if (email !== undefined && String(email).trim() !== '' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email).trim())) {
+            return res.status(400).json({ success: false, message: 'Invalid email address' });
+        }
+        if (description !== undefined && String(description).length > 500) {
+            return res.status(400).json({ success: false, message: 'Bio is too long (max 500 characters)' });
+        }
+        for (const [field, value] of [['instagram', instagram], ['behance', behance], ['tiktok', tiktok]]) {
+            if (value !== undefined && String(value).length > 255) {
+                return res.status(400).json({ success: false, message: `${field} link is too long` });
+            }
+        }
+        const tagsError = (raw, name) => {
+            if (raw === undefined || raw === null || raw === '') return null;
+            let arr;
+            try { arr = JSON.parse(raw); } catch { return `${name} must be a JSON array`; }
+            if (!Array.isArray(arr) || arr.length > 30 || arr.some((t) => typeof t !== 'string' || t.length > 50)) {
+                return `${name} must be an array of up to 30 short strings`;
+            }
+            return null;
+        };
+        const tagErr = tagsError(styleTags, 'styleTags') || tagsError(languageTags, 'languageTags');
+        if (tagErr) return res.status(400).json({ success: false, message: tagErr });
 
         // 3. Перевіряємо, чи не зайнятий email/username кимось іншим
         const [existingUsers] = await db.query(
@@ -73,39 +101,14 @@ router.post('/update-profile', auth, uploadMemory.single('profileImage'), async 
             ]
         );
 
-        // 6. Оновлюємо сесію, щоб фронтенд одразу побачив зміни
-        let parsedStylesArray = [];
-        let parsedLanguagesArray = [];
-
-        try {
-            // Намагаємось розпарсити JSON рядки назад у масиви для сесії
-            if (finalStyles) parsedStylesArray = JSON.parse(finalStyles);
-            if (finalLanguages) parsedLanguagesArray = JSON.parse(finalLanguages);
-        } catch (e) {
-            console.error("Error parsing JSON for session:", e);
-        }
-
-        const profileImageBase64 = Buffer.isBuffer(finalImage)
-            ? `data:image/jpeg;base64,${finalImage.toString('base64')}`
-            : null;
-
-        req.session.user = {
-            ...req.session.user,
-            name: finalName,
-            email: finalEmail,
-            bio: finalBio,
-            instagram: finalInsta,
-            behance: finalBehance,
-            tiktok: finalTikTok,
-            styles: parsedStylesArray,     // У сесію кладемо масив
-            languages: parsedLanguagesArray, // У сесію кладемо масив
-            profileImage: profileImageBase64
-        };
+        // 6. Свіжі дані з БД; у сесії — лише id/name/email
+        const payload = await loadUserPayload(userId);
+        req.session.user = toSessionUser(payload);
 
         res.json({
             success: true,
             message: 'Profile updated successfully',
-            user: req.session.user
+            user: payload
         });
 
     } catch (err) {
@@ -256,8 +259,9 @@ router.get('/download/:paintingId', auth, async (req, res) => {
         let imagesToDownload = [];
 
         // Добавляем основное изображение
+        const ext = (buf) => ({ 'image/jpeg': 'jpg', 'image/png': 'png', 'image/gif': 'gif', 'image/webp': 'webp' }[detectImageMime(buf)] || 'png');
         if (painting.Image) {
-            imagesToDownload.push({ name: `${painting.Title}_main.png`, buffer: painting.Image });
+            imagesToDownload.push({ name: `${painting.Title}_main.${ext(painting.Image)}`, buffer: painting.Image });
         }
 
         // Если есть Batch_ID, ищем дополнительные изображения
@@ -267,7 +271,7 @@ router.get('/download/:paintingId', auth, async (req, res) => {
                 [painting.Batch_ID]
             );
             extraImages.forEach((row, index) => {
-                imagesToDownload.push({ name: `${painting.Title}_${index + 1}.png`, buffer: row.Image });
+                imagesToDownload.push({ name: `${painting.Title}_${index + 1}.${ext(row.Image)}`, buffer: row.Image });
             });
         }
 
@@ -283,7 +287,7 @@ router.get('/download/:paintingId', auth, async (req, res) => {
             // ИСПРАВЛЕНИЕ: кодируем имя файла и для старого параметра filename
             const encodedName = encodeURIComponent(safeName);
 
-            res.set('Content-Type', 'image/png');
+            res.set('Content-Type', detectImageMime(img.buffer) || 'application/octet-stream');
             // Используем encodedName в обоих местах, чтобы избежать недопустимых символов
             res.set('Content-Disposition', `attachment; filename="${encodedName}"; filename*=UTF-8''${encodedName}`);
             return res.send(img.buffer);

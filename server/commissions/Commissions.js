@@ -1,7 +1,7 @@
 const db = require('../config/db');
-const path = require('path');
-const fs = require('fs');
-const {upload} = require('../config/multerConfig');
+const { imageUpload, withImageUpload } = require('../config/multerConfig');
+const auth = require('../middleware/authMiddleware');
+const { imageToDataUri, imageToFile } = require('../utils/images');
 const { getIO } = require('../socket');
 const {
     getSessionUserId,
@@ -11,152 +11,91 @@ const {
     emitToCommission,
 } = require('../utils/commissionAccess');
 const express = require('express');
-const AdmZip = require('adm-zip');
 const router = express.Router();
 
-// new helpers to normalize images to data URIs
-function bufferToDataUri(buffer, fallbackExt = 'png') {
-    if (!buffer) return null;
-    const ext = (fallbackExt || 'png').toLowerCase();
-    const mime = ext === 'jpg' || ext === 'jpeg' ? 'image/jpeg' : `image/${ext}`;
-    return `data:${mime};base64,${Buffer.from(buffer).toString('base64')}`;
-}
+function validateCommissionFields(body) {
+    const title = String(body.title || '').trim();
+    const description = String(body.description || '').trim();
+    if (!title || !description) return { error: 'Title and description are required' };
+    if (title.length > 255) return { error: 'Title is too long (max 255)' };
+    if (description.length > 5000) return { error: 'Description is too long (max 5000)' };
 
-function filePathToDataUri(filePath) {
-    try {
-        if (!filePath) return null;
-        if (String(filePath).startsWith('data:')) return filePath; // already a data URI
-
-        // try a few candidate locations relative to server
-        const candidates = [
-            path.join(__dirname, '..', 'public', filePath),
-            path.join(__dirname, '..', filePath),
-            path.join(__dirname, 'public', filePath),
-            path.resolve(filePath)
-        ];
-
-        for (const c of candidates) {
-            if (fs.existsSync(c)) {
-                const buffer = fs.readFileSync(c);
-                const ext = path.extname(c).slice(1) || 'png';
-                return bufferToDataUri(buffer, ext);
-            }
-        }
-
-        return null;
-    } catch (err) {
-        console.error('filePathToDataUri error:', err);
-        return null;
+    let price = null;
+    if (body.price !== undefined && body.price !== null && body.price !== '') {
+        price = Number(body.price);
+        if (!Number.isFinite(price) || price < 0 || price > 1e7) return { error: 'Price must be a number from 0 to 10 000 000' };
+        price = Math.round(price * 100) / 100;
     }
+
+    const short = (v) => (v ? String(v).trim().slice(0, 100) || null : null);
+    return {
+        values: {
+            title, description, price,
+            category: short(body.category), style: short(body.style),
+            size: short(body.size), format: short(body.format),
+        },
+    };
 }
 
-// 1. СТВОРЕННЯ ПУБЛІЧНОГО КОМІШЕНУ (із збереженням зображення в base64)
-// Create a public commission (with up to 5 images)
+// 1. СТВОРЕННЯ КОМІШЕНУ (public або direct, до 5 зображень; зберігаються як бінарні BLOB)
 router.post(
     '/create',
-    upload.fields([
+    auth,
+    withImageUpload(imageUpload.fields([
         {name: 'referenceImage', maxCount: 1},
         {name: 'image2', maxCount: 1},
         {name: 'image3', maxCount: 1},
         {name: 'image4', maxCount: 1},
         {name: 'image5', maxCount: 1}
-    ]),
+    ])),
     async (req, res) => {
         try {
-            // Отримуємо всі поля
-            const {title, description, category, style, size, format, price, creatorId} = req.body;
-
-            // 1. Перевірка авторизації
-            if (!req.session.user) {
-                return res.status(401).json({ success: false, message: 'Unauthorized. Please log in.' });
-            }
             const user = req.session.user;
+            const { values, error } = validateCommissionFields(req.body || {});
+            if (error) return res.status(400).json({ success: false, message: error });
 
-            // 2. Валідація обов'язкових полів
-            if (!title || !description) {
-                return res.status(400).json({ success: false, message: 'Title and description are required' });
-            }
-
-            // 3. Логіка визначення ТИПУ замовлення
-            let commissionType = 'public'; // За замовчуванням
-            let targetCreator = null;      // За замовчуванням
-
-            // Перевіряємо, чи передали ID автора (і чи він не "null"/"undefined" рядком)
+            // Тип замовлення: direct, якщо вказано конкретного художника
+            let commissionType = 'public';
+            let targetCreator = null;
+            const { creatorId } = req.body;
             if (creatorId && creatorId !== 'null' && creatorId !== 'undefined' && creatorId !== '') {
-                targetCreator = parseInt(creatorId);
-
-                // Перевірка на самозамовлення
-                if (parseInt(user.id) === targetCreator) {
+                targetCreator = Number(creatorId);
+                if (!Number.isInteger(targetCreator) || targetCreator <= 0) {
+                    return res.status(400).json({ success: false, message: 'Invalid artist id' });
+                }
+                if (Number(user.id) === targetCreator) {
                     return res.status(400).json({ success: false, message: 'You cannot request a commission from yourself.' });
                 }
-
-                // Якщо все ок — тип стає direct
+                const [artist] = await db.query('SELECT 1 FROM creators WHERE Creator_ID = ?', [targetCreator]);
+                if (artist.length === 0) {
+                    return res.status(404).json({ success: false, message: 'Artist not found' });
+                }
                 commissionType = 'direct';
             }
 
-            const fileToBase64 = (file) => {
-                if (!file) return null;
-                try {
-                    const fileBuffer = fs.readFileSync(file.path);
-                    const mimeType = file.mimetype || 'image/png';
-                    return `data:${mimeType};base64,${fileBuffer.toString('base64')}`;
-                } catch (err) {
-                    console.error(`Error reading ${file.originalname}:`, err);
-                    return null;
-                }
-            }
+            const file = (name) => req.files?.[name]?.[0]?.buffer || null;
 
-            // 4. Обробка зображень
-            const referenceImageBase64 = fileToBase64(req.files?.referenceImage?.[0]);
-            const image2xBase64 = fileToBase64(req.files?.image2?.[0]);
-            const image3xBase64 = fileToBase64(req.files?.image3?.[0]);
-            const image4xBase64 = fileToBase64(req.files?.image4?.[0]);
-            const image5xBase64 = fileToBase64(req.files?.image5?.[0]);
-
-            // 5. SQL Запит
-            const sql = `
+            const [result] = await db.query(`
                 INSERT INTO commissions
                 (Title, Description, Category, Style, Size, Format, Price,
                  ReferenceImage, Image2, Image3, Image4, Image5,
                  Type, Customer_ID, Creator_ID, Status, Created_At)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'open', NOW())
-            `;
-
-            const values = [
-                title,
-                description,
-                category || null,
-                style || null,
-                size || null,
-                format || null,
-                price || null,
-                referenceImageBase64,
-                image2xBase64,
-                image3xBase64,
-                image4xBase64,
-                image5xBase64,
-                commissionType, // 'public' або 'direct'
-                user.id,        // Customer_ID (Замовник)
-                targetCreator   // Creator_ID (Виконавець або NULL)
-            ];
-
-            const [result] = await db.query(sql, values);
-
-            console.log(`Commission created. ID: ${result.insertId}, Type: ${commissionType}, Creator: ${targetCreator}`);
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Open', NOW())
+            `, [
+                values.title, values.description, values.category, values.style,
+                values.size, values.format, values.price,
+                file('referenceImage'), file('image2'), file('image3'), file('image4'), file('image5'),
+                commissionType, user.id, targetCreator
+            ]);
 
             res.status(201).json({
                 success: true,
                 message: `${commissionType} commission created successfully`,
                 commissionId: result.insertId
             });
-
         } catch (err) {
             console.error('Error creating commission:', err);
-            res.status(500).json({
-                success: false,
-                message: 'Database error',
-                error: err.message
-            });
+            res.status(500).json({ success: false, message: 'Database error' });
         }
     }
 );
@@ -176,47 +115,8 @@ router.get('/public', async (req, res) => {
 
     try {
         const [results] = await db.query(sql);
-        console.log(`Found ${results.length} commissions`);
-
         const commissionsWithImages = results.map((commission) => {
-            let imageUrl = null;
-            const ref = commission.ReferenceImage;
-
-            console.log(`Commission ${commission.Commission_ID} (${commission.Title}):`);
-            console.log(`  - ReferenceImage type: ${ref ? (Buffer.isBuffer(ref) ? 'Buffer' : typeof ref) : 'null'}`);
-
-            if (ref) {
-                let refAsString = null;
-
-                // --- ПОЧАТОК ВИПРАВЛЕННЯ ---
-                // 1. Перетворюємо буфер на рядок, якщо це буфер.
-                // Ми припускаємо, що в БД зберігається рядок (Data URI або шлях до файлу).
-                if (Buffer.isBuffer(ref)) {
-                    refAsString = ref.toString('utf8');
-                } else if (typeof ref === 'string') {
-                    refAsString = ref;
-                }
-
-                // 2. Тепер працюємо з рядком
-                if (refAsString) {
-                    const trimmed = refAsString.trim();
-
-                    // 3. Перевіряємо, чи це ВЖЕ готовий Data URI
-                    if (trimmed.startsWith('data:image')) {
-                        imageUrl = trimmed;
-                        console.log(`  - Successfully processed data URI from DB`);
-                    }
-                    // 4. Якщо ні, припускаємо, що це шлях до файлу
-                    else {
-                        imageUrl = filePathToDataUri(trimmed);
-                        console.log(`  - Tried file path, result: ${imageUrl ? 'success' : 'failed'}`);
-                    }
-                }
-                // --- КІНЕЦЬ ВИПРАВЛЕННЯ ---
-
-            } else {
-                console.log(`  - No image data`);
-            }
+            const imageUrl = imageToDataUri(commission.ReferenceImage);
 
             // Return normalized commission object
             return {
@@ -239,7 +139,6 @@ router.get('/public', async (req, res) => {
             };
         });
 
-        console.log(`Sending ${commissionsWithImages.length} commissions to frontend`);
         res.json({success: true, commissions: commissionsWithImages});
     } catch (err) {
         console.error('Error fetching public commissions:', err);
@@ -272,27 +171,9 @@ router.get('/my', async (req, res) => {
 
         // 3. Нормалізація зображень (використовуємо ту ж логіку, що і в public route)
         const myCommissions = results.map((commission) => {
-            let imageUrl = null;
-            const ref = commission.ReferenceImage;
-
-            if (ref) {
-                let refAsString = null;
-                if (Buffer.isBuffer(ref)) {
-                    refAsString = ref.toString('utf8');
-                } else if (typeof ref === 'string') {
-                    refAsString = ref;
-                }
-
-                if (refAsString) {
-                    const trimmed = refAsString.trim();
-                    if (trimmed.startsWith('data:image')) {
-                        imageUrl = trimmed;
-                    } else {
-                        // Використовуємо допоміжну функцію filePathToDataUri, яка є у вашому файлі
-                        imageUrl = filePathToDataUri(trimmed);
-                    }
-                }
-            }
+            const imageUrl = imageToDataUri(commission.ReferenceImage);
+            // Бінарні поля не віддаємо: ResultImage тут обійшов би перевірку оплати
+            const { Image2, Image3, Image4, Image5, ResultImage, ...rest } = commission;
 
             // Нормалізуємо статус під новий enum (Title Case)
             // Берем з поля в любом регистре (MySQL может вернуть как Status/status)
@@ -306,9 +187,10 @@ router.get('/my', async (req, res) => {
                 'Open';
 
             return {
-                ...commission,
+                ...rest,
                 Status: normalizedStatus,
                 status: normalizedStatus,
+                hasResult: Boolean(ResultImage),
                 ReferenceImage: imageUrl // Оновлюємо поле для фронтенду
             };
         });
@@ -371,54 +253,7 @@ router.get('/:id', async (req, res) => {
         // Готовий результат — виконавцю завжди, замовнику лише після оплати.
         const canSeeResult = role === 'creator' || (role === 'customer' && Boolean(commission.is_paid));
 
-        // normalize any stored image value to a data URI or public URL (same logic as list endpoint)
-        const toDataUri = (value) => {
-            if (!value) return null;
-            try {
-                let valueAsString = null;
-
-                // 1. Спершу спробуємо перетворити на рядок, якщо це буфер
-                if (Buffer.isBuffer(value)) {
-                    valueAsString = value.toString('utf8');
-                } else if (typeof value === 'string') {
-                    valueAsString = value;
-                }
-
-                // 2. Тепер обробляємо рядок
-                if (valueAsString) {
-                    const trimmed = valueAsString.trim();
-
-                    // 2a. Це ВЖЕ готовий Data URI?
-                    if (trimmed.startsWith('data:image')) {
-                        return trimmed;
-                    }
-
-                    // 2b. Це "чистий" Base64 рядок без префікса?
-                    const cleaned = trimmed.replace(/[\r\n\s]+/g, '');
-                    if (/^[A-Za-z0-9+/=]+$/.test(cleaned) && cleaned.length > 50) {
-                        return `data:image/png;base64,${cleaned}`;
-                    }
-
-                    // 2c. Це шлях до файлу?
-                    const fileConverted = filePathToDataUri(trimmed);
-                    if (fileConverted) return fileConverted;
-
-                    // 2d. Це URL?
-                    if (/^https?:\/\//i.test(trimmed)) return trimmed;
-                }
-
-                // 3. (Fallback) Якщо це був буфер, але не схожий на рядок,
-                //    спробуємо обробити його як "сирі" дані зображення.
-                if (Buffer.isBuffer(value)) {
-                    return bufferToDataUri(value, 'png'); // Виклик вашого bufferToDataUri згори
-                }
-
-                return null;
-            } catch (err) {
-                console.error(`[toDataUri] error converting image value for commission ${id}:`, err);
-                return null;
-            }
-        };
+        const toDataUri = imageToDataUri;
 
         const image1 = toDataUri(commission.ReferenceImage);
         const image2 = toDataUri(commission.Image2);
@@ -428,8 +263,6 @@ router.get('/:id', async (req, res) => {
         const resultImageUri = canSeeResult ? toDataUri(commission.ResultImage) : null;
 
         const images = [image1, image2, image3, image4, image5].filter(Boolean);
-
-        console.log(`[GET /${id}] images normalized: ${images.length}`);
 
         // normalize status too (source may be Status or status)
         const sourceStatus = commission.Status ?? commission.status ?? '';
@@ -596,57 +429,15 @@ router.get('/download/:id', async (req, res) => {
             return res.status(402).send('Payment required. Please pay to download files.');
         }
 
-        // 3. Збираємо файли
-        const filesToZip = [];
-
-        // Допоміжна функція
-        const addFile = (buffer, filename) => {
-            if (buffer) filesToZip.push({ name: filename, buffer: buffer });
-        };
-
-        // --- ИСПРАВЛЕНИЕ: Берем ResultImage ---
-        // Если есть ResultImage (наше новое поле), берем его
-        if (commission.ResultImage) {
-            addFile(commission.ResultImage, 'Final_Result.png');
-        }
-        // Если ResultImage пустое (старые заказы), пробуем взять из Image2-Image5
-        else {
-            if (commission.Image2) addFile(commission.Image2, 'result_1.png');
-            if (commission.Image3) addFile(commission.Image3, 'result_2.png');
-            if (commission.Image4) addFile(commission.Image4, 'result_3.png');
-            if (commission.Image5) addFile(commission.Image5, 'result_4.png');
-        }
-
-        // Если все еще пусто — возможно, это просто Image (если логика сохраняла туда)
-        if (filesToZip.length === 0 && commission.Image) {
-            // Но осторожно, Image может быть референсом. Проверьте логику.
-            // Обычно для Completed ResultImage должно быть заполнено.
-        }
-
-        // Якщо нічого не знайдено
-        if (filesToZip.length === 0) {
+        // 3. Віддаємо готовий результат (ResultImage зберігається після схвалення фінального етапу).
+        // Референси замовника (Image2..Image5) результатом не є, тому їх не віддаємо.
+        const file = imageToFile(commission.ResultImage);
+        if (!file) {
             return res.status(404).send('No finished files found to download (ResultImage is empty).');
         }
-
-        // 4. Віддаємо файли
-        if (filesToZip.length === 1) {
-            // Якщо файл один - віддаємо його напряму
-            const file = filesToZip[0];
-            res.set('Content-Type', 'image/png');
-            res.set('Content-Disposition', `attachment; filename="${file.name}"`);
-            return res.send(file.buffer);
-        } else {
-            // Якщо файлів декілька - пакуємо в ZIP
-            const zip = new AdmZip();
-            filesToZip.forEach(f => {
-                zip.addFile(f.name, f.buffer);
-            });
-
-            const zipBuffer = zip.toBuffer();
-            res.set('Content-Type', 'application/zip');
-            res.set('Content-Disposition', `attachment; filename="commission_${commissionId}_files.zip"`);
-            return res.send(zipBuffer);
-        }
+        res.set('Content-Type', file.mime);
+        res.set('Content-Disposition', `attachment; filename="commission_${commissionId}_result.${file.ext}"`);
+        return res.send(file.buffer);
 
     } catch (err) {
         console.error('Download error:', err);

@@ -1,0 +1,18 @@
+node_modules
+**/node_modules
+build
+.git
+.github
+.claude
+.idea
+coverage
+npm-debug.log*
+
+# Secrets and local env files never go into images
+.env
+.env.*
+server/.env
+server/.env.*
+
+# Legacy per-user upload folders (uploads are stored in the DB now)
+server/public

@@ -2,10 +2,8 @@ const express = require('express');
 const db = require('../config/db');
 const path = require('path');
 const fs = require('fs');
-const multer = require('multer');
 const auth = require('../middleware/authMiddleware');
-
-const uploadMemory = multer({ storage: multer.memoryStorage() });
+const { imageUpload, withImageUpload, MAX_FILES } = require('../config/multerConfig');
 
 const router = express.Router();
 
@@ -78,80 +76,100 @@ router.get('', async (req, res) => {
   }
 });
 
-router.post("/upload", auth, uploadMemory.any(), async (req, res) => {
-    // 1. ОТРИМУЄМО ВСІ ПОЛЯ, ЯКІ НАДСИЛАЄ ФРОНТЕНД
-    const {
-        title,
-        description,
-        category,
-        style,
-        format,
-        price,
-        width,
-        height
-    } = req.body;
+// Перевірка полів картини. Повертає { values } або { error }.
+function validatePaintingFields(body) {
+    const title = String(body.title || '').trim();
+    if (!title) return { error: 'Title is required' };
+    if (title.length > 255) return { error: 'Title is too long (max 255)' };
 
+    const description = body.description === undefined ? null : String(body.description).slice(0, 5000);
+
+    const price = body.price === undefined || body.price === '' ? 0 : Number(body.price);
+    if (!Number.isFinite(price) || price < 0 || price > 1e7) return { error: 'Price must be a number from 0 to 10 000 000' };
+
+    const dim = (v, name) => {
+        if (v === undefined || v === null || v === '') return { value: null };
+        const n = Number(v);
+        if (!Number.isInteger(n) || n <= 0 || n > 100000) return { error: `${name} must be a positive integer` };
+        return { value: n };
+    };
+    const width = dim(body.width, 'Width');
+    if (width.error) return width;
+    const height = dim(body.height, 'Height');
+    if (height.error) return height;
+
+    const short = (v) => (v ? String(v).trim().slice(0, 100) || null : null);
+
+    return {
+        values: {
+            title,
+            description,
+            category: short(body.category),
+            style: short(body.style),
+            format: short(body.format),
+            price: Math.round(price * 100) / 100,
+            width: width.value,
+            height: height.value,
+        },
+    };
+}
+
+router.post("/upload", auth, withImageUpload(imageUpload.any()), async (req, res) => {
     const Author = req.session.user?.name || null;
     const Creator_ID = req.session.user?.id || null;
 
+    if (!req.files || req.files.length === 0) {
+        return res.status(400).json({ success: false, message: "No images uploaded" });
+    }
+    if (req.files.length > MAX_FILES) {
+        return res.status(400).json({ success: false, message: `Too many images uploaded (max ${MAX_FILES})` });
+    }
+
+    const { values, error } = validatePaintingFields(req.body || {});
+    if (error) return res.status(400).json({ success: false, message: error });
+
+    const images = req.files;
+    const conn = await db.getConnection();
     try {
-        if (!req.files || req.files.length === 0) {
-            return res.status(400).json({ message: "No images uploaded" });
-        }
-
-        if (req.files.length > 10) {
-            return res.status(400).json({ message: "Too many images uploaded (max 10)" });
-        }
-
-        const images = req.files;
+        await conn.beginTransaction();
 
         /* 1️⃣ Create a new batch */
-        const [batchResult] = await db.query(`INSERT INTO painting_batches () VALUES ()`);
+        const [batchResult] = await conn.query(`INSERT INTO painting_batches () VALUES ()`);
         const Batch_ID = batchResult.insertId;
 
         /* 2️⃣ First image becomes main painting */
-        const mainImage = images[0].buffer;
-
-        // 2. ДОДАЄМО НОВІ ПОЛЯ В SQL ЗАПИТ
-        // Зверніть увагу: ми додали Category, Style, Format, Size, Width, Height, Price
-        const [paintingResult] = await db.query(
+        const [paintingResult] = await conn.query(
             `INSERT INTO paintings
              (Title, Description, Category, Style, Format, Width, Height, Price, Author, Creation_Date, Image, Creator_ID, Batch_ID)
              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), ?, ?, ?)`,
             [
-                title,
-                description,
-                category || null,
-                style || null,
-                format || null,
-                width || null,
-                height || null,
-                price || 0,
-                Author,
-                mainImage,
-                Creator_ID,
-                Batch_ID
+                values.title, values.description, values.category, values.style, values.format,
+                values.width, values.height, values.price,
+                Author, images[0].buffer, Creator_ID, Batch_ID
             ]
         );
 
         /* 3️⃣ Additional images go to painting_images */
         for (let i = 1; i < images.length; i++) {
-            await db.query(
+            await conn.query(
                 `INSERT INTO painting_images (Batch_ID, Image) VALUES (?, ?)`,
                 [Batch_ID, images[i].buffer]
             );
         }
 
+        await conn.commit();
         res.status(201).json({
             success: true,
             message: "Painting uploaded successfully",
             paintingID: paintingResult.insertId,
             Batch_ID,
         });
-
     } catch (err) {
+        await conn.rollback();
         console.error("Upload error:", err);
         res.status(500).json({ success: false, message: "Database error" });
+    } finally {
+        conn.release();
     }
 });
 
@@ -333,31 +351,40 @@ router.delete('/delete/:id', auth, async (req, res) => {
     const paintingId = req.params.id;
     const userId = req.session.user.id;
 
+    const conn = await db.getConnection();
     try {
-        // Get batch ID
-        const [[painting]] = await db.query(
-            'SELECT Batch_ID FROM paintings WHERE Painting_ID = ? AND Creator_ID = ?',
+        await conn.beginTransaction();
+
+        const [[painting]] = await conn.query(
+            'SELECT Batch_ID FROM paintings WHERE Painting_ID = ? AND Creator_ID = ? FOR UPDATE',
             [paintingId, userId]
         );
-
         if (!painting) {
+            await conn.rollback();
             return res.status(404).json({ success: false, message: 'Painting not found' });
         }
 
-        const batchID = painting.Batch_ID;
+        // user_purchases має ON DELETE CASCADE: видалення стерло б покупку в покупців.
+        const [[sold]] = await conn.query('SELECT COUNT(*) AS n FROM user_purchases WHERE Painting_ID = ?', [paintingId]);
+        if (sold.n > 0) {
+            await conn.rollback();
+            return res.status(409).json({ success: false, message: 'This painting has already been purchased and cannot be deleted' });
+        }
 
-        // Delete main painting
-        await db.query('DELETE FROM paintings WHERE Painting_ID = ?', [paintingId]);
+        await conn.query('DELETE FROM paintings WHERE Painting_ID = ?', [paintingId]);
+        if (painting.Batch_ID) {
+            // painting_images видаляються каскадно разом із batch (FK ON DELETE CASCADE)
+            await conn.query('DELETE FROM painting_batches WHERE Batch_ID = ?', [painting.Batch_ID]);
+        }
 
-        // Delete all images in the batch
-        await db.query('DELETE FROM painting_images WHERE Batch_ID = ?', [batchID]);
-        await db.query('DELETE FROM painting_batches WHERE Batch_ID = ?', [batchID]);
-
+        await conn.commit();
         res.json({ success: true, message: 'Painting deleted successfully' });
-
     } catch (err) {
+        await conn.rollback();
         console.error('Error deleting painting:', err);
         res.status(500).json({ success: false, message: 'Error deleting painting' });
+    } finally {
+        conn.release();
     }
 });
 

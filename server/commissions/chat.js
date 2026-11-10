@@ -2,6 +2,7 @@ const express = require('express');
 const db = require('../config/db');
 const { detectImageMime, rowToMessage } = require('../utils/chatHelpers');
 const { requireCommissionParticipant, getSessionUserId } = require('../utils/commissionAccess');
+const { detectImageMime: detectRealImage } = require('../config/multerConfig');
 
 const router = express.Router();
 
@@ -75,6 +76,9 @@ router.post('/:commissionId/submit-stage', async (req, res) => {
     const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
     if (buffer.length > MAX_IMAGE_BYTES) {
       return res.status(413).json({ success: false, code: 'PAYLOAD_TOO_LARGE', message: 'Image is too large' });
+    }
+    if (!detectRealImage(buffer)) {
+      return res.status(415).json({ success: false, code: 'BAD_IMAGE', message: 'Only JPG, PNG, GIF or WEBP images are allowed' });
     }
 
     const [result] = await db.query(
@@ -241,6 +245,9 @@ router.post('/:commissionId/messages', async (req, res) => {
         if (buffer.length > MAX_IMAGE_BYTES) {
           return res.status(413).json({ success: false, code: 'PAYLOAD_TOO_LARGE', message: 'Image is too large' });
         }
+        if (!detectRealImage(buffer)) {
+          return res.status(415).json({ success: false, code: 'BAD_IMAGE', message: 'Only JPG, PNG, GIF or WEBP images are allowed' });
+        }
 
         const [result] = await db.query(
           'INSERT INTO messages (senderId, receiverId, commissionId, type, content, image, status) VALUES (?, ?, ?, ?, ?, ?, ?)',
@@ -263,6 +270,9 @@ router.post('/:commissionId/messages', async (req, res) => {
       }
 
       // non-image messages (text)
+      if (type !== 'text' || typeof content !== 'string' || !content.trim() || content.length > 5000) {
+        return res.status(400).json({ success: false, message: 'Message must be non-empty text up to 5000 characters' });
+      }
       const [result] = await db.query(
         'INSERT INTO messages (senderId, receiverId, commissionId, type, content, status) VALUES (?, ?, ?, ?, ?, ?)',
         [senderId, receiverId, commissionId, type, content, 'unread']

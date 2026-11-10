@@ -2,32 +2,37 @@ const express = require('express');
 const db = require('../config/db');
 const router = express.Router();
 
+// Екрануємо % і _ , щоб користувацький запит шукався буквально.
+const escapeLike = (s) => s.replace(/[\\%_]/g, (c) => '\\' + c);
+
 // Поиск художников по имени или стилю
 // NOTE: этот роут смонтирован в app.js как app.use('/api/search', searchRoutes)
 // поэтому конечный путь здесь должен быть БЕЗ префикса /api
 router.get('/creators', async (req, res) => {
-    const query = req.query.q?.trim() || '';
+    const query = String(req.query.q || '').trim().slice(0, 100);
 
     if (!query) {
         return res.status(400).json({ success: false, message: 'Search query is required' });
     }
 
     try {
+        // Стилі зберігаються в creators.styles як JSON-рядок (напр. '["Retro","Realism"]'),
+        // окремих таблиць styles/creator_styles у БД немає.
+        const pattern = `%${escapeLike(query)}%`;
         const [results] = await db.query(`
-            SELECT DISTINCT
-                c.Creator_ID,
-                c.Name,
-                c.Other_Details,
-                c.Image
-            FROM creators c
-                     LEFT JOIN creator_styles cs ON c.Creator_ID = cs.Creator_ID
-                     LEFT JOIN styles s ON cs.Style_ID = s.Style_ID
-            WHERE c.Name LIKE CONCAT('%', ?, '%')
-               OR s.Style_Name LIKE CONCAT('%', ?, '%')
-                LIMIT 50
-        `, [query, query]);
+            SELECT Creator_ID, Name, Other_Details, Image, styles
+            FROM creators
+            WHERE Name LIKE ? OR styles LIKE ?
+            ORDER BY Name
+            LIMIT 50
+        `, [pattern, pattern]);
 
         const formatted = results.map(c => {
+            let styles = [];
+            try {
+                const parsed = JSON.parse(c.styles || '[]');
+                if (Array.isArray(parsed)) styles = parsed.map(String);
+            } catch { /* legacy non-JSON value */ }
             const img = c.Image
                 ? (Buffer.isBuffer(c.Image)
                     ? `data:image/jpeg;base64,${c.Image.toString('base64')}`
@@ -37,6 +42,7 @@ router.get('/creators', async (req, res) => {
                 id: c.Creator_ID,
                 name: c.Name,
                 bio: c.Other_Details || '',
+                styles,
                 profileImage: img
             };
         });
