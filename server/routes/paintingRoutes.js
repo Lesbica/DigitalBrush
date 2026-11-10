@@ -1,32 +1,9 @@
 const express = require('express');
 const db = require('../config/db');
-const path = require('path');
-const fs = require('fs');
 const auth = require('../middleware/authMiddleware');
 const { imageUpload, withImageUpload, MAX_FILES } = require('../config/multerConfig');
 
 const router = express.Router();
-
-// Ensure auxiliary table for per-user likes exists (idempotent)
-let LIKES_TABLE_READY = false;
-async function ensureLikesTable() {
-  if (LIKES_TABLE_READY) return;
-  try {
-    await db.query(`
-      CREATE TABLE IF NOT EXISTS painting_likes (
-        Painting_ID BIGINT NOT NULL,
-        User_ID BIGINT NOT NULL,
-        Created_At DATETIME DEFAULT CURRENT_TIMESTAMP,
-        CONSTRAINT uq_painting_user UNIQUE (Painting_ID, User_ID),
-        INDEX idx_user (User_ID),
-        INDEX idx_painting (Painting_ID)
-      ) ENGINE=InnoDB;
-    `);
-    LIKES_TABLE_READY = true;
-  } catch (e) {
-    console.error('Failed to ensure painting_likes table:', e);
-  }
-}
 
 /* =====================================================
    GET ALL PAINTINGS (main only)
@@ -239,7 +216,6 @@ router.get('/:id', async (req, res) => {
       try {
           const userId = req.session?.user?.Creator_ID || req.session?.user?.id || null;
           if (userId) {
-              await ensureLikesTable();
               const [likeRows] = await db.query(
                   'SELECT 1 FROM painting_likes WHERE Painting_ID = ? AND User_ID = ? LIMIT 1',
                   [paintingId, userId]
@@ -298,8 +274,6 @@ router.post('/:id/like', auth, async (req, res) => {
   }
 
   try {
-    // Ensure dependencies
-    await ensureLikesTable();
 
     // Check painting exists
     const [existsRows] = await db.query('SELECT Painting_ID FROM paintings WHERE Painting_ID = ?', [paintingId]);

@@ -131,6 +131,31 @@ describe('commissions', () => {
     });
 });
 
+describe('likes', () => {
+    test('like toggles once per user and keeps the counter in sync', async () => {
+        const url = `/paintings/${f.paintings.a}/like`;
+        assert.equal((await call('POST', url)).status, 401);
+        const on = await call('POST', url, { cookie: as.customer });
+        assert.deepEqual({ liked: on.data.liked, likes: on.data.likes }, { liked: true, likes: 1 });
+        const d = await call('GET', `/paintings/${f.paintings.a}`, { cookie: as.customer });
+        assert.equal(d.data.painting.likedByCurrentUser, true);
+        const off = await call('POST', url, { cookie: as.customer });
+        assert.deepEqual({ liked: off.data.liked, likes: off.data.likes }, { liked: false, likes: 0 });
+    });
+});
+
+describe('database constraints (migration 004)', () => {
+    test('chat messages require an existing commission', async () => {
+        await assert.rejects(
+            db.query('INSERT INTO messages (senderId, receiverId, commissionId, type, content) VALUES (?, ?, ?, ?, ?)',
+                [f.customer.id, f.artist.id, 999999999, 'text', 'x']),
+            { code: 'ER_NO_REFERENCED_ROW_2' });
+    });
+    test('an artist with paintings cannot be deleted silently', async () => {
+        await assert.rejects(db.query('DELETE FROM creators WHERE Creator_ID = ?', [f.artist.id]), { code: 'ER_ROW_IS_REFERENCED_2' });
+    });
+});
+
 describe('search', () => {
     test('finds artists by style; no email in results', async () => {
         const r = await call('GET', `/search/creators?q=${f.tag}-style`);
