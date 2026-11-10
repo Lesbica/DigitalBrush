@@ -85,10 +85,18 @@ jobs:
             docker stop frontend backend || true
             docker rm frontend backend || true
 
+            echo "🔑 Check backend env file"
+            BACKEND_ENV_FILE="$HOME/paintings/backend.env"
+            if [ ! -f "$BACKEND_ENV_FILE" ]; then
+              echo "❌ $BACKEND_ENV_FILE not found. Create it from server/.env.example"
+              exit 1
+            fi
+
             echo "🚀 Start backend container"
             docker run -d \
               --name backend \
               --network paintings-net \
+              --env-file "$BACKEND_ENV_FILE" \
               ghcr.io/diplomeproject/paintingsproject-backend:latest
 
             echo "🚀 Start frontend container (PUBLIC)"

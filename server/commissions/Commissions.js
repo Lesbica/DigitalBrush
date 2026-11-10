@@ -3,6 +3,13 @@ const path = require('path');
 const fs = require('fs');
 const {upload} = require('../config/multerConfig');
 const { getIO } = require('../socket');
+const {
+    getSessionUserId,
+    getRole,
+    requireCommissionParticipant,
+    loadCommissionAccess,
+    emitToCommission,
+} = require('../utils/commissionAccess');
 const express = require('express');
 const AdmZip = require('adm-zip');
 const router = express.Router();
@@ -159,8 +166,7 @@ router.post(
 router.get('/public', async (req, res) => {
     const sql = `
         SELECT c.*,
-               cr.Name  AS customer_name,
-               cr.Email AS customer_email
+               cr.Name  AS customer_name
         FROM commissions c
                  LEFT JOIN creators cr ON c.Customer_ID = cr.Creator_ID
         WHERE c.Type = 'public'
@@ -229,7 +235,6 @@ router.get('/public', async (req, res) => {
                 Creator_ID: commission.Creator_ID,
                 Created_At: commission.Created_At,
                 customer_name: commission.customer_name,
-                customer_email: commission.customer_email,
                 imageUrl: imageUrl // This is the key field for frontend
             };
         });
@@ -337,6 +342,7 @@ router.get('/:id', async (req, res) => {
                Customer_ID,
                Creator_ID,
                Status,
+               Type,
                Created_At,
                Updated_At,
                is_paid,
@@ -353,6 +359,17 @@ router.get('/:id', async (req, res) => {
         }
 
         const commission = rows[0];
+
+        // Доступ: учасники бачать усе; інші — лише відкриті публічні комішени (без результату).
+        const userId = getSessionUserId(req);
+        const role = getRole(commission, userId);
+        const isOpenPublic = String(commission.Type || '').toLowerCase() === 'public'
+            && String(commission.Status || '').toLowerCase() === 'open';
+        if (!role && !isOpenPublic) {
+            return res.status(403).json({ success: false, message: 'Forbidden' });
+        }
+        // Готовий результат — виконавцю завжди, замовнику лише після оплати.
+        const canSeeResult = role === 'creator' || (role === 'customer' && Boolean(commission.is_paid));
 
         // normalize any stored image value to a data URI or public URL (same logic as list endpoint)
         const toDataUri = (value) => {
@@ -408,7 +425,7 @@ router.get('/:id', async (req, res) => {
         const image3 = toDataUri(commission.Image3);
         const image4 = toDataUri(commission.Image4);
         const image5 = toDataUri(commission.Image5);
-        const resultImageUri = toDataUri(commission.ResultImage);
+        const resultImageUri = canSeeResult ? toDataUri(commission.ResultImage) : null;
 
         const images = [image1, image2, image3, image4, image5].filter(Boolean);
 
@@ -477,11 +494,12 @@ router.patch('/:id/accept', async (req, res) => {
                 Creator_ID = ?
             WHERE Commission_ID = ?
               AND LOWER(Status) = 'open'
-              AND Customer_ID != ? 
+              AND Customer_ID != ?
+              AND (Creator_ID IS NULL OR Creator_ID = ?)
         `;
 
-        // Передаємо creatorId, id комішену, і (опціонально) перевірку на власника
-        const [result] = await db.query(sql, [creatorId, id, creatorId]);
+        // Direct-комішен може прийняти лише художник, якому його адресовано
+        const [result] = await db.query(sql, [creatorId, id, creatorId, creatorId]);
 
         if (result.affectedRows === 0) {
             return res.status(404).json({
@@ -492,11 +510,10 @@ router.patch('/:id/accept', async (req, res) => {
 
         // Эмитим событие изменения статуса/исполнителя в комнату комиссии
         try {
-            const io = getIO();
-            const payload = { commissionId: Number(id), status: 'Sketch' };
-            io.to(`commission_${id}`).emit('statusUpdated', payload);
-            // Дополнительно широковещательно, чтобы списки пользователя обновились
-            io.emit('statusUpdated', payload);
+            const updated = await loadCommissionAccess(id);
+            if (updated) {
+                emitToCommission(getIO(), updated, 'statusUpdated', { commissionId: Number(id), status: 'Sketch' });
+            }
         } catch (e) {
             // socket not initialized — игнорируем
         }
@@ -508,33 +525,35 @@ router.patch('/:id/accept', async (req, res) => {
     }
 });
 
-router.patch('/:id/status', async (req, res) => {
+// Ручна зміна статусу. Переходи Sketch → Edits → Completed робить лише флоу рев'ю етапів
+// (POST /chat/:id/review), тому тут дозволене тільки скасування учасником неоплаченого комішену.
+router.patch('/:id/status', requireCommissionParticipant('id'), async (req, res) => {
     const { id } = req.params;
-    const { status } = req.body;
-    const allowedStatuses = ['Open', 'Sketch', 'Edits', 'Completed', 'Cancelled'];
+    const { status } = req.body || {};
+    const commission = req.commission;
 
-    const normalizedStatus = allowedStatuses.find(s => s.toLowerCase() === (status || '').toLowerCase());
+    if (String(status || '').toLowerCase() !== 'cancelled') {
+        return res.status(400).json({ success: false, message: 'Only cancellation is allowed via this endpoint' });
+    }
 
-    if (!normalizedStatus) {
-        return res.status(400).json({ success: false, message: `Invalid status. Allowed: ${allowedStatuses.join(', ')}` });
+    const current = String(commission.Status || '').toLowerCase();
+    if (current === 'completed' || current === 'cancelled') {
+        return res.status(409).json({ success: false, message: `Commission is already ${commission.Status}` });
+    }
+    if (commission.is_paid) {
+        return res.status(409).json({ success: false, message: 'Paid commission cannot be cancelled' });
     }
 
     try {
-        const sql = `UPDATE commissions SET Status = ?, Updated_At = NOW() WHERE Commission_ID = ?`;
-        await db.query(sql, [normalizedStatus, id]);
+        await db.query(`UPDATE commissions SET Status = 'Cancelled', Updated_At = NOW() WHERE Commission_ID = ?`, [id]);
 
-        // уведомляем участников комнаты комиссии о смене статуса
         try {
-            const io = getIO();
-            const payload = { commissionId: Number(id), status: normalizedStatus };
-            io.to(`commission_${id}`).emit('statusUpdated', payload);
-            // Дополнительно широковещательно
-            io.emit('statusUpdated', payload);
+            emitToCommission(getIO(), commission, 'statusUpdated', { commissionId: Number(id), status: 'Cancelled' });
         } catch (e) {
             // socket not initialized — пропускаем
         }
 
-        res.json({ success: true, status: normalizedStatus });
+        res.json({ success: true, status: 'Cancelled' });
     } catch (err) {
         console.error(err);
         res.status(500).json({ success: false, message: 'Database error' });

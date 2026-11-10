@@ -22,19 +22,16 @@ const CheckoutPage = ({ onViewArtDetails }) => {
         if (cartItems.length === 0) return;
 
         try {
-            // Build payload required by backend: { amount, paintingIds }
+            // The backend calculates the amount from DB prices; only IDs are sent.
             const paintingIds = cartItems.map((item) => item.id);
 
             const res = await axios.post(
-                `/fondy/create-session`,
-                {
-                    amount: subtotalNumber,
-                    paintingIds,
-                },
+                `/payments/create-session`,
+                { paintingIds },
                 { withCredentials: true }
             );
 
-            const url = res?.data?.response?.checkout_url;
+            const url = res?.data?.checkoutUrl;
             if (url) {
                 window.location.href = url;
             } else {

@@ -17,7 +17,6 @@ router.get('/creators', async (req, res) => {
             SELECT DISTINCT
                 c.Creator_ID,
                 c.Name,
-                c.Email,
                 c.Other_Details,
                 c.Image
             FROM creators c
@@ -37,7 +36,6 @@ router.get('/creators', async (req, res) => {
             return {
                 id: c.Creator_ID,
                 name: c.Name,
-                email: c.Email,
                 bio: c.Other_Details || '',
                 profileImage: img
             };

@@ -4,6 +4,9 @@ const fs = require('fs');
 const express = require('express');
 const router = express.Router();
 
+// Лише публічні поля профілю. НІКОЛИ не віддавати Password, Email, Birthday.
+const PUBLIC_CREATOR_COLUMNS = 'Creator_ID, Name, Other_Details, Image, styles, likes, Instagram, Behance, TikTok, languages';
+
 function bufferToDataUri(buffer, fallbackExt = 'jpeg') {
   if (!buffer) return null;
   const ext = fallbackExt.toLowerCase();
@@ -29,7 +32,7 @@ function filePathToDataUri(filePath) {
 // GET all artists + artworks
 router.get('/getartists', async (req, res) => {
   try {
-    const [artists] = await db.query('SELECT * FROM creators');
+    const [artists] = await db.query(`SELECT ${PUBLIC_CREATOR_COLUMNS} FROM creators`);
 
     const artistsWithArtworks = await Promise.all(
       artists.map(async (artist) => {
@@ -105,8 +108,8 @@ router.get('/artist/:id', async (req, res) => {
   const artistId = req.params.id;
   try {
     const [artistRows] = await db.query(
-      'SELECT * FROM creators WHERE Creator_Id = ? OR Creator_ID = ?',
-      [artistId, artistId]
+      `SELECT ${PUBLIC_CREATOR_COLUMNS} FROM creators WHERE Creator_ID = ?`,
+      [artistId]
     );
     if (artistRows.length === 0)
       return res.status(404).json({ error: 'Artist not found' });
@@ -142,7 +145,6 @@ router.get('/artist/:id', async (req, res) => {
       // id/name/email
       const normId = artist.Creator_ID || artist.Creator_Id || artist.id;
       const normName = artist.Name || artist.name;
-      const normEmail = artist.Email || artist.email;
 
       // bio: prefer explicit bio field if any, else Other_Details/Description
       const normBio = artist.bio || artist.Bio || artist.Other_Details || artist.Description || '';
@@ -204,7 +206,6 @@ router.get('/artist/:id', async (req, res) => {
       // expose normalized fields (keep original ones for compatibility)
       artist.id = normId;
       artist.name = normName;
-      artist.email = normEmail;
       artist.bio = normBio;
       artist.avatar = artist.imageBase64 || artist.avatar || null;
       artist.stylesArray = normStyles; // additional explicit array field

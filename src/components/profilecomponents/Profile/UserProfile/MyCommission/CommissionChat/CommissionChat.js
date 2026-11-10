@@ -481,14 +481,13 @@ const CommissionChat = ({ commissionId, user, onBack }) => {
     const handlePayClick = async () => {
         try {
             // Создаем сессию оплаты через ваш backend
-            const res = await axios.post('/fondy/create-session', {
-                amount: commission.price,     // Цена из объекта commission
-                commissionId: commissionId,   // ID для вебхука
+            const res = await axios.post('/payments/create-session', {
+                commissionId: commissionId,   // сума рахується на бекенді з ціни комішену
                 type: 'commission'            // Указываем тип, чтобы backend понял, что это не корзина
             });
 
-            if (res.data && res.data.response && res.data.response.checkout_url) {
-                window.location.href = res.data.response.checkout_url;
+            if (res.data && res.data.checkoutUrl) {
+                window.location.href = res.data.checkoutUrl;
             } else {
                 alert('Error creating payment session');
             }

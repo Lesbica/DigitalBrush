@@ -107,6 +107,9 @@ router.post('/login', async (req, res) => {
             console.error("JSON parse error:", e);
         }
 
+        // Нова сесія після логіну (захист від session fixation)
+        await new Promise((resolve, reject) => req.session.regenerate(err => (err ? reject(err) : resolve())));
+
         // ВАЖЛИВО: Не зберігаємо _imageBlob у сесії! Це вбиває пам'ять.
         req.session.user = {
             id: user.Creator_ID,
@@ -138,7 +141,7 @@ router.get('/check-session', async (req, res) => {
 router.post('/logout', (req, res) => {
     req.session.destroy(err => {
         if (err) return res.status(500).json({ success: false });
-        res.clearCookie('connect.sid');
+        res.clearCookie(req.app.locals.sessionCookieName || 'bestart.sid');
         res.json({ success: true, message: 'Logout successful' });
     });
 });

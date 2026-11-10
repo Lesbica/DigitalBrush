@@ -1,4 +1,5 @@
-require('dotenv').config();
+// server/.env незалежно від того, з якої папки запущено node (у Docker змінні приходять через --env-file)
+require('dotenv').config({ path: require('path').join(__dirname, '.env'), quiet: true });
 const app = require('./app');
 const db = require('./config/db');
 
@@ -12,7 +13,10 @@ db.getConnection()
         const http = require('http');
         const server = http.createServer(app);
         const { init } = require('./socket');
-        init(server);
+        init(server, {
+            sessionMiddleware: app.locals.sessionMiddleware,
+            corsOrigin: app.locals.corsOrigin
+        });
 
         server.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
     })

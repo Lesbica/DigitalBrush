@@ -15,10 +15,10 @@
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
+    "express-mysql-session": "^3.0.3",
     "express-session": "^1.18.2",
     "hasown": "^2.0.2",
     "lucide-react": "^0.544.0",
-    "muller": "^1.1.0",
     "multer": "^2.0.2",
     "mysql2": "^3.15.1",
     "node-fetch": "^3.3.2",
@@ -37,7 +37,9 @@
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "server": "node server/server.js",
+    "migrate": "node server/scripts/migrate.js"
   },
   "eslintConfig": {
     "extends": [

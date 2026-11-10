@@ -1,14 +1,15 @@
 const express = require('express');
 const db = require('../config/db');
 const { detectImageMime, rowToMessage } = require('../utils/chatHelpers');
+const { requireCommissionParticipant, getSessionUserId } = require('../utils/commissionAccess');
 
 const router = express.Router();
 
 // Get messages for a commission
 // GET /api/commissions/chat/:commissionId/messages?limit=100
-router.get('/:commissionId/messages', async (req, res) => {
+router.get('/:commissionId/messages', requireCommissionParticipant(), async (req, res) => {
   const { commissionId } = req.params;
-  const limit = parseInt(req.query.limit, 10) || 1000;
+  const limit = Math.min(parseInt(req.query.limit, 10) || 1000, 1000);
 
   try {
     const [rows] = await db.query(
@@ -287,11 +288,15 @@ router.post('/:commissionId/messages', async (req, res) => {
 
 // Mark a message as read
 // PATCH /api/commissions/chat/:commissionId/messages/:id/read
-router.patch('/:commissionId/messages/:id/read', async (req, res) => {
-  const { id } = req.params;
+router.patch('/:commissionId/messages/:id/read', requireCommissionParticipant(), async (req, res) => {
+  const { id, commissionId } = req.params;
 
   try {
-    const [result] = await db.query('UPDATE messages SET status = ? WHERE id = ?', ['read', id]);
+    // Позначити прочитаним може лише отримувач повідомлення
+    const [result] = await db.query(
+      'UPDATE messages SET status = ? WHERE id = ? AND commissionId = ? AND receiverId = ?',
+      ['read', id, commissionId, req.userId]
+    );
 
     if (result.affectedRows === 0) {
       return res.status(404).json({ success: false, message: 'Message not found' });
@@ -307,8 +312,16 @@ router.patch('/:commissionId/messages/:id/read', async (req, res) => {
 // Unread count for a user (optionally filtered by commission)
 // GET /api/commissions/chat/unread-count/:userId?commissionId=123
 router.get('/unread-count/:userId', async (req, res) => {
-  const { userId } = req.params;
   const { commissionId } = req.query;
+  const userId = getSessionUserId(req);
+
+  if (!userId) {
+    return res.status(401).json({ success: false, message: 'Not authenticated' });
+  }
+  // Лічильник доступний лише для власного акаунта
+  if (Number(req.params.userId) !== userId) {
+    return res.status(403).json({ success: false, message: 'Forbidden' });
+  }
 
   try {
     let sql = 'SELECT COUNT(*) AS cnt FROM messages WHERE receiverId = ? AND status = ?';

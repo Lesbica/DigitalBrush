@@ -1,8 +1,11 @@
-require('dotenv').config();
+// server/.env незалежно від того, з якої папки запущено node (у Docker змінні приходять через --env-file)
+require('dotenv').config({ path: require('path').join(__dirname, '.env'), quiet: true });
 const express = require('express');
 const cors = require('cors');
 const session = require('express-session');
+const MySQLStore = require('express-mysql-session')(session);
 
+const db = require('./config/db');
 const authRoutes = require('./routes/authRoutes');
 const paintingRoutes = require('./routes/paintingRoutes');
 const profileRoutes = require('./routes/profileRoutes');
@@ -10,7 +13,14 @@ const searchRoutes = require('./routes/searchRoutes');
 const commissionsRoutes = require('./commissions/Commissions');
 const chatRoutes = require('./commissions/chat');
 const artistsRoutes = require('./Artists/Artists');
-const fondyRoutes = require('./routes/fondyRoutes');
+const paymentRoutes = require('./routes/paymentRoutes');
+
+if (!process.env.SESSION_SECRET) {
+  throw new Error('SESSION_SECRET env var is required');
+}
+
+const CORS_ORIGIN = process.env.CORS_ORIGIN || 'https://bestartgallery.pp.ua';
+const SESSION_COOKIE_NAME = 'bestart.sid';
 
 const app = express();
 
@@ -19,35 +29,39 @@ app.set('trust proxy', 1);
 // отключаем ETag, чтобы не было 304
 app.set('etag', false);
 
-// ✅ CORS (ТОЛЬКО HTTPS ДОМЕН)
+// CORS должен быть ПЕРВЫМ. cors() сам отвечает на preflight OPTIONS,
+// отдельный app.options('*') не нужен (и ломает старт на Express 5).
 const corsOptions = {
-  origin: 'https://bestartgallery.pp.ua',
+  origin: CORS_ORIGIN,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization']
 };
-
-// CORS должен быть ПЕРВЫМ
 app.use(cors(corsOptions));
-app.options('*', cors(corsOptions));
 
 // body parsers
 app.use(express.json({ limit: '15mb' }));
 app.use(express.urlencoded({ extended: true, limit: '15mb' }));
 
-// ✅ session (HTTPS)
-app.use(session({
-  name: 'bestart.sid',
+// Сессии храним в MySQL (таблица `sessions` создаётся автоматически),
+// чтобы они переживали рестарт и не текли по памяти.
+const sessionStore = new MySQLStore({}, db);
+
+const sessionMiddleware = session({
+  name: SESSION_COOKIE_NAME,
   secret: process.env.SESSION_SECRET,
+  store: sessionStore,
   resave: false,
   saveUninitialized: false,
   cookie: {
-    secure: true,        // ОБЯЗАТЕЛЬНО для HTTPS
+    secure: process.env.COOKIE_SECURE !== 'false',
     httpOnly: true,
-    sameSite: 'none',    // ОБЯЗАТЕЛЬНО для cross-origin
+    // Фронт и API на одном сайте: lax не даёт чужим сайтам слать запросы с нашей сессией (CSRF).
+    sameSite: 'lax',
     maxAge: 24 * 60 * 60 * 1000
   }
-}));
+});
+app.use(sessionMiddleware);
 
 // запрет кеширования API
 app.use((req, res, next) => {
@@ -63,7 +77,8 @@ app.use('/api/search', searchRoutes);
 app.use('/api/commissions/chat', chatRoutes);
 app.use('/api/commissions', commissionsRoutes);
 app.use('/api/artists', artistsRoutes);
-app.use('/api/fondy', fondyRoutes);
+app.use('/api/payments', paymentRoutes);
+app.use('/api/fondy', paymentRoutes.legacyFondyRouter);
 
 // 404
 app.use((req, res) => {
@@ -75,5 +90,9 @@ app.use((err, req, res, next) => {
   console.error(err);
   res.status(500).json({ error: 'Internal server error' });
 });
+
+app.locals.sessionMiddleware = sessionMiddleware;
+app.locals.corsOrigin = CORS_ORIGIN;
+app.locals.sessionCookieName = SESSION_COOKIE_NAME;
 
 module.exports = app;
