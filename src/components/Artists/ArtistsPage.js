@@ -19,12 +19,33 @@ const categories = [
 
 const artistFilterConfig = [
     { title: "SORT BY", options: [
-            { name: "NONE" }, { name: "NAME (A-Z)" }, { name: "NAME (Z-A)" }, { name: "LATEST" }
+            { name: "NONE" }, { name: "NAME (A-Z)" }, { name: "NAME (Z-A)" }, { name: "TOP RATED" }, { name: "LATEST" }
         ]},
-    { title: "COUNTRY", options: [
-            { name: "NONE" }, { name: "Ukraine" }, { name: "Poland" }, { name: "USA" }, { name: "Italy" }, { name: "Spain" }
+    { title: "RATING", options: [
+            { name: "ANY" }, { name: "4★ & UP" }, { name: "3★ & UP" }
+        ]},
+    { title: "AVAILABILITY", options: [
+            { name: "ANY" }, { name: "OPEN" }, { name: "BUSY" }, { name: "VACATION" }
+        ]},
+    { title: "PRICE", options: [
+            { name: "ANY" }, { name: "UP TO 500" }, { name: "UP TO 1000" }, { name: "UP TO 5000" }
         ]}
 ];
+
+const DEFAULT_FILTERS = { "SORT BY": "NONE", "RATING": "ANY", "AVAILABILITY": "ANY", "PRICE": "ANY" };
+
+// Selected panel options → query params of /artists/getartists
+function filtersToParams(f) {
+    const params = {};
+    const sort = { "NAME (A-Z)": "name_asc", "NAME (Z-A)": "name_desc", "TOP RATED": "rating", "LATEST": "newest" }[f["SORT BY"]];
+    if (sort) params.sort = sort;
+    const minRating = { "4★ & UP": 4, "3★ & UP": 3 }[f["RATING"]];
+    if (minRating) params.minRating = minRating;
+    if (f["AVAILABILITY"] !== "ANY") params.availability = f["AVAILABILITY"].toLowerCase();
+    const maxPrice = { "UP TO 500": 500, "UP TO 1000": 1000, "UP TO 5000": 5000 }[f["PRICE"]];
+    if (maxPrice) params.maxPrice = maxPrice;
+    return params;
+}
 
 export default function ArtistsPage() {
     const [searchQuery, setSearchQuery] = useState("");
@@ -32,6 +53,7 @@ export default function ArtistsPage() {
     // const [showAdvanced, setShowAdvanced] = useState(false); // ВИДАЛЕНО: компонент тепер керує цим сам
     const [galleryStates, setGalleryStates] = useState({});
     const [artistsData, setArtistsData] = useState([]);
+    const [advancedFilters, setAdvancedFilters] = useState(DEFAULT_FILTERS);
 
     useEffect(() => {
         axios.get(`/auth/check-session`)
@@ -58,7 +80,7 @@ export default function ArtistsPage() {
     useEffect(() => {
         const fetchArtists = async () => {
             try {
-                const res = await axios.get(`/artists/getartists`);
+                const res = await axios.get(`/artists/getartists`, { params: filtersToParams(advancedFilters) });
                 const serverArtists = Array.isArray(res.data) ? res.data : (res.data.artists || []);
 
                 const mapped = serverArtists.map((a, idx) => {
@@ -122,6 +144,9 @@ export default function ArtistsPage() {
                         styles: stylesArr,
                         avatar: a.imageBase64 || a.profileImage || '/images/profileImg.jpg',
                         likesCount,
+                        ratingAvg: a.ratingAvg ?? null,
+                        ratingCount: a.ratingCount || 0,
+                        availability: a.availability || 'open',
                         artworks
                     };
                 });
@@ -133,7 +158,7 @@ export default function ArtistsPage() {
         };
 
         fetchArtists();
-    }, []);
+    }, [advancedFilters]);
 
     const filteredArtists = useMemo(() => {
         let items = artistsData;
@@ -233,7 +258,14 @@ export default function ArtistsPage() {
 
                     {/* ОНОВЛЕНО: Просто вставляємо AdvancedFilters */}
                     <div className={styles.filtersContainer}>
-                        <AdvancedFilters filterConfig={artistFilterConfig} />
+                        <AdvancedFilters
+                            filterConfig={artistFilterConfig}
+                            selected={advancedFilters}
+                            onSelect={(title, option) => {
+                                setAdvancedFilters(prev => ({ ...prev, [title]: option }));
+                                setCurrentPage(0);
+                            }}
+                        />
                     </div>
                 </div>
 
@@ -257,7 +289,13 @@ export default function ArtistsPage() {
 
                                             <div className={styles.artistDetails}>
                                                 <span>Style: {artist.style}</span><br/>
-                                                <span>Likes: {artist.likesCount}</span>
+                                                <span>Likes: {artist.likesCount}</span><br/>
+                                                <span>
+                                                    Rating: {artist.ratingCount > 0
+                                                        ? `${artist.ratingAvg.toFixed(1)} ★ (${artist.ratingCount})`
+                                                        : 'no reviews yet'}
+                                                </span><br/>
+                                                <span>Status: {artist.availability}</span>
                                             </div>
                                         </div>
                                     </Link>

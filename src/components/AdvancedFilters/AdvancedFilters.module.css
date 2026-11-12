@@ -138,3 +138,8 @@
 .subItem:hover {
     background: rgba(84, 84, 254, 0.3);
 }
+/* Active option */
+.filterItem.selected {
+    color: #b991ff;
+    font-weight: 600;
+}

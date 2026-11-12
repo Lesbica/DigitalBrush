@@ -17,7 +17,8 @@ const AVAILABLE_LANGUAGES = [
 function ProfileSettings({user}) {
     const fileInputRef = useRef(null);
 
-    const [status, setStatus] = useState('available');
+    // Availability for commissions: open | busy | vacation (saved with the profile)
+    const [status, setStatus] = useState('open');
     const [avatarPreview, setAvatarPreview] = useState(user.profileImage || "https://via.placeholder.com/220");
     const [selectedFile, setSelectedFile] = useState(null);
 
@@ -49,6 +50,7 @@ function ProfileSettings({user}) {
             if (user.profileImage) {
                 setAvatarPreview(user.profileImage);
             }
+            setStatus(user.availability || 'open');
 
             // Завантаження стилів
             if (user.styles && Array.isArray(user.styles) && user.styles.length > 0) {
@@ -116,6 +118,7 @@ function ProfileSettings({user}) {
         dataToSend.append('username', formData.username);
         dataToSend.append('email', formData.email);
         dataToSend.append('description', formData.description);
+        dataToSend.append('availability', status);
 
         // Додаємо нові соцмережі
         dataToSend.append('instagram', formData.instagram);
@@ -169,24 +172,17 @@ function ProfileSettings({user}) {
 
                     {/* ТЕПЕР ЧЕКБОКСИ ТУТ (Верх лівої колонки) */}
                     <div className={styles.statusSection}>
-                        <label className={styles.checkboxLabel}>
-                            <input
-                                type="checkbox"
-                                className={styles.checkboxInput}
-                                checked={status === 'available'}
-                                onChange={() => handleStatusChange('available')}
-                            />
-                            available
-                        </label>
-                        <label className={styles.checkboxLabel}>
-                            <input
-                                type="checkbox"
-                                className={styles.checkboxInput}
-                                checked={status === 'unavailable'}
-                                onChange={() => handleStatusChange('unavailable')}
-                            />
-                            unavailable
-                        </label>
+                        {[['open', 'available'], ['busy', 'busy'], ['vacation', 'on vacation']].map(([value, label]) => (
+                            <label key={value} className={styles.checkboxLabel}>
+                                <input
+                                    type="checkbox"
+                                    className={styles.checkboxInput}
+                                    checked={status === value}
+                                    onChange={() => handleStatusChange(value)}
+                                />
+                                {label}
+                            </label>
+                        ))}
                     </div>
 
                     <div className={styles.formGroup}>

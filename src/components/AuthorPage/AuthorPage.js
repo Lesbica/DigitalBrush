@@ -37,6 +37,7 @@ const AuthorPage = () => {
     const [loading, setLoading] = useState(true);
     const [activeCategory, setActiveCategory] = useState(null);
     const [isCommissionModalOpen, setIsCommissionModalOpen] = useState(false);
+    const [reviews, setReviews] = useState({ summary: { average: null, count: 0 }, reviews: [] });
 
     useEffect(() => {
         const fetchArtist = async () => {
@@ -50,6 +51,13 @@ const AuthorPage = () => {
             }
         };
         if (id) fetchArtist();
+    }, [id]);
+
+    useEffect(() => {
+        if (!id) return;
+        axios.get(`/reviews/artist/${id}`, { params: { limit: 20 } })
+            .then(res => setReviews({ summary: res.data.summary, reviews: res.data.reviews || [] }))
+            .catch(err => console.error("Error loading reviews:", err));
     }, [id]);
 
     const handleCommissionClick = () => {
@@ -151,7 +159,7 @@ const AuthorPage = () => {
                     <div>
                         <h1 className={styles.artistName}>
                             {artistName}
-                            <span className={styles.status}>(available)</span>
+                            <span className={styles.status}>({artist.availability === 'busy' ? 'busy' : artist.availability === 'vacation' ? 'on vacation' : 'available'})</span>
                         </h1>
                     </div>
 
@@ -163,6 +171,14 @@ const AuthorPage = () => {
                         <div className={styles.metaRow}>
                             <img src={globeIcon} alt="Languages"/>
                             <span>{artistLanguages}</span>
+                        </div>
+                        <div className={styles.metaRow}>
+                            <span className={styles.ratingStar}>★</span>
+                            <span>
+                                {reviews.summary.count > 0
+                                    ? `${Number(reviews.summary.average).toFixed(1)} (${reviews.summary.count} ${reviews.summary.count === 1 ? 'review' : 'reviews'})`
+                                    : 'No reviews yet'}
+                            </span>
                         </div>
                         <div className={styles.metaRow}>
                             <img src={heartIcon} alt="Likes"/>
@@ -224,6 +240,25 @@ const AuthorPage = () => {
                         totalPages={totalPages}
                         onPageChange={setCurrentPage}
                     />
+
+                    <section className={styles.reviews}>
+                        <h2 className={styles.reviewsTitle}>Reviews</h2>
+                        {reviews.reviews.length === 0 ? (
+                            <div className={styles.noArt}>No reviews yet.</div>
+                        ) : reviews.reviews.map(r => (
+                            <div key={r.id} className={styles.reviewItem}>
+                                <div className={styles.reviewHeader}>
+                                    <img src={r.customer.avatar} alt="" className={styles.reviewAvatar} />
+                                    <span className={styles.reviewAuthor}>{r.customer.name}</span>
+                                    <span className={styles.reviewStars} aria-label={`${r.rating} of 5`}>
+                                        {'★'.repeat(r.rating)}{'☆'.repeat(5 - r.rating)}
+                                    </span>
+                                    <span className={styles.reviewDate}>{new Date(r.createdAt).toLocaleDateString()}</span>
+                                </div>
+                                {r.text && <p className={styles.reviewText}>{r.text}</p>}
+                            </div>
+                        ))}
+                    </section>
                 </main>
             </div>
 

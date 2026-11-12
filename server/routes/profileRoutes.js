@@ -18,7 +18,7 @@ router.post('/update-profile', auth, withImageUpload(imageUpload.single('profile
 
     try {
         // 2. Отримуємо дані з фронтенду
-        const { username, email, description, instagram, behance, tiktok, styleTags, languageTags } = req.body;
+        const { username, email, description, instagram, behance, tiktok, styleTags, languageTags, availability } = req.body;
 
         // Валідація (ТЗ: біо до 500 символів)
         if (username !== undefined && String(username).trim().length > 50) {
@@ -26,6 +26,9 @@ router.post('/update-profile', auth, withImageUpload(imageUpload.single('profile
         }
         if (email !== undefined && String(email).trim() !== '' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email).trim())) {
             return res.status(400).json({ success: false, message: 'Invalid email address' });
+        }
+        if (availability !== undefined && !['open', 'busy', 'vacation'].includes(availability)) {
+            return res.status(400).json({ success: false, message: 'Availability must be open, busy or vacation' });
         }
         if (description !== undefined && String(description).length > 500) {
             return res.status(400).json({ success: false, message: 'Bio is too long (max 500 characters)' });
@@ -93,12 +96,13 @@ router.post('/update-profile', auth, withImageUpload(imageUpload.single('profile
             `UPDATE creators
              SET Name = ?, Email = ?, Other_Details = ?,
                  Instagram = ?, Behance = ?, TikTok = ?,
-                 Image = ?, styles = ?, languages = ?
+                 Image = ?, styles = ?, languages = ?, Availability = ?
              WHERE Creator_ID = ?`,
             [
                 finalName, finalEmail, finalBio,
                 finalInsta, finalBehance, finalTikTok,
                 finalImage, finalStyles, finalLanguages,
+                availability || currentUser.Availability || 'open',
                 userId
             ]
         );

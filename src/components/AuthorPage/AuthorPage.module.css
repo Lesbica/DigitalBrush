@@ -155,3 +155,68 @@
         grid-template-columns: repeat(auto-fill, minmax(100%, 1fr));
     }
 }
+/* ---- Rating & reviews ---- */
+.ratingStar {
+    color: #ffc94d;
+    font-size: 20px;
+    width: 24px;
+    text-align: center;
+}
+
+.reviews {
+    margin-top: 40px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.reviewsTitle {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.4rem;
+    color: #fff;
+    margin: 0 0 8px;
+}
+
+.reviewItem {
+    background: rgba(30, 30, 50, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 12px;
+    padding: 16px 20px;
+    color: #fff;
+}
+
+.reviewHeader {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.reviewAvatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.reviewAuthor {
+    font-weight: 600;
+}
+
+.reviewStars {
+    color: #ffc94d;
+    letter-spacing: 2px;
+}
+
+.reviewDate {
+    margin-left: auto;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 0.9rem;
+}
+
+.reviewText {
+    margin: 10px 0 0;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}

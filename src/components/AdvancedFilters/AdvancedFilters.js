@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import styles from './AdvancedFilters.module.css';
 
-function AdvancedFilters({ filterConfig }) {
+// selected: { [columnTitle]: optionName }; onSelect(columnTitle, optionName) — optional (without it the panel is display-only)
+function AdvancedFilters({ filterConfig, selected = {}, onSelect }) {
     const [isOpen, setIsOpen] = useState(false);
     const [openSubMenu, setOpenSubMenu] = useState(null);
 
@@ -35,8 +36,11 @@ function AdvancedFilters({ filterConfig }) {
                                 {column.options.map(opt => (
                                     <li
                                         key={opt.name}
-                                        className={`${styles.filterItem} ${opt.subOptions ? styles.hasSubMenu : ''}`}
-                                        onClick={() => opt.subOptions && setOpenSubMenu(openSubMenu === opt.name ? null : opt.name)}
+                                        className={`${styles.filterItem} ${opt.subOptions ? styles.hasSubMenu : ''} ${selected[column.title] === opt.name ? styles.selected : ''}`}
+                                        onClick={() => {
+                                            if (opt.subOptions) setOpenSubMenu(openSubMenu === opt.name ? null : opt.name);
+                                            else if (onSelect) onSelect(column.title, opt.name);
+                                        }}
                                     >
                                         {opt.name}
                                         {opt.subOptions && <span>{openSubMenu === opt.name ? '‹' : '›'}</span>}

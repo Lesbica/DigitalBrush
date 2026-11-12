@@ -225,13 +225,18 @@ router.get('/:id', async (req, res) => {
         // Готовий результат — виконавцю завжди, замовнику лише після оплати.
         const canSeeResult = role === 'creator' || (role === 'customer' && Boolean(commission.is_paid));
 
+        const status = normalizeStatus(commission.Status);
+        const [[review]] = await db.query(
+            'SELECT Rating AS rating, Text AS text, Created_At AS createdAt FROM reviews WHERE Commission_ID = ?',
+            [id]
+        );
+
         const url = (flag, slot) => (flag ? commissionImageUrl(id, slot) : null);
         const image1 = url(commission.hasRef, 'ref');
         const image2 = url(commission.has2, 2);
         const image3 = url(commission.has3, 3);
         const image4 = url(commission.has4, 4);
         const image5 = url(commission.has5, 5);
-        const status = normalizeStatus(commission.Status);
 
         res.json({
             success: true,
@@ -250,6 +255,8 @@ router.get('/:id', async (req, res) => {
                 Creator_ID: commission.Creator_ID,
                 status,
                 Status: status,
+                review: review ? { ...review, text: review.text || '' } : null,
+                canReview: role === 'customer' && status === 'Completed' && !review,
                 images: [image1, image2, image3, image4, image5].filter(Boolean),
                 image1,
                 image2,

@@ -98,6 +98,7 @@ app.use('/api/search', searchRoutes);
 app.use('/api/commissions/chat', chatRoutes);
 app.use('/api/commissions', commissionsRoutes);
 app.use('/api/artists', artistsRoutes);
+app.use('/api/reviews', require('./routes/reviewRoutes'));
 app.use('/api/payments', paymentRoutes);
 app.use('/api/fondy', paymentRoutes.legacyFondyRouter);
 // Image files (sets its own Cache-Control, overriding no-store above)
