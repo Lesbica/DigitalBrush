@@ -86,7 +86,7 @@ const BasketModal = ({ onClose, onViewItemDetails, position}) => {
                                             e.stopPropagation();
                                             removeFromCart(item.id);
                                         }}>
-                                            <img width="36" height="36" viewBox="0 0 36 36" fill="none" src={trash} />
+                                            <img width="36" height="36" src={trash} alt="Remove" />
                                         </button>
                                     </div>
                                 </div>

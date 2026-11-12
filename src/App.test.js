@@ -1,8 +1,11 @@
 import { render, screen } from '@testing-library/react';
+import axios from 'axios';
 import App from './App';
 
-test('renders learn react link', () => {
-  render(<App />);
-  const linkElement = screen.getByText(/learn react/i);
-  expect(linkElement).toBeInTheDocument();
+vi.mock('axios');
+
+test('renders the navigation of the app', async () => {
+    axios.get.mockResolvedValue({ data: { loggedIn: false, paintings: [] } });
+    render(<App />);
+    expect((await screen.findAllByText(/shop/i)).length).toBeGreaterThan(0);
 });

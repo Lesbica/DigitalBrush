@@ -5,7 +5,7 @@
 
 | Частина | Стек |
 |---|---|
-| Фронтенд (`src/`) | React 19, React Router 7, Create React App, axios, socket.io-client |
+| Фронтенд (`src/`) | React 19, React Router 7, Vite, axios, socket.io-client; тести — Vitest + Testing Library |
 | Бекенд (`server/`) | Node.js 22, Express 5, mysql2, express-session (сесії в MySQL), socket.io, sharp |
 | База даних | MySQL 8, міграції в `server/migrations/` |
 | Оплата | WayForPay (Fondy — резервний провайдер) |
@@ -35,14 +35,15 @@ WAYFORPAY_MERCHANT_ACCOUNT=test_merch_n1          # публічний тест�
 WAYFORPAY_SECRET_KEY=flk3409refn54t54t*FNJRET
 ```
 
-Фронтенд бере адресу API з `.env.development` (`REACT_APP_API_BASE`).
+Фронтенд бере адресу API з `.env.development` (`VITE_API_BASE`, див. `src/config.js`).
 
 ## Команди
 
 | Команда | Що робить |
 |---|---|
 | `npm run setup` | встановлює залежності кореня (фронтенд) і `server/` (бекенд) |
-| `npm start` / `npm run build` | фронтенд: dev-сервер / продакшн-збірка |
+| `npm start` / `npm run build` | фронтенд: dev-сервер Vite / продакшн-збірка в `build/` |
+| `npm test` / `npm run lint` | тести фронтенду (Vitest) / ESLint фронтенду |
 | `npm run server` | запуск API |
 | `npm run migrate` | застосувати нові міграції (`server/scripts/migrate.js`, облік у `schema_migrations`) |
 | `npm run test:api` | інтеграційні тести API (`server/tests`, node:test) на БД з `server/.env`; кожен набір створює й прибирає власні дані |

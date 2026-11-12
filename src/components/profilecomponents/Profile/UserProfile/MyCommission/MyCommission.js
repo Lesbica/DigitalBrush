@@ -5,6 +5,7 @@ import CategoryFilters from "../../../../CategoryFilters/CategoryFilters";
 import CommissionModalDetails from "../../../../Commission/CommissionModals/CommissionModalDetails";
 import logo from '../../../../../assets/logo.svg'
 import { io } from 'socket.io-client';
+import { SOCKET_BASE } from '../../../../../config';
 
 const commissionFilters = ['MY ORDERS', 'MY TASKS'];
 
@@ -130,8 +131,7 @@ function MyCommission({ user, onOpenChat}) {
 
     // Live-обновление статусов через сокет
     useEffect(() => {
-        const serverBase = (process.env.REACT_APP_API_BASE || `/api`).replace(/\/api$/, '');
-        const socket = io(serverBase, { withCredentials: true, autoConnect: true, reconnection: true });
+        const socket = io(SOCKET_BASE, { withCredentials: true, autoConnect: true, reconnection: true });
 
         const onStatusUpdated = (payload) => {
             if (!payload || !payload.commissionId) return;

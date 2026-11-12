@@ -1,7 +1,7 @@
 # DigitalBrush
 
 Маркетплейс цифрового арту: продаж картин і комішени (замовлення художнику) з чатом і оплатою.
-Фронтенд — React 19 (CRA) у `src/`; бекенд — Express 5 + mysql2 + socket.io у `server/`.
+Фронтенд — React 19 + Vite у `src/` (JSX у `.js`-файлах, адреси API — `src/config.js`); бекенд — Express 5 + mysql2 + socket.io у `server/`.
 Спілкування з командою — українською.
 
 ## Запуск (поки лише локально)
@@ -12,6 +12,7 @@
 - `npm run migrate` — застосувати нові міграції; `npm run server` — бекенд на :8080; `npm start` — фронтенд на :3000.
 - `.claude/launch.json` містить конфігурації `backend` і `frontend` для превʼю в застосунку.
 - `npm run test:api` — інтеграційні тести API на локальній БД (створюють власні тестові дані й прибирають їх).
+- `npm test` — тести фронтенду (Vitest), `npm run lint` — ESLint фронтенду.
 - `npm run lint:server` — ESLint бекенду (`server/.eslintrc.json`). CI запускає лінт, міграції на порожній MySQL і тести.
 - Бекенд не перезавантажується сам: після змін у `server/` перезапусти його.
 

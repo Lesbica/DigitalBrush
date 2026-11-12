@@ -49,8 +49,13 @@ jobs:
           npm ci
           npm --prefix server ci
 
-      - name: Lint backend
-        run: npm run lint:server
+      - name: Lint backend and frontend
+        run: |
+          npm run lint:server
+          npm run lint
+
+      - name: Frontend tests (Vitest)
+        run: npm test
 
       - name: Configure backend for the CI database
         run: |
@@ -70,10 +75,7 @@ jobs:
       - name: API tests
         run: npm run test:api
 
-      - name: Frontend build
-        # CI=true would turn the existing lint warnings into build errors
-        env:
-          CI: false
+      - name: Frontend build (Vite)
         run: npm run build
 
 # =====================

@@ -3,6 +3,7 @@ import {useNavigate} from "react-router-dom";
 import axios from "axios";
 import {io} from "socket.io-client";
 import styles from "./NotificationBell.module.css";
+import {SOCKET_BASE} from "../../../config";
 
 // Bell with unread counter. New notifications arrive live over socket.io (the server puts every
 // logged-in socket into its user room); the counter is also refreshed every minute as a fallback.
@@ -26,8 +27,7 @@ export default function NotificationBell() {
     useEffect(() => {
         load();
         const timer = setInterval(load, 60000);
-        const serverBase = (process.env.REACT_APP_API_BASE || '/api').replace(/\/api$/, '');
-        const socket = io(serverBase, {withCredentials: true, transports: ['websocket', 'polling']});
+        const socket = io(SOCKET_BASE, {withCredentials: true, transports: ['websocket', 'polling']});
         socket.on('notification', (n) => {
             setItems(prev => [n, ...prev.filter(x => x.id !== n.id)].slice(0, 20));
             setUnread(u => u + 1);

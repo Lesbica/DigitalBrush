@@ -4,9 +4,9 @@ import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 import axios from 'axios';
+import { API_BASE } from './config';
 
 // Configure global axios defaults
-const API_BASE = process.env.REACT_APP_API_BASE || 'https://bestartgallery.pp.ua/api';
 axios.defaults.baseURL = API_BASE;
 axios.defaults.withCredentials = true;
 
