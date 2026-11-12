@@ -3,6 +3,7 @@
 //   Open --decline--> Declined, any unpaid unfinished --cancel--> Cancelled
 const db = require('../config/db');
 const logger = require('../utils/logger');
+const { releaseCommission } = require('./wallet');
 
 const STAGES = ['Sketch', 'Lineart', 'Color', 'Final'];
 const NEXT_STATUS = { Sketch: 'Lineart', Lineart: 'Color', Color: 'Final', Final: 'Completed' };
@@ -81,6 +82,8 @@ async function reviewStage(commissionId, { decision, messageId, auto = false }) 
                     'UPDATE commissions c JOIN messages m ON m.id = ? SET c.ResultImage = m.image WHERE c.Commission_ID = ?',
                     [targetId, commissionId]
                 );
+                // a payment made before completion is released from escrow to the artist
+                await releaseCommission(conn, commissionId);
             }
         } else {
             await conn.query(

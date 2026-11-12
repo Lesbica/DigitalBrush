@@ -200,3 +200,81 @@
 @media (max-width: 900px) {
     .topGrid { grid-template-columns: 1fr; }
 }
+/* ---- Balance & withdrawal ---- */
+.balanceRow {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 28px;
+}
+
+.balanceCard,
+.withdrawForm {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 16px 20px;
+    border: 1px solid rgba(185, 123, 255, 0.35);
+    border-radius: 12px;
+    background: rgba(30, 30, 50, 0.6);
+    color: #EDEBFF;
+    min-width: 180px;
+}
+
+.withdrawForm {
+    flex: 1 1 280px;
+}
+
+.balanceLabel {
+    font-size: 12px;
+    letter-spacing: 1px;
+    color: rgba(237, 235, 255, 0.7);
+}
+
+.balanceValue {
+    font-size: 26px;
+    font-weight: 700;
+    color: #35E59A;
+}
+
+.balanceValueMuted {
+    font-size: 22px;
+    font-weight: 700;
+}
+
+.balanceHint {
+    font-size: 12px;
+    color: rgba(237, 235, 255, 0.6);
+}
+
+.withdrawInput {
+    padding: 8px 10px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    background: rgba(0, 0, 0, 0.3);
+    color: #fff;
+    font-size: 14px;
+}
+
+.withdrawBtn {
+    padding: 9px 14px;
+    border-radius: 8px;
+    border: none;
+    background: #7b4dff;
+    color: #fff;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.withdrawBtn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.formOk { color: #35E59A; font-size: 13px; }
+.formError { color: #ff8a8a; font-size: 13px; }
+
+@media (max-width: 900px) {
+    .topGrid { grid-template-columns: 1fr; }
+    .monthsPanel { width: 100%; }
+}

@@ -61,6 +61,7 @@ app.use('/api/auth/resend-verification', limiter(15, 5));
 app.use('/api/auth/forgot-password', limiter(15, 5));
 app.use('/api/auth/reset-password', limiter(15, 10));
 app.use('/api/payments/create-session', limiter(15, 20));
+app.use('/api/wallet/withdrawals', limiter(60, 10));
 
 // Body parsers: chat accepts images as data URIs (up to 10 MB), everything else is small
 app.use('/api/commissions/chat', express.json({ limit: '15mb' }));
@@ -103,6 +104,7 @@ app.use('/api/commissions', commissionsRoutes);
 app.use('/api/artists', artistsRoutes);
 app.use('/api/reviews', require('./routes/reviewRoutes'));
 app.use('/api/notifications', require('./routes/notificationRoutes'));
+app.use('/api/wallet', require('./routes/walletRoutes'));
 app.use('/api/payments', paymentRoutes);
 app.use('/api/fondy', paymentRoutes.legacyFondyRouter);
 // Image files (sets its own Cache-Control, overriding no-store above)

@@ -37,12 +37,21 @@
   Оригінали картин — лише покупцям через `/api/profile/download/:id`.
 - Списки підтримують `page`/`limit` (макс. 100) і повертають `total`/`totalPages`.
 - Публічні ендпоінти ніколи не віддають `Password`, `Email`, `Birthday` користувачів.
+- **Ролі**: `creators.Role` = artist | customer. Дії художника (завантаження картин, прийняття
+  комішенів) — через `middleware/requireArtist.js`. Вхід — лише з підтвердженим email
+  (`REQUIRE_EMAIL_VERIFICATION`); одноразові токени — `services/accountTokens.js`, листи — `utils/mailer.js`.
+- **Комішени**: статуси й переходи — лише через `services/commissionStages.js`
+  (Sketch → Lineart → Color → Final → Completed, Declined, Cancelled); фонове автозатвердження — `services/scheduler.js`.
+- **Сповіщення** — `services/notifications.js` (`notify`, `commissionEvents`), не надсилати сокет-події/листи вручну.
+- **Гаманець** — `services/wallet.js` (копійки, ідемпотентні записи через унікальний `Ref`, ескроу для
+  комішенів до завершення). Виведення обробляється вручну: `npm run withdrawals`.
 - Після змін у бекенді — `npm run lint:server` і `npm run test:api`; нова поведінка → новий тест у `server/tests/`.
 - Логи — через `server/utils/logger.js` (рівень `LOG_LEVEL`), не `console.*`.
 - Нові залежності бекенду — у `server/package.json`, фронтенду — в кореневий `package.json`.
 - У комітах і PR не вказувати Claude автором (без `Co-Authored-By`).
 
 ## План покращень
-Фази 0 (безпека), 1 (баги, валідація, Docker), 2 (цілісність БД), 3 (продуктивність) і 4 (архітектура, CI)
-завершені. Далі: 5 — функції з use cases
-(ролі, відгуки, нотифікації, гаманець — з новими таблицями), 6 — фронтенд.
+Фази 0–5 завершені (безпека, баги, БД, продуктивність, архітектура/CI, функції з use cases:
+відгуки, життєвий цикл комішену, акаунти, сповіщення, гаманець). Далі: 6 — фронтенд (серверна
+пагінація у списках, AuthContext, i18n, міграція з CRA). Не зроблено: вхід через Google (потрібні ключі
+Google Cloud), автоматичні виплати через платіжний API.

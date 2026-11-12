@@ -10,7 +10,8 @@
   "scripts": {
     "start": "node server.js",
     "migrate": "node scripts/migrate.js",
-    "test": "node --test --test-concurrency=1 --test-reporter=spec tests/*.test.js"
+    "test": "node --test --test-concurrency=1 --test-reporter=spec tests/*.test.js",
+    "withdrawals": "node scripts/withdrawals.js"
   },
   "dependencies": {
     "adm-zip": "^0.5.16",

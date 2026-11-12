@@ -20,7 +20,8 @@
     "migrate": "npm --prefix server run migrate",
     "test:api": "npm --prefix server test",
     "setup": "npm install && npm --prefix server install",
-    "lint:server": "eslint --no-eslintrc -c server/.eslintrc.json server --ext .js"
+    "lint:server": "eslint --no-eslintrc -c server/.eslintrc.json server --ext .js",
+    "withdrawals": "npm --prefix server run withdrawals --"
   },
   "eslintConfig": {
     "extends": [

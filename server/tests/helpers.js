@@ -189,6 +189,9 @@ async function cleanupFixtures(f) {
     const extra = f.extraEmails.length ? (await db.query('SELECT Creator_ID FROM creators WHERE Email IN (?)', [f.extraEmails]))[0] : [];
     const ids = [...users, ...extra].map((u) => u.Creator_ID);
     if (ids.length) {
+        // wallet rows reference users with ON DELETE RESTRICT
+        await db.query('DELETE FROM wallet_transactions WHERE User_ID IN (?) OR Payer_ID IN (?)', [ids, ids]);
+        await db.query('DELETE FROM withdrawals WHERE User_ID IN (?)', [ids]);
         const [comms] = await db.query('SELECT Commission_ID FROM commissions WHERE Customer_ID IN (?) OR Creator_ID IN (?)', [ids, ids]);
         const cids = comms.map((c) => c.Commission_ID);
         if (cids.length) {

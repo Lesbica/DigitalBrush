@@ -4,6 +4,8 @@ const crypto = require('crypto');
 const logger = require('../utils/logger');
 const db = require('../config/db');
 const { getIO } = require('../socket');
+const wallet = require('../services/wallet');
+const { notify, commissionLink } = require('../services/notifications');
 
 const CURRENCY = 'UAH';
 const MAX_CART_ITEMS = 50;
@@ -160,6 +162,7 @@ async function applyPaymentResult(provider, result) {
 
     const conn = await db.getConnection();
     let commissionToNotify = null;
+    const earnings = []; // { artistId, net, kind, title, commissionId, pending } — notified after commit
     try {
         await conn.beginTransaction();
 
@@ -177,12 +180,34 @@ async function applyPaymentResult(provider, result) {
             if (order.Target_ID) {
                 await conn.query('UPDATE commissions SET is_paid = 1 WHERE Commission_ID = ?', [order.Target_ID]);
                 commissionToNotify = order.Target_ID;
+                // Artist earning: held in escrow until the commission is completed
+                const [[c]] = await conn.query('SELECT Creator_ID, Title, status FROM commissions WHERE Commission_ID = ?', [order.Target_ID]);
+                if (c && c.Creator_ID) {
+                    const completed = String(c.status).toLowerCase() === 'completed';
+                    const { net } = await wallet.creditCommission(conn, {
+                        orderId, commissionId: order.Target_ID, artistId: c.Creator_ID, payerId: order.User_ID,
+                        gross: Number(order.Amount), completed, title: c.Title,
+                    });
+                    earnings.push({ artistId: c.Creator_ID, net, kind: 'commission', title: c.Title, commissionId: order.Target_ID, pending: !completed });
+                }
             }
         } else {
-            const [itemRows] = await conn.query('SELECT Painting_ID FROM payment_order_items WHERE Order_ID = ?', [orderId]);
+            const [itemRows] = await conn.query(
+                `SELECT i.Painting_ID, p.Creator_ID, p.Title, p.Price
+                   FROM payment_order_items i JOIN paintings p ON p.Painting_ID = i.Painting_ID
+                  WHERE i.Order_ID = ?`,
+                [orderId]
+            );
             if (itemRows.length > 0) {
                 const values = itemRows.map((r) => [order.User_ID, r.Painting_ID]);
                 await conn.query('INSERT IGNORE INTO user_purchases (User_ID, Painting_ID) VALUES ?', [values]);
+                for (const item of itemRows) {
+                    const { net } = await wallet.creditSale(conn, {
+                        orderId, paintingId: item.Painting_ID, artistId: item.Creator_ID, payerId: order.User_ID,
+                        gross: toMinorUnits(item.Price), title: item.Title,
+                    });
+                    earnings.push({ artistId: item.Creator_ID, net, kind: 'sale', title: item.Title });
+                }
             }
         }
 
@@ -195,6 +220,19 @@ async function applyPaymentResult(provider, result) {
     }
 
     logger.info(`[payments] order ${orderId} approved (${order.Type}, ${provider})`);
+
+    for (const e of earnings) {
+        const amount = `${(e.net / 100).toFixed(2)} UAH`;
+        await notify(e.artistId, e.kind === 'sale'
+            ? { type: 'painting_sold', title: 'Your painting was sold', body: `"${e.title}" was bought. ${amount} added to your wallet.`, link: '/profile?tab=wallet', email: true }
+            : {
+                type: 'commission_paid', title: 'Commission paid',
+                body: e.pending
+                    ? `The customer paid for "${e.title}". ${amount} will be available after the commission is completed.`
+                    : `The customer paid for "${e.title}". ${amount} added to your wallet.`,
+                link: commissionLink(e.commissionId), commissionId: e.commissionId, email: true,
+            });
+    }
 
     if (commissionToNotify) {
         try {
