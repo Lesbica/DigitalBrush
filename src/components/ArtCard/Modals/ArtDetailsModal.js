@@ -36,7 +36,6 @@ const ArtDetailsModal = ({art, onClose, isLoggedIn}) => {
 
     useEffect(() => {
         document.body.style.overflow = 'hidden';
-        startScrollAnimation();
         return () => {
             document.body.style.overflow = 'auto';
             if (animationFrameId.current) {

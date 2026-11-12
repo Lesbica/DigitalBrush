@@ -24,7 +24,7 @@
     "withdrawals": "npm --prefix server run withdrawals --",
     "preview": "vite preview",
     "test:watch": "vitest",
-    "lint": "eslint src --ext .js,.jsx"
+    "lint": "eslint src --ext .js,.jsx --max-warnings 0"
   },
   "devDependencies": {
     "@testing-library/dom": "^10.4.2",

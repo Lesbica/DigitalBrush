@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useState, useRef } from 'react';
 import styles from './AddCommissionModal.module.css';
 import closeIcon from '../../../assets/closeCross.svg';
 import addImageIcon from '../../../assets/image-placeholder-icon.svg';
@@ -27,20 +27,18 @@ const AddCommissionModal = ({ onClose, targetCreatorId = null }) => {
     const [errors, setErrors] = useState({});
     const [submitting, setSubmitting] = useState(false);
 
+    // Previews are revoked when an image is removed and the rest on close; revoking on every
+    // change would break the previews that are still shown
+    const imagesRef = useRef(images);
+    useEffect(() => { imagesRef.current = images; }, [images]);
+
     useEffect(() => {
         document.body.style.overflow = 'hidden';
-
         return () => {
             document.body.style.overflow = 'auto';
-            images.forEach(img => URL.revokeObjectURL(img.preview));
+            imagesRef.current.forEach(img => URL.revokeObjectURL(img.preview));
         };
     }, []);
-
-    useEffect(() => {
-        return () => {
-            images.forEach(img => URL.revokeObjectURL(img.preview));
-        };
-    }, [images]);
 
     const handlePriceChange = (e) => {
         const value = e.target.value.replace(/\D/g, '');

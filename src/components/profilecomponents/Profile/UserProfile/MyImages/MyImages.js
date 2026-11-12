@@ -57,14 +57,6 @@ function MyImages({ user, onTotalLikesChange, initialView = 'created' }) {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [paintings]);
 
-    const handleCategoryClick = (category) => {
-        if (activeCategory === category) {
-            setActiveCategory(null);
-        } else {
-            setActiveCategory(category);
-        }
-        setCurrentPage(0);
-    };
 
     // Обработчик для переключения между MyImages / BoughtImages через CategoryFilters
     const handleViewFilterClick = (filter) => {

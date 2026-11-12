@@ -48,16 +48,17 @@ const AddArtModal = ({
   const lerpFactor = 0.1;
 
   // --- Disable scroll + start animation ---
+  // Object URLs of new files are revoked on close (the cleanup must see the latest list)
+  const imagesRef = useRef(images);
+  useEffect(() => { imagesRef.current = images; }, [images]);
+
   useEffect(() => {
     document.body.style.overflow = 'hidden';
-    startScrollAnimation();
-
+    const frame = animationFrameId;
     return () => {
       document.body.style.overflow = 'auto';
-      animationFrameId.current &&
-        cancelAnimationFrame(animationFrameId.current);
-
-      images.forEach(img => img.file && URL.revokeObjectURL(img.preview));
+      if (frame.current) cancelAnimationFrame(frame.current);
+      imagesRef.current.forEach(img => img.file && URL.revokeObjectURL(img.preview));
     };
   }, []);
 
@@ -162,7 +163,7 @@ const AddArtModal = ({
     };
 
     fetchPainting();
-  }, [existingPaintingId]);
+  }, [existingPaintingId, categories]);
 
   // --- Add images ---
   const handleFileAdd = e => {

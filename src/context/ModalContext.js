@@ -10,7 +10,6 @@ export const useModal = () => useContext(ModalContext);
 export const ModalProvider = ({ children }) => {
     const { isLoggedIn } = useAuth();
     const [selectedArt, setSelectedArt] = useState(null);
-    const [loading, setLoading] = useState(false);
 
     // Функція відкриття. Приймає базові дані з картки (id, title, image),
     // щоб показати щось одразу, поки вантажаться деталі.
@@ -23,7 +22,6 @@ export const ModalProvider = ({ children }) => {
 
         // 2. Якщо є ID, дозавантажуємо повну інформацію (галерею, батчі)
         if (basicArtData.id) {
-            setLoading(true);
             try {
                 const res = await axios.get(`/paintings/${basicArtData.id}`);
 
@@ -59,8 +57,6 @@ export const ModalProvider = ({ children }) => {
                 }
             } catch (err) {
                 console.error("Failed to fetch full painting details:", err);
-            } finally {
-                setLoading(false);
             }
         }
     };

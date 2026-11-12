@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import axios from 'axios';
 import styles from './AuthorPage.module.css';
 import ArtCard from '../ArtCard/ArtCard';
@@ -34,7 +34,6 @@ const categories = CATEGORIES;
 const AuthorPage = () => {
     const { t } = useTranslation();
     const { id } = useParams();
-    const navigate = useNavigate();
 
     const [artist, setArtist] = useState(null);
     const [loading, setLoading] = useState(true);

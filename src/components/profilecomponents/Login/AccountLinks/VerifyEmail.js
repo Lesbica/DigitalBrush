@@ -17,7 +17,7 @@ export default function VerifyEmail() {
         axios.post('/auth/verify-email', {token: params.get('token') || ''})
             .then(res => setState({status: 'ok', message: res.data.message}))
             .catch(err => setState({status: 'error', message: err.response?.data?.message || t('auth.verifyFailed')}));
-    }, [params]);
+    }, [params, t]);
 
     return (
         <div style={{display: 'flex', justifyContent: 'center', padding: '60px 16px'}}>

@@ -42,7 +42,6 @@ const CommissionChat = ({ commissionId, user, onBack }) => {
 
     const [mainImage, setMainImage] = useState(null);
     // Прев'ю нижче головного більше не відображаємо, залишаємо тільки головне зображення
-    const [previewImages, setPreviewImages] = useState([]);
 
     const [isViewerOpen, setIsViewerOpen] = useState(false);
     const [viewerInitialIndex, setViewerInitialIndex] = useState(0);
@@ -80,10 +79,8 @@ const CommissionChat = ({ commissionId, user, onBack }) => {
                     if (commData.images && commData.images.length > 0) {
                         setMainImage(commData.images[0]);
                         // Логіку нижніх прев'ю прибираємо
-                        setPreviewImages([]);
                     } else {
                         setMainImage(placeholderImg);
-                        setPreviewImages([]);
                     }
                 }
             })
@@ -400,19 +397,6 @@ const CommissionChat = ({ commissionId, user, onBack }) => {
 
     // src/.../CommissionChat.js
 
-    const updateStatus = async (newStatus) => {
-        try {
-            // Замініть URL на ваш реальний шлях до API
-            await axios.patch(`/commissions/${commissionId}/status`, { status: newStatus });
-
-            // Оновлюємо локальний стейт
-            setCommission(prev => ({ ...prev, Status: newStatus }));
-            setStatus(newStatus); // Якщо у вас є окремий стейт для статусу
-        } catch (error) {
-            console.error("Failed to update status", error);
-            toast.error(t('commission.updateFailed'));
-        }
-    };
 
     const chatPartnerName = partnerName || (isCustomer ? t('chat.artist') : t('chat.customer'));
 
