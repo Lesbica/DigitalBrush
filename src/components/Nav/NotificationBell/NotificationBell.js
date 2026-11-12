@@ -3,10 +3,12 @@ import {useNavigate} from "react-router-dom";
 import axios from "axios";
 import styles from "./NotificationBell.module.css";
 import {useSocket} from "../../../context/SocketContext";
+import { useTranslation } from 'react-i18next';
 
 // Bell with unread counter. New notifications arrive live over socket.io (the server puts every
 // logged-in socket into its user room); the counter is also refreshed every minute as a fallback.
 export default function NotificationBell() {
+    const { t } = useTranslation();
     const navigate = useNavigate();
     const [open, setOpen] = useState(false);
     const [items, setItems] = useState([]);
@@ -71,7 +73,7 @@ export default function NotificationBell() {
                 type="button"
                 className={styles.bell}
                 onClick={() => { setOpen(o => !o); if (!open) load(); }}
-                aria-label={unread ? `Notifications, ${unread} unread` : 'Notifications'}
+                aria-label={unread ? t('notifications.unreadLabel', { count: unread }) : t('notifications.title')}
                 aria-expanded={open}
             >
                 <svg width="28" height="28" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -82,13 +84,13 @@ export default function NotificationBell() {
             </button>
 
             {open && (
-                <div className={styles.panel} role="dialog" aria-label="Notifications">
+                <div className={styles.panel} role="dialog" aria-label={t('notifications.title')}>
                     <div className={styles.header}>
-                        <span>Notifications</span>
-                        {unread > 0 && <button type="button" className={styles.readAll} onClick={readAll}>Mark all as read</button>}
+                        <span>{t('notifications.title')}</span>
+                        {unread > 0 && <button type="button" className={styles.readAll} onClick={readAll}>{t('notifications.readAll')}</button>}
                     </div>
                     {items.length === 0 ? (
-                        <div className={styles.empty}>No notifications yet</div>
+                        <div className={styles.empty}>{t('notifications.empty')}</div>
                     ) : (
                         <ul className={styles.list}>
                             {items.map(n => (

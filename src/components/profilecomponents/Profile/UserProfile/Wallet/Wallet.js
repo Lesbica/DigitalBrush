@@ -4,6 +4,8 @@ import styles from './Wallet.module.css';
 import CategoryFilters from '../../../../CategoryFilters/CategoryFilters';
 import Pagination from '../../../../hooks/Pagination/Pagination';
 import { usePagination } from '../../../../hooks/Pagination/usePagination';
+import { useTranslation } from 'react-i18next';
+import { formatDate, formatMoney } from '../../../../../i18n/format';
 
 const MONTHS = [
     { code: 'JAN', label: 'JANUARY' },
@@ -20,11 +22,10 @@ const MONTHS = [
     { code: 'DEC', label: 'DECEMBER' },
 ];
 
-const TYPE_LABEL = { sale: 'Paintings', commission: 'Commissions', withdrawal: 'Withdrawal', adjustment: 'Adjustment' };
-const money = (v) => Number(v).toLocaleString('uk-UA', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 // Artist wallet: balance, income by month, history and withdrawal requests (data from /api/wallet)
 const Wallet = () => {
+    const { t: tr } = useTranslation();
     const [data, setData] = useState(null);
     const [error, setError] = useState('');
     const [activeYear, setActiveYear] = useState(String(new Date().getFullYear()));
@@ -42,7 +43,7 @@ const Wallet = () => {
 
     const transactions = useMemo(() => (data?.transactions || []).map(t => {
         const d = new Date(t.createdAt);
-        return { ...t, year: String(d.getFullYear()), month: MONTHS[d.getMonth()].code, date: d.toLocaleDateString() };
+        return { ...t, year: String(d.getFullYear()), month: MONTHS[d.getMonth()].code };
     }), [data]);
 
     const years = useMemo(() => {
@@ -68,7 +69,7 @@ const Wallet = () => {
         const byType = {};
         scope.forEach(t => { byType[t.type] = (byType[t.type] || 0) + t.amount; });
         return Object.entries(byType)
-            .map(([type, amount]) => ({ name: TYPE_LABEL[type] || type, amount, percent: total ? Math.round((amount / total) * 100) : 0 }))
+            .map(([type, amount]) => ({ name: type, amount, percent: total ? Math.round((amount / total) * 100) : 0 }))
             .sort((a, b) => b.amount - a.amount);
     }, [income, selectedMonth]);
 
@@ -83,49 +84,49 @@ const Wallet = () => {
         setFormMessage(null);
         try {
             await axios.post('/wallet/withdrawals', { amount: Number(form.amount), iban: form.iban });
-            setFormMessage({ ok: true, text: 'Withdrawal requested. The money is usually sent within 3 business days.' });
+            setFormMessage({ ok: true, text: tr('wallet.requested') });
             setForm({ amount: '', iban: '' });
             load();
         } catch (err) {
-            setFormMessage({ ok: false, text: err.response?.data?.message || 'Could not create the request' });
+            setFormMessage({ ok: false, text: err.response?.data?.message || tr('wallet.requestFailed') });
         } finally {
             setSending(false);
         }
     };
 
     if (error) return <div className={styles.walletContainer}><p className={styles.noData}>{error}</p></div>;
-    if (!data) return <div className={styles.walletContainer}><p className={styles.noData}>Loading…</p></div>;
+    if (!data) return <div className={styles.walletContainer}><p className={styles.noData}>{tr('common.loading')}</p></div>;
 
     return (
         <div className={styles.walletContainer}>
             {/* Баланс і виведення коштів */}
             <div className={styles.balanceRow}>
                 <div className={styles.balanceCard}>
-                    <span className={styles.balanceLabel}>AVAILABLE</span>
-                    <span className={styles.balanceValue}>{money(data.balance.available)} ₴</span>
+                    <span className={styles.balanceLabel}>{tr('wallet.available')}</span>
+                    <span className={styles.balanceValue}>{formatMoney(data.balance.available)}</span>
                 </div>
                 <div className={styles.balanceCard}>
-                    <span className={styles.balanceLabel}>IN ESCROW</span>
-                    <span className={styles.balanceValueMuted}>{money(data.balance.escrow)} ₴</span>
-                    <span className={styles.balanceHint}>paid commissions, released when completed</span>
+                    <span className={styles.balanceLabel}>{tr('wallet.escrow')}</span>
+                    <span className={styles.balanceValueMuted}>{formatMoney(data.balance.escrow)}</span>
+                    <span className={styles.balanceHint}>{tr('wallet.escrowHint')}</span>
                 </div>
                 <div className={styles.balanceCard}>
-                    <span className={styles.balanceLabel}>WITHDRAWING</span>
-                    <span className={styles.balanceValueMuted}>{money(data.balance.withdrawing)} ₴</span>
+                    <span className={styles.balanceLabel}>{tr('wallet.withdrawing')}</span>
+                    <span className={styles.balanceValueMuted}>{formatMoney(data.balance.withdrawing)}</span>
                 </div>
                 <form className={styles.withdrawForm} onSubmit={submitWithdrawal}>
-                    <span className={styles.balanceLabel}>WITHDRAW TO BANK ACCOUNT</span>
+                    <span className={styles.balanceLabel}>{tr('wallet.withdrawTitle')}</span>
                     <input
                         className={styles.withdrawInput}
                         type="number"
                         min={data.minWithdrawal}
                         step="0.01"
                         max={data.balance.available}
-                        placeholder={`Amount, min ${data.minWithdrawal} ₴`}
+                        placeholder={tr('wallet.amountPlaceholder', { min: data.minWithdrawal })}
                         value={form.amount}
                         onChange={(e) => setForm(f => ({ ...f, amount: e.target.value }))}
                         required
-                        aria-label="Amount in UAH"
+                        aria-label={tr('wallet.amountLabel')}
                     />
                     <input
                         className={styles.withdrawInput}
@@ -136,12 +137,12 @@ const Wallet = () => {
                         aria-label="IBAN"
                     />
                     <button className={styles.withdrawBtn} type="submit" disabled={sending || data.balance.available < data.minWithdrawal}>
-                        {sending ? 'Sending…' : 'Request withdrawal'}
+                        {sending ? tr('auth.sending') : tr('wallet.request')}
                     </button>
                     {formMessage && (
                         <span role="status" className={formMessage.ok ? styles.formOk : styles.formError}>{formMessage.text}</span>
                     )}
-                    {data.feePercent > 0 && <span className={styles.balanceHint}>Platform fee: {data.feePercent}% of each sale</span>}
+                    {data.feePercent > 0 && <span className={styles.balanceHint}>{tr('wallet.fee', { percent: data.feePercent })}</span>}
                 </form>
             </div>
 
@@ -175,12 +176,12 @@ const Wallet = () => {
                                     setSelectedMonth(active ? null : m.code);
                                     setCurrentPage(0);
                                 }}
-                                title={`Income: ${money(m.income)} ₴`}
+                                title={tr('wallet.monthIncome', { amount: formatMoney(m.income) })}
                             >
                                 <div className={styles.barTrack}>
                                     <div className={styles.barFill} style={{ width: `${percent}%` }} />
                                 </div>
-                                <span className={styles.monthLabel}>{m.label}</span>
+                                <span className={styles.monthLabel}>{tr(`wallet.months.${m.code}`)}</span>
                             </button>
                         );
                     })}
@@ -188,12 +189,12 @@ const Wallet = () => {
 
                 <aside className={styles.categoryCard}>
                     <div className={styles.categoryCardInner}>
-                        <div className={styles.categoryHeader}>CATEGORY</div>
+                        <div className={styles.categoryHeader}>{tr('wallet.category')}</div>
                         <div className={styles.categoryListCompact}>
-                            {categoryStats.length === 0 && <div className={styles.categoryLine}><span className={styles.categoryName}>No income yet</span></div>}
+                            {categoryStats.length === 0 && <div className={styles.categoryLine}><span className={styles.categoryName}>{tr('wallet.noIncome')}</span></div>}
                             {categoryStats.map((cat) => (
                                 <div key={cat.name} className={styles.categoryLine}>
-                                    <span className={styles.categoryName}>{cat.name}</span>
+                                    <span className={styles.categoryName}>{tr(`wallet.types.${cat.name}`, { defaultValue: cat.name })}</span>
                                     <span className={styles.categoryPercent}>{cat.percent}%</span>
                                 </div>
                             ))}
@@ -208,11 +209,11 @@ const Wallet = () => {
                     <table className={styles.transactionTableDark}>
                         <thead>
                         <tr>
-                            <th>AMOUNT</th>
-                            <th>DATE</th>
-                            <th>FROM</th>
-                            <th>DETAILS</th>
-                            <th>TYPE</th>
+                            <th>{tr('wallet.amount')}</th>
+                            <th>{tr('wallet.date')}</th>
+                            <th>{tr('wallet.from')}</th>
+                            <th>{tr('wallet.details')}</th>
+                            <th>{tr('wallet.type')}</th>
                         </tr>
                         </thead>
                         <tbody>
@@ -220,20 +221,20 @@ const Wallet = () => {
                             displayedData.map((t) => (
                                 <tr key={t.id} className={styles.rowDark}>
                                     <td className={`${styles.profitCell} ${t.amount > 0 ? styles.income : styles.expense}`}>
-                                        {t.amount > 0 ? '+' : ''}{money(t.amount)}
+                                        {t.amount > 0 ? '+' : ''}{formatMoney(t.amount)}
                                     </td>
-                                    <td>{t.date}</td>
+                                    <td>{formatDate(t.createdAt)}</td>
                                     <td>{t.payer || '—'}</td>
                                     <td>{t.description}</td>
                                     <td>
-                                        {TYPE_LABEL[t.type] || t.type}
-                                        {t.status !== 'completed' && <span className={styles.status}> · {t.status === 'pending' && t.type === 'commission' ? 'in escrow' : t.status}</span>}
+                                        {tr(`wallet.types.${t.type}`, { defaultValue: t.type })}
+                                        {t.status !== 'completed' && <span className={styles.status}> · {tr(`wallet.txStatus.${t.status === 'pending' && t.type === 'commission' ? 'escrow' : t.status}`, { defaultValue: t.status })}</span>}
                                     </td>
                                 </tr>
                             ))
                         ) : (
                             <tr>
-                                <td colSpan="5" className={styles.noData}>No transactions for this period</td>
+                                <td colSpan="5" className={styles.noData}>{tr('wallet.noTransactions')}</td>
                             </tr>
                         )}
                         </tbody>

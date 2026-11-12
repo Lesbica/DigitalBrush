@@ -7,8 +7,11 @@ import BasketModal from "./BasketModal/BasketModal";
 import NotificationBell from "./NotificationBell/NotificationBell";
 import {useAuth} from "../../context/AuthContext";
 import {useModal} from "../../context/ModalContext";
+import { useTranslation } from 'react-i18next';
+import LanguageSwitcher from "./LanguageSwitcher/LanguageSwitcher";
 
 export function Navbar() {
+    const { t } = useTranslation();
     const navigate = useNavigate();
     const {isLoggedIn} = useAuth();
     const {openModal} = useModal();
@@ -78,25 +81,25 @@ export function Navbar() {
                                 className={getButtonClass('/homepage', 'MAIN')}
                                 onClick={() => handleNavigation('/homepage')}
                             >
-                                MAIN
+                                {t('nav.main')}
                             </button>
                             <button
                                 className={getButtonClass('/shop', 'SHOP')}
                                 onClick={() => handleNavigation('/shop')}
                             >
-                                SHOP
+                                {t('nav.shop')}
                             </button>
                             <button
                                 className={getButtonClass('/artists', 'ARTISTS')}
                                 onClick={() => handleNavigation('/artists')}
                             >
-                                ARTISTS
+                                {t('nav.artists')}
                             </button>
                             <button
                                 className={getButtonClass('/commission', 'COMMISSION')}
                                 onClick={() => handleNavigation('/commission')}
                             >
-                                COMMISSION
+                                {t('nav.commission')}
                             </button>
                         </div>
                     </div>
@@ -149,11 +152,12 @@ export function Navbar() {
                             {/*</div>*/}
                         </div>
 
+                        <LanguageSwitcher />
                         <button
                             className={getButtonClass('/profile', 'PROFILE')}
                             onClick={() => handleNavigation('/profile')}
                         >
-                            {isLoggedIn ? 'PROFILE' : 'SIGN IN'}
+                            {isLoggedIn ? t('nav.profile') : t('nav.signIn')}
                         </button>
                     </div>
 
@@ -179,11 +183,12 @@ export function Navbar() {
                     </svg>
                 </button>
                 <div className={styles.mobileNavLinks}>
-                    <button onClick={() => handleNavigation('/homepage')}>MAIN</button>
-                    <button onClick={() => handleNavigation('/shop')}>SHOP</button>
-                    <button onClick={() => handleNavigation('/artists')}>ARTISTS</button>
-                    <button onClick={() => handleNavigation('/commission')}>COMMISSION</button>
-                    <button onClick={() => handleNavigation('/profile')}>SIGN IN / PROFILE</button>
+                    <button onClick={() => handleNavigation('/homepage')}>{t('nav.main')}</button>
+                    <button onClick={() => handleNavigation('/shop')}>{t('nav.shop')}</button>
+                    <button onClick={() => handleNavigation('/artists')}>{t('nav.artists')}</button>
+                    <button onClick={() => handleNavigation('/commission')}>{t('nav.commission')}</button>
+                    <button onClick={() => handleNavigation('/profile')}>{isLoggedIn ? t('nav.profile') : t('nav.signIn')}</button>
+                    <LanguageSwitcher />
                 </div>
             </div>
         </nav>

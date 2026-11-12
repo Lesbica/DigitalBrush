@@ -1,6 +1,7 @@
 import React from 'react';
 import styles from './ArtCard.module.css';
-import { useModal } from '../../context/ModalContext'; // Імпортуємо хук
+import { useModal } from '../../context/ModalContext';
+import { formatPrice } from '../../i18n/format';
 
 function ArtCard(props) {
     const { openModal } = useModal(); // Дістаємо функцію відкриття
@@ -68,12 +69,7 @@ function ArtCard(props) {
             <span className={styles.artistStyle}>{artistStyle}</span>
           </div>
           <span className={styles.artCardPrice}>
-            <svg width="17" height="18" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-              <g transform="translate(5 0) scale(1.3333 1.3333) translate(-7 -3)">
-                <path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-.9.6-1.75 2.1-1.75 1.7 0 2.2.8 2.3 2.1h2.1c-.1-1.7-1.1-3.2-3-3.8V3h-3v2.1c-1.9.5-3.1 1.9-3.1 3.8 0 2.2 1.8 3.4 4.5 4 2.8.6 3 1.3 3 2.2 0 1-.6 1.8-2.2 1.8-1.8 0-2.3-.9-2.4-2.1H7c.1 1.7 1.1 3.2 3.1 3.8V21h3v-2.1c1.9-.5 3.1-1.9 3.1-3.8 0-2.3-1.8-3.5-4.6-4.1z"/>
-              </g>
-            </svg>
-            {price}
+            {formatPrice(price)}
           </span>
         </div>
       </div>

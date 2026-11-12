@@ -12,6 +12,8 @@ import globeIcon from '../../assets/icons/globeIcon.svg'
 import heartIcon from '../../assets/icons/heartIcon.svg'
 import AddCommissionModal from '../Commission/CommissionModals/AddCommissionModal';
 import { CATEGORIES } from '../../constants/categories';
+import { useTranslation } from 'react-i18next';
+import { formatDate } from '../../i18n/format';
 
 // Конфіг
 const additionalFilterConfig = [
@@ -30,6 +32,7 @@ const additionalFilterConfig = [
 const categories = CATEGORIES;
 
 const AuthorPage = () => {
+    const { t } = useTranslation();
     const { id } = useParams();
     const navigate = useNavigate();
 
@@ -159,29 +162,29 @@ const AuthorPage = () => {
                     <div>
                         <h1 className={styles.artistName}>
                             {artistName}
-                            <span className={styles.status}>({artist.availability === 'busy' ? 'busy' : artist.availability === 'vacation' ? 'on vacation' : 'available'})</span>
+                            <span className={styles.status}>({t(`availability.${['busy', 'vacation'].includes(artist.availability) ? artist.availability : 'open'}`)})</span>
                         </h1>
                     </div>
 
                     <div className={styles.metaInfo}>
                         <div className={styles.metaRow}>
-                            <img src={infoIcon} alt="Style"/>
+                            <img src={infoIcon} alt={t('artists.style')}/>
                             <span>{artistStyle}</span>
                         </div>
                         <div className={styles.metaRow}>
-                            <img src={globeIcon} alt="Languages"/>
+                            <img src={globeIcon} alt={t('author.languages')}/>
                             <span>{artistLanguages}</span>
                         </div>
                         <div className={styles.metaRow}>
                             <span className={styles.ratingStar}>★</span>
                             <span>
                                 {reviews.summary.count > 0
-                                    ? `${Number(reviews.summary.average).toFixed(1)} (${reviews.summary.count} ${reviews.summary.count === 1 ? 'review' : 'reviews'})`
-                                    : 'No reviews yet'}
+                                    ? `${Number(reviews.summary.average).toFixed(1)} (${t('author.reviewCount', { count: reviews.summary.count })})`
+                                    : t('author.noReviews')}
                             </span>
                         </div>
                         <div className={styles.metaRow}>
-                            <img src={heartIcon} alt="Likes"/>
+                            <img src={heartIcon} alt={t('artists.likes')}/>
                             <span>{totalLikes > 1000 ? (totalLikes/1000).toFixed(1) + 'k' : totalLikes}</span>
                         </div>
                     </div>
@@ -191,7 +194,7 @@ const AuthorPage = () => {
                     </p>
 
                     <button className={styles.commissionBtn} onClick={handleCommissionClick}>
-                        Commission
+                        {t('author.commission')}
                     </button>
                 </aside>
 
@@ -230,7 +233,7 @@ const AuthorPage = () => {
                                 />
                             ))
                         ) : (
-                            <div className={styles.noArt}>No artworks available.</div>
+                            <div className={styles.noArt}>{t('artists.noArtworks')}</div>
                         )}
                     </div>
 
@@ -242,9 +245,9 @@ const AuthorPage = () => {
                     />
 
                     <section className={styles.reviews}>
-                        <h2 className={styles.reviewsTitle}>Reviews</h2>
+                        <h2 className={styles.reviewsTitle}>{t('author.reviews')}</h2>
                         {reviews.reviews.length === 0 ? (
-                            <div className={styles.noArt}>No reviews yet.</div>
+                            <div className={styles.noArt}>{t('author.noReviews')}</div>
                         ) : reviews.reviews.map(r => (
                             <div key={r.id} className={styles.reviewItem}>
                                 <div className={styles.reviewHeader}>
@@ -253,7 +256,7 @@ const AuthorPage = () => {
                                     <span className={styles.reviewStars} aria-label={`${r.rating} of 5`}>
                                         {'★'.repeat(r.rating)}{'☆'.repeat(5 - r.rating)}
                                     </span>
-                                    <span className={styles.reviewDate}>{new Date(r.createdAt).toLocaleDateString()}</span>
+                                    <span className={styles.reviewDate}>{formatDate(r.createdAt)}</span>
                                 </div>
                                 {r.text && <p className={styles.reviewText}>{r.text}</p>}
                             </div>

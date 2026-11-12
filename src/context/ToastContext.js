@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import styles from '../components/Toast/Toast.module.css';
+import { useTranslation } from 'react-i18next';
 
 // Small non-blocking notifications instead of window.alert().
 // const toast = useToast(); toast.success('Saved'); toast.error('Failed', { action: { label: 'Retry', onClick } })
@@ -10,6 +11,7 @@ const MAX_VISIBLE = 4;
 let nextId = 1;
 
 function ToastItem({ toast, onClose }) {
+    const { t } = useTranslation();
     const { id, kind, message, action, duration } = toast;
     useEffect(() => {
         const timer = setTimeout(() => onClose(id), duration);
@@ -28,7 +30,7 @@ function ToastItem({ toast, onClose }) {
                     {action.label}
                 </button>
             )}
-            <button type="button" className={styles.close} onClick={() => onClose(id)} aria-label="Close">×</button>
+            <button type="button" className={styles.close} onClick={() => onClose(id)} aria-label={t('common.close')}>×</button>
         </div>
     );
 }

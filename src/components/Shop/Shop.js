@@ -10,6 +10,7 @@ import logo from "../../assets/logo.svg";
 import { CATEGORIES } from '../../constants/categories';
 import { SHOP_FILTERS, filtersToParams, toggleFilter } from '../../constants/filters';
 import { useAuth } from '../../context/AuthContext';
+import { useTranslation } from 'react-i18next';
 
 const PAGE_SIZE = 48;
 
@@ -28,6 +29,7 @@ const toCard = (p) => ({
 });
 
 const Shop = () => {
+    const { t } = useTranslation();
     const { isArtist } = useAuth();
     const [activeCategory, setActiveCategory] = useState(null);
     const [searchQuery, setSearchQuery] = useState('');
@@ -53,12 +55,12 @@ const Shop = () => {
             <div className={styles.contentWrapper}>
                 <header className={styles.header}>
                     <div className={styles.headerLeft}>
-                        <h1 className={styles.shopTitle}>SHOP</h1>
+                        <h1 className={styles.shopTitle}>{t('nav.shop')}</h1>
                         <div className={styles.searchBarContainer}>
                             <input
                                 type="text"
                                 className={styles.searchInput}
-                                placeholder="Title of the art..."
+                                placeholder={t('shop.searchPlaceholder')}
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                             />
@@ -74,7 +76,7 @@ const Shop = () => {
                             <svg width="25" height="25" viewBox="0 0 25 25" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <path d="M12.4158 0C5.56994 0 0 5.56994 0 12.4158C0 19.2617 5.56994 24.8317 12.4158 24.8317C19.2617 24.8317 24.8317 19.2617 24.8317 12.4158C24.8317 5.56994 19.2617 0 12.4158 0ZM12.4158 1.91013C18.2293 1.91013 22.9216 6.60236 22.9216 12.4158C22.9216 18.2293 18.2293 22.9216 12.4158 22.9216C6.60236 22.9216 1.91013 18.2293 1.91013 12.4158C1.91013 6.60236 6.60236 1.91013 12.4158 1.91013ZM11.4608 6.68545V11.4608H6.68545V13.3709H11.4608V18.1462H13.3709V13.3709H18.1462V11.4608H13.3709V6.68545H11.4608Z" fill="white"/>
                             </svg>
-                            ADD IMAGE
+                            {t('shop.addImage')}
                         </button>
                     )}
                 </header>
@@ -97,7 +99,7 @@ const Shop = () => {
 
                 {loading ? (
                     <div className={styles.loadingSpinnerContainer}>
-                        <img src={logo} alt="Loading" className={styles.loadingLogo} />
+                        <img src={logo} alt={t('common.loading')} className={styles.loadingLogo} />
                     </div>
                 ) : cards.length ? (
                     <>
@@ -108,7 +110,7 @@ const Shop = () => {
                     </>
                 ) : (
                     <div className={styles.noResults}>
-                        {error ? 'Could not load the paintings. Please try again later.' : 'No paintings match your search'}
+                        {error ? t('shop.loadError') : t('shop.empty')}
                     </div>
                 )}
             </div>

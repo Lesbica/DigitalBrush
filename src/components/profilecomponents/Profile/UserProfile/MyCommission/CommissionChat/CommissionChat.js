@@ -7,6 +7,8 @@ import CommissionModalDetails from "../../../../../Commission/CommissionModals/C
 import ReviewBox from './ReviewBox';
 import { useSocket, useCommissionRoom } from '../../../../../../context/SocketContext';
 import { useToast } from '../../../../../../context/ToastContext';
+import { useTranslation } from 'react-i18next';
+import { formatPrice, formatDate } from '../../../../../../i18n/format';
 // Іконки
 const CheckIcon = () => (<svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" /></svg>);
 const CrossIcon = () => (<svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" /></svg>);
@@ -24,6 +26,7 @@ const mapServerMsg = (m) => {
 };
 
 const CommissionChat = ({ commissionId, user, onBack }) => {
+    const { t } = useTranslation();
     const toast = useToast();
     const [commission, setCommission] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -249,7 +252,7 @@ const CommissionChat = ({ commissionId, user, onBack }) => {
             // Optional: limit file size (e.g., 5MB)
             const MAX_SIZE = 5 * 1024 * 1024;
             if (file.size > MAX_SIZE) {
-                toast.error('File is too large. Max 5MB');
+                toast.error(t('chat.fileTooLarge'));
                 return;
             }
 
@@ -268,11 +271,11 @@ const CommissionChat = ({ commissionId, user, onBack }) => {
                         setStageDecision(null);
                     } else {
                         console.error('Stage submit failed', res.data);
-                        toast.error('Failed to submit for review');
+                        toast.error(t('chat.submitFailed'));
                     }
                 } catch (err) {
                     console.error('Error submitting stage:', err);
-                    toast.error('Error submitting for review');
+                    toast.error(t('chat.submitFailed'));
                 } finally {
                     setSubmittingStage(false);
                 }
@@ -291,7 +294,7 @@ const CommissionChat = ({ commissionId, user, onBack }) => {
         if (!file) return;
         const MAX_SIZE = 5 * 1024 * 1024;
         if (file.size > MAX_SIZE) {
-            toast.error('File is too large. Max 5MB');
+            toast.error(t('chat.fileTooLarge'));
             return;
         }
         const reader = new FileReader();
@@ -312,11 +315,11 @@ const CommissionChat = ({ commissionId, user, onBack }) => {
                     setMessages(prev => prev.some(x => String(x.id) === String(mapped.id)) ? prev : [...prev, mapped]);
                     scrollToBottom();
                 } else {
-                    toast.error('Failed to upload image');
+                    toast.error(t('chat.uploadFailed'));
                 }
             } catch (err) {
                 console.error('Chat image upload error:', err);
-                toast.error('Error uploading image');
+                toast.error(t('chat.uploadFailed'));
             }
         };
         reader.readAsDataURL(file);
@@ -407,11 +410,11 @@ const CommissionChat = ({ commissionId, user, onBack }) => {
             setStatus(newStatus); // Якщо у вас є окремий стейт для статусу
         } catch (error) {
             console.error("Failed to update status", error);
-            toast.error("Error updating status");
+            toast.error(t('commission.updateFailed'));
         }
     };
 
-    const chatPartnerName = partnerName || (isCustomer ? "Creator" : "Customer");
+    const chatPartnerName = partnerName || (isCustomer ? t('chat.artist') : t('chat.customer'));
 
     // Відкриття модального вікна з деталями комісії по кліку на назві
 
@@ -421,11 +424,11 @@ const CommissionChat = ({ commissionId, user, onBack }) => {
     const statusProgress = STAGE_ORDER.indexOf(statusLower) + 1;
     const isWorkStage = ['sketch', 'lineart', 'color', 'final'].includes(statusLower);
     const statusNote = (() => {
-        if (statusLower === 'declined') return 'The artist declined this commission.';
-        if (statusLower === 'cancelled') return 'This commission was cancelled.';
-        if (commission?.reviewState === 'changes_requested') return 'Changes requested — waiting for a new version.';
+        if (statusLower === 'declined') return t('chat.note.declined');
+        if (statusLower === 'cancelled') return t('chat.note.cancelled');
+        if (commission?.reviewState === 'changes_requested') return t('chat.note.changesRequested');
         if (commission?.reviewState === 'pending' && commission?.autoApproveAt) {
-            return `Waiting for review · auto-approval on ${new Date(commission.autoApproveAt).toLocaleDateString()}`;
+            return t('chat.note.waitingReview', { date: formatDate(commission.autoApproveAt) });
         }
         return null;
     })();
@@ -441,11 +444,11 @@ const CommissionChat = ({ commissionId, user, onBack }) => {
             if (res.data && res.data.checkoutUrl) {
                 window.location.href = res.data.checkoutUrl;
             } else {
-                toast.error('Error creating payment session');
+                toast.error(t('checkout.createFailed'));
             }
         } catch (err) {
             console.error('Payment error:', err);
-            toast.error('Failed to initiate payment');
+            toast.error(t('checkout.createFailed'));
         }
     };
 
@@ -465,7 +468,7 @@ const CommissionChat = ({ commissionId, user, onBack }) => {
                     <div className={styles.imageWrapper}>
                         <img
                             src={mainImage}
-                            alt="Commission"
+                            alt={t('chat.reference')}
                             className={styles.thumbImage}
                             onClick={openImageViewer} // Відкрити Viewer при кліку
                         />
@@ -483,12 +486,12 @@ const CommissionChat = ({ commissionId, user, onBack }) => {
 
                         {/* Опис */}
                         <p className={styles.descriptionText}>
-                            {commission?.description || "Create a cozy living room with a view of the forest..."}
+                            {commission?.description || ''}
                         </p>
 
                         {/* Ціна */}
                         <div className={styles.priceTag}>
-                            {commission?.price != null ? `${commission.price}$` : '—'}
+                            {formatPrice(commission?.price)}
                         </div>
                     </div>
                 </div>
@@ -498,7 +501,7 @@ const CommissionChat = ({ commissionId, user, onBack }) => {
                     <div className={styles.statusHeader}>
                         <div className={styles.statusTitleBlock}>
                             <div className={statusProgress > 0 ? styles.bigDot : styles.bigDotHollow}></div>
-                            <span className={styles.statusName}>{status}</span>
+                            <span className={styles.statusName}>{t(`status.${status}`, { defaultValue: status })}</span>
                         </div>
 
                         {/* Пусті/заповнені круги праворуч */}
@@ -513,7 +516,7 @@ const CommissionChat = ({ commissionId, user, onBack }) => {
                             {statusNote && <span>{statusNote}</span>}
                             {commission?.deadline && (
                                 <span style={{ color: commission.overdue ? '#ff8a8a' : undefined }}>
-                                    Deadline: {new Date(`${commission.deadline}T00:00:00`).toLocaleDateString()}{commission.overdue ? ' (overdue)' : ''}
+                                    {t('commission.deadline')}: {formatDate(`${commission.deadline}T00:00:00`)}{commission.overdue ? ` (${t('commission.overdue')})` : ''}
                                 </span>
                             )}
                         </div>
@@ -526,14 +529,14 @@ const CommissionChat = ({ commissionId, user, onBack }) => {
                             {/* --- ЛОГИКА ОТОБРАЖЕНИЯ КАРТИНКИ --- */}
                             {/* 1. Если есть активная подача на ревью (pendingStageImage) - показываем её (приоритет) */}
                             {pendingStageImage ? (
-                                <img src={pendingStageImage} alt="Stage" className={styles.currentStageImage} />
+                                <img src={pendingStageImage} alt={t('chat.stageImage')} className={styles.currentStageImage} />
                             ) : (
                                 /* 2. Иначе, если статус Completed - показываем финальный результат (resultImage) */
                                 statusLower === 'completed' ? (
                                     <img
                                         /* Берем resultImage из данных комишена, или mainImage как запасной вариант */
                                         src={commission.resultImage || mainImage}
-                                        alt="Final Result"
+                                        alt={t('chat.finalResult')}
                                         className={styles.currentStageImage}
                                     />
                                 ) : (
@@ -552,7 +555,7 @@ const CommissionChat = ({ commissionId, user, onBack }) => {
                                         <>
                                             {/* Повідомлення про успіх (бачать усі) */}
                                             <div style={{ color: '#4CAF50', fontWeight: 'bold', fontSize: '16px', marginBottom: '5px' }}>
-                                                Payment Successful! ✅
+                                                {t('chat.paid')} ✅
                                             </div>
 
                                             {/* Кнопка скачування (ТІЛЬКИ ДЛЯ ЗАМОВНИКА) */}
@@ -562,7 +565,7 @@ const CommissionChat = ({ commissionId, user, onBack }) => {
                                                     onClick={handleDownloadClick}
                                                     style={{ width: 'auto', padding: '10px 20px', fontSize: '14px', borderRadius: '8px', background: '#28a745', color: '#fff', border: 'none', cursor: 'pointer' }}
                                                 >
-                                                    Download Files 📥
+                                                    {t('chat.download')}
                                                 </button>
                                             )}
 
@@ -582,12 +585,12 @@ const CommissionChat = ({ commissionId, user, onBack }) => {
                                                 onClick={handlePayClick}
                                                 style={{ width: 'auto', padding: '10px 20px', fontSize: '14px', borderRadius: '8px', background: '#007BFF', color: '#fff', border: 'none', cursor: 'pointer' }}
                                             >
-                                                Pay {commission.price}$ 💳
+                                                {t('chat.pay', { price: formatPrice(commission.price) })}
                                             </button>
                                         ) : (
                                             /* Повідомлення для художника */
                                             <div style={{ padding: '8px 12px', background: 'rgba(255,255,255,0.1)', color: 'white', borderRadius: 4 }}>
-                                                Waiting for payment... ⏳
+                                                {t('chat.waitingPayment')}
                                             </div>
                                         )
                                     )}
@@ -622,7 +625,7 @@ const CommissionChat = ({ commissionId, user, onBack }) => {
                             <>
                                 <input type="file" ref={fileInputRef} style={{display: 'none'}} accept="image/*" onChange={handleFileChange} />
                                 <div className={styles.addSketchBar} onClick={() => { if (!submittingStage) handleAddSketchClick(); }}>
-                                    {submittingStage ? 'Uploading...' : `Submit ${status}`}
+                                    {submittingStage ? t('upload.uploading') : t('chat.submitStage', { stage: t(`status.${status}`, { defaultValue: status }) })}
                                 </div>
                             </>
                         )}
@@ -636,7 +639,7 @@ const CommissionChat = ({ commissionId, user, onBack }) => {
                     <div className={styles.headerUserName}>
                         {chatPartnerName}
                     </div>
-                    <button className={styles.backButton} onClick={onBack}>✕</button>
+                    <button className={styles.backButton} onClick={onBack} aria-label={t('common.close')}>✕</button>
                 </div>
 
                 <div className={styles.messagesList}>
@@ -666,7 +669,7 @@ const CommissionChat = ({ commissionId, user, onBack }) => {
                     <div className={styles.inputWrapper}>
                         <input
                             type="text"
-                            placeholder="Write message"
+                            placeholder={t('chat.placeholder')}
                             className={styles.chatInput}
                                     value={inputText}
                                     onChange={(e) => setInputText(e.target.value)}
@@ -679,7 +682,7 @@ const CommissionChat = ({ commissionId, user, onBack }) => {
                             </svg>
                         </div>
                         <input type="file" ref={fileInputChatRef} style={{display:'none'}} accept="image/*" onChange={handleChatFileChange} />
-                        <button className={styles.sendButton} onClick={handleSendMessage}>Send</button>
+                        <button className={styles.sendButton} onClick={handleSendMessage}>{t('common.send')}</button>
                     </div>
                 </div>
             </div>

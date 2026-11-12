@@ -10,6 +10,7 @@ import leftArrow from '../../assets/leftArrow.svg';
 import rightArrow from '../../assets/rightArrow.svg';
 import axios from 'axios';
 import { CATEGORIES } from '../../constants/categories';
+import { useTranslation } from 'react-i18next';
 
 const categories = CATEGORIES;
 
@@ -44,6 +45,7 @@ function filtersToParams(f) {
 }
 
 export default function ArtistsPage() {
+    const { t } = useTranslation();
     const [searchQuery, setSearchQuery] = useState("");
     const [activeCategory, setActiveCategory] = useState(null);
     // const [showAdvanced, setShowAdvanced] = useState(false); // ВИДАЛЕНО: компонент тепер керує цим сам
@@ -122,7 +124,7 @@ export default function ArtistsPage() {
                     };
 
                     const stylesArr = resolveStyles();
-                    const styleDisplay = stylesArr.length ? stylesArr.join(' / ') : 'Unknown';
+                    const styleDisplay = stylesArr.length ? stylesArr.join(' / ') : '—';
 
                     // likes: prefer aggregated creator likes if present, else sum artworks likes
                     const likesFromArtworks = artworks.reduce((s, p) => s + (Number(p.likes) || 0), 0);
@@ -130,7 +132,7 @@ export default function ArtistsPage() {
                     return {
                         id: currentArtistId,
                         name,
-                        country: a.Country || a.country || 'Unknown',
+                        country: a.Country || a.country || '',
                         style: styleDisplay,
                         styles: stylesArr,
                         avatar: a.imageBase64 || a.profileImage || '/images/profileImg.jpg',
@@ -222,12 +224,12 @@ export default function ArtistsPage() {
             <div className={styles.contentWrapper}>
                 <header className={styles.header}>
                     <div className={styles.headerLeft}>
-                        <h1 className={styles.artistsTitle}>Artists</h1>
+                        <h1 className={styles.artistsTitle}>{t('artists.title')}</h1>
                         <div className={styles.searchBarContainer}>
                             <input
                                 type="text"
                                 className={styles.searchInput}
-                                placeholder="Search by artist name..."
+                                placeholder={t('artists.searchPlaceholder')}
                                 value={searchQuery}
                                 onChange={handleSearchChange}
                             />
@@ -279,14 +281,14 @@ export default function ArtistsPage() {
                                             <h3 className={styles.artistName}>{artist.name}</h3>
 
                                             <div className={styles.artistDetails}>
-                                                <span>Style: {artist.style}</span><br/>
-                                                <span>Likes: {artist.likesCount}</span><br/>
+                                                <span>{t('artists.style')}: {artist.style}</span><br/>
+                                                <span>{t('artists.likes')}: {artist.likesCount}</span><br/>
                                                 <span>
-                                                    Rating: {artist.ratingCount > 0
+                                                    {t('artists.rating')}: {artist.ratingCount > 0
                                                         ? `${artist.ratingAvg.toFixed(1)} ★ (${artist.ratingCount})`
-                                                        : 'no reviews yet'}
+                                                        : t('reviews.none')}
                                                 </span><br/>
-                                                <span>Status: {artist.availability}</span>
+                                                <span>{t('artists.status')}: {t(`availability.${artist.availability}`, { defaultValue: artist.availability })}</span>
                                             </div>
                                         </div>
                                     </Link>
@@ -297,7 +299,7 @@ export default function ArtistsPage() {
                                                 className={`${styles.navButton} ${styles.left}`}
                                                 onClick={() => scrollGallery(artist.id, 'left')}
                                             >
-                                                <img src={leftArrow} alt="Scroll left" />
+                                                <img src={leftArrow} alt={t('artists.scrollLeft')} />
                                             </button>
                                         )}
 
@@ -311,7 +313,7 @@ export default function ArtistsPage() {
                                                     <ArtCard key={card.id} art={card} />
                                                 ))
                                             ) : (
-                                                <div className={styles.noArtworks}>No artworks available</div>
+                                                <div className={styles.noArtworks}>{t('artists.noArtworks')}</div>
                                             )}
                                         </div>
 
@@ -320,7 +322,7 @@ export default function ArtistsPage() {
                                                 className={`${styles.navButton} ${styles.right}`}
                                                 onClick={() => scrollGallery(artist.id, 'right')}
                                             >
-                                                <img src={rightArrow} alt="Scroll right" />
+                                                <img src={rightArrow} alt={t('artists.scrollRight')} />
                                             </button>
                                         )}
                                     </div>
@@ -328,7 +330,7 @@ export default function ArtistsPage() {
                             );
                         })
                     ) : (
-                        <div className={styles.noResults}>No artists found</div>
+                        <div className={styles.noResults}>{t('artists.empty')}</div>
                     )}
                 </div>
                 <Pagination

@@ -4,10 +4,12 @@ import styles from "./Register.module.css";
 import {EyeIcon, EyeSlashIcon} from "./AuthIcons";
 import axios from 'axios';
 import { useToast } from '../../../context/ToastContext';
+import { useTranslation } from 'react-i18next';
 
 // Registration: the server creates the account and emails a confirmation link
 // (the account becomes active after the link is opened).
 function Register({toggleForm}) {
+    const { t } = useTranslation();
     const toast = useToast();
     const navigate = useNavigate();
     const goBack = toggleForm || (() => navigate('/profile'));
@@ -34,11 +36,11 @@ function Register({toggleForm}) {
             if (data.verificationRequired) {
                 setStep(2);
             } else {
-                toast.success("Registration successful! You can log in now.");
+                toast.success(t('register.done'));
                 goBack();
             }
         } catch (err) {
-            setError(err.response?.data?.message || "Registration failed. Please try again.");
+            setError(err.response?.data?.message || t('register.failed'));
         } finally {
             setLoading(false);
         }
@@ -50,7 +52,7 @@ function Register({toggleForm}) {
             const {data} = await axios.post(`/auth/resend-verification`, {email: formData.email});
             setInfo(data.message);
         } catch (err) {
-            setInfo(err.response?.data?.message || "Could not send the link. Try again later.");
+            setInfo(err.response?.data?.message || t('auth.linkFailed'));
         } finally {
             setLoading(false);
         }
@@ -64,18 +66,17 @@ function Register({toggleForm}) {
     if (step === 2) {
         return (
             <div className={styles.authCard}>
-                <h2 className={styles.mainTitle}>Confirm your email</h2>
+                <h2 className={styles.mainTitle}>{t('register.confirmTitle')}</h2>
                 <p className={styles.emailTitle} style={{textAlign: 'left', marginBottom: '20px'}}>
-                    We sent a confirmation link to <strong>{formData.email}</strong>.
-                    Open it to activate your account, then log in.
+                    {t('register.confirmSent')} <strong>{formData.email}</strong>. {t('register.confirmOpen')}
                 </p>
                 {info && <p className={styles.emailTitle} style={{textAlign: 'left'}}>{info}</p>}
                 <div className={styles.buttonsRow}>
                     <button type="button" className={styles.submitBtn} onClick={resend} disabled={loading}>
-                        {loading ? "Sending..." : "Send again"}
+                        {loading ? t('auth.sending') : t('register.sendAgain')}
                     </button>
                     <button type="button" className={styles.backBtn} onClick={goBack} disabled={loading}>
-                        Log in
+                        {t('auth.logIn')}
                     </button>
                 </div>
             </div>
@@ -84,10 +85,10 @@ function Register({toggleForm}) {
 
     return (
         <form className={styles.authCard} onSubmit={handleSubmit}>
-            <h2 className={styles.mainTitle}>Registration via email</h2>
+            <h2 className={styles.mainTitle}>{t('register.title')}</h2>
 
             <div className={styles.field}>
-                <label htmlFor="reg-username">Username</label>
+                <label htmlFor="reg-username">{t('register.username')}</label>
                 <input id="reg-username" name="username"
                        value={formData.username}
                        onChange={handleChange}
@@ -97,7 +98,7 @@ function Register({toggleForm}) {
                 />
             </div>
             <div className={styles.field}>
-                <label htmlFor="reg-email">Email</label>
+                <label htmlFor="reg-email">{t('auth.email')}</label>
                 <input id="reg-email" type="email" name="email"
                        value={formData.email}
                        onChange={handleChange}
@@ -106,7 +107,7 @@ function Register({toggleForm}) {
                 />
             </div>
             <div className={styles.field}>
-                <label htmlFor="reg-birthday">Birthday</label>
+                <label htmlFor="reg-birthday">{t('register.birthday')}</label>
                 <input id="reg-birthday" type="date" name="birthday"
                        value={formData.birthday}
                        onChange={handleChange}
@@ -116,7 +117,7 @@ function Register({toggleForm}) {
                 />
             </div>
             <div className={styles.field}>
-                <label htmlFor="reg-password">Password</label>
+                <label htmlFor="reg-password">{t('auth.password')}</label>
                 <div className={styles.passwordWrapper}>
                     <input id="reg-password" name="password"
                            type={showPassword ? "text" : "password"}
@@ -128,22 +129,22 @@ function Register({toggleForm}) {
                            maxLength="72"
                     />
                     <button type="button" className={styles.eyeBtn} onClick={() => setShowPassword((s) => !s)}
-                            aria-label={showPassword ? "Hide password" : "Show password"}>
+                            aria-label={showPassword ? t('auth.hidePassword') : t('auth.showPassword')}>
                         {showPassword ? <EyeIcon/> : <EyeSlashIcon/>}
                     </button>
                 </div>
             </div>
             <fieldset className={styles.field} style={{border: 'none', padding: 0, margin: 0}}>
-                <legend style={{marginBottom: 6}}>I want to</legend>
+                <legend style={{marginBottom: 6}}>{t('register.iWantTo')}</legend>
                 <label style={{display: 'flex', gap: 8, alignItems: 'center', fontSize: 14}}>
                     <input type="radio" name="role" value="customer" checked={formData.role === 'customer'}
                            onChange={handleChange} disabled={loading} style={{width: 'auto'}}/>
-                    buy art and order commissions
+                    {t('register.roleCustomer')}
                 </label>
                 <label style={{display: 'flex', gap: 8, alignItems: 'center', fontSize: 14}}>
                     <input type="radio" name="role" value="artist" checked={formData.role === 'artist'}
                            onChange={handleChange} disabled={loading} style={{width: 'auto'}}/>
-                    sell my art and take commissions (artist)
+                    {t('register.roleArtist')}
                 </label>
             </fieldset>
 
@@ -151,10 +152,10 @@ function Register({toggleForm}) {
 
             <div className={styles.buttonsRow}>
                 <button type="submit" className={styles.submitBtn} disabled={loading}>
-                    {loading ? "Send data..." : "Create account"}
+                    {loading ? t('auth.sending') : t('auth.createAccount')}
                 </button>
                 <button type="button" className={styles.backBtn} onClick={goBack} disabled={loading}>
-                    Back
+                    {t('common.back')}
                 </button>
             </div>
         </form>

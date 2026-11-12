@@ -7,6 +7,7 @@ import arrowIcon from "../../../../../assets/icons/arrowIcon.svg";
 import uploadIconPlaceholder from "../../../../../assets/image-placeholder-icon.svg";
 import {useAuth} from "../../../../../context/AuthContext";
 import { useToast } from '../../../../../context/ToastContext';
+import { useTranslation } from 'react-i18next';
 
 const AVAILABLE_STYLES = [
     "Retro", "Psychedelia", "Minimalism", "Cyberpunk", "Realism", "Abstract", "Pop Art"
@@ -17,6 +18,7 @@ const AVAILABLE_LANGUAGES = [
 ];
 
 function ProfileSettings({user}) {
+    const { t } = useTranslation();
     const toast = useToast();
     const {refresh} = useAuth();
     const fileInputRef = useRef(null);
@@ -152,7 +154,7 @@ function ProfileSettings({user}) {
 
             if (response.data.success) {
                 await refresh();
-                toast.success("Profile updated successfully!");
+                toast.success(t('settings.saved'));
             }
         } catch (error) {
             console.error("Error updating profile:", error);
@@ -166,7 +168,7 @@ function ProfileSettings({user}) {
                     toast.error(error.response.data.message);
                 }
             } else {
-                toast.error("Failed to update profile. Please try again.");
+                toast.error(t('settings.saveFailed'));
             }
         }
     };
@@ -187,9 +189,9 @@ function ProfileSettings({user}) {
                                 checked={isArtist}
                                 onChange={(e) => setIsArtist(e.target.checked)}
                             />
-                            artist account
+                            {t('settings.artistAccount')}
                         </label>
-                        {isArtist && [['open', 'available'], ['busy', 'busy'], ['vacation', 'on vacation']].map(([value, label]) => (
+                        {isArtist && ['open', 'busy', 'vacation'].map((value) => (
                             <label key={value} className={styles.checkboxLabel}>
                                 <input
                                     type="checkbox"
@@ -197,13 +199,13 @@ function ProfileSettings({user}) {
                                     checked={status === value}
                                     onChange={() => handleStatusChange(value)}
                                 />
-                                {label}
+                                {t(`availability.${value}`)}
                             </label>
                         ))}
                     </div>
 
                     <div className={styles.formGroup}>
-                        <label>User's name</label>
+                        <label>{t('settings.name')}</label>
                         <input
                             type="text"
                             name="username"
@@ -214,7 +216,7 @@ function ProfileSettings({user}) {
                         {errors.username && <span className={styles.errorMessage}>{errors.username}</span>}
                     </div>
                     <div className={styles.formGroup}>
-                        <label>Email</label>
+                        <label>{t('auth.email')}</label>
                         <input
                             type="text"
                             name="email"
@@ -227,7 +229,7 @@ function ProfileSettings({user}) {
 
                     {/* Styles Tags */}
                     <div className={styles.formGroup}>
-                        <label>Style</label>
+                        <label>{t('art.style')}</label>
                         <div className={styles.tagsContainer}>
                             {styleTags.map((tag, index) => (
                                 <div key={index} className={styles.tagRow}>
@@ -248,7 +250,7 @@ function ProfileSettings({user}) {
                                         className={styles.removeTagBtn}
                                         onClick={() => removeTag(index, setStyleTags, styleTags)}
                                     >
-                                        <img src={deleteCrossIcon} alt="Remove"/>
+                                        <img src={deleteCrossIcon} alt={t('common.remove')}/>
                                     </button>
                                 </div>
                             ))}
@@ -258,13 +260,13 @@ function ProfileSettings({user}) {
                             className={styles.addTagButton}
                             onClick={() => addTag(setStyleTags, styleTags, AVAILABLE_STYLES)}
                         >
-                            <img src={plusIcon} alt="Add"/>
+                            <img src={plusIcon} alt={t('common.add')}/>
                         </button>
                     </div>
 
                     {/* Language Tags */}
                     <div className={styles.formGroup}>
-                        <label>Language</label>
+                        <label>{t('author.languages')}</label>
                         <div className={styles.tagsContainer}>
                             {languageTags.map((tag, index) => (
                                 <div key={index} className={styles.tagRow}>
@@ -285,7 +287,7 @@ function ProfileSettings({user}) {
                                         className={styles.removeTagBtn}
                                         onClick={() => removeTag(index, setLanguageTags, languageTags)}
                                     >
-                                        <img src={deleteCrossIcon} alt="Remove"/>
+                                        <img src={deleteCrossIcon} alt={t('common.remove')}/>
                                     </button>
                                 </div>
                             ))}
@@ -295,7 +297,7 @@ function ProfileSettings({user}) {
                             className={styles.addTagButton}
                             onClick={() => addTag(setLanguageTags, languageTags, AVAILABLE_LANGUAGES)}
                         >
-                            <img src={plusIcon} alt="Add"/>
+                            <img src={plusIcon} alt={t('common.add')}/>
                         </button>
                     </div>
                 </div>
@@ -316,7 +318,7 @@ function ProfileSettings({user}) {
                         <div className={styles.avatarContainer} onClick={handleAvatarClick}>
                             <img
                                 src={avatarPreview}
-                                alt="User Avatar"
+                                alt={t('settings.avatar')}
                                 className={styles.avatarImage}
                             />
                             <div className={styles.avatarOverlay}>
@@ -327,24 +329,24 @@ function ProfileSettings({user}) {
 
                     {/* Social Links */}
                     <div className={styles.formGroup}>
-                        <label>Instagram (link)</label>
+                        <label>{t('settings.link', { name: 'Instagram' })}</label>
                         <input type="text" name="instagram" value={formData.instagram} onChange={handleInputChange}
                                className={styles.inputField}/>
                     </div>
                     <div className={styles.formGroup}>
-                        <label>Behance (link)</label>
+                        <label>{t('settings.link', { name: 'Behance' })}</label>
                         <input type="text" name="behance" value={formData.behance} onChange={handleInputChange}
                                className={styles.inputField}/>
                     </div>
                     <div className={styles.formGroup}>
-                        <label>Tik Tok (link)</label>
+                        <label>{t('settings.link', { name: 'TikTok' })}</label>
                         <input type="text" name="tiktok" value={formData.tiktok} onChange={handleInputChange}
                                className={styles.inputField}/>
                     </div>
                 </div>
 
                 <div className={`${styles.formGroup} ${styles.fullWidth}`}>
-                    <label>Description</label>
+                    <label>{t('settings.description')}</label>
                     <textarea
                         name="description"
                         value={formData.description}
@@ -354,7 +356,7 @@ function ProfileSettings({user}) {
                 </div>
             </div>
 
-            <button type="submit" className={styles.saveButton}>Save</button>
+            <button type="submit" className={styles.saveButton}>{t('common.save')}</button>
         </form>
     );
 }

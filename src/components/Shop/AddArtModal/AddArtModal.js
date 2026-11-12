@@ -5,6 +5,7 @@ import closeIcon from '../../../assets/closeCross.svg';
 import addImageIcon from '../../../assets/image-placeholder-icon.svg';
 import { useToast } from '../../../context/ToastContext';
 import { PAINTING_FORMATS } from '../../../constants/filters';
+import { useTranslation } from 'react-i18next';
 
 const getOptions = (config, title) => {
   const section = config.find(f => f.title === title);
@@ -21,6 +22,7 @@ const AddArtModal = ({
   existingPaintingId = null
 }) => {
   const toast = useToast();
+    const { t } = useTranslation();
   const styleOptions = getOptions(filterConfig, "STYLE");
   const formatOptions = PAINTING_FORMATS;
 
@@ -195,14 +197,14 @@ const AddArtModal = ({
   // --- Validate ---
   const validate = () => {
     const e = {};
-    if (!name.trim()) e.name = "Name required";
-    if (!category) e.category = "Category required";
-    if (!style) e.style = "Style required";
-    if (!fileFormat) e.fileFormat = "Format required";
-    if (!sizeW || !sizeH) e.size = "Size required";
-    if (!about.trim()) e.about = "Description required";
-    if (!price.trim()) e.price = "Price required";
-    if (!images.length) e.images = "At least one image required";
+    if (!name.trim()) e.name = t('upload.required.name');
+    if (!category) e.category = t('upload.required.category');
+    if (!style) e.style = t('upload.required.style');
+    if (!fileFormat) e.fileFormat = t('upload.required.format');
+    if (!sizeW || !sizeH) e.size = t('upload.required.size');
+    if (!about.trim()) e.about = t('upload.required.about');
+    if (!price.trim()) e.price = t('upload.required.price');
+    if (!images.length) e.images = t('upload.required.image');
 
     setErrors(e);
     return Object.keys(e).length === 0;
@@ -215,7 +217,7 @@ const AddArtModal = ({
 
     try {
       if (existingPaintingId) {
-        toast.info('Оновлення картини наразі не підтримується API. Будь ласка, створіть нову картину.');
+        toast.info(t('upload.editUnsupported'));
         setSubmitting(false);
         return;
       }
@@ -250,11 +252,11 @@ const AddArtModal = ({
         onClose();
         window.location.reload();
       } else {
-        toast.error(res.data.message || "Failed to save");
+        toast.error(res.data.message || t('upload.saveFailed'));
       }
     } catch (err) {
       console.error(err);
-      toast.error("Error saving artwork");
+      toast.error(t('upload.saveFailed'));
     } finally {
       setSubmitting(false);
     }
@@ -269,7 +271,7 @@ const AddArtModal = ({
       <div className={styles.modalContent} onClick={(e) => e.stopPropagation()} onWheel={handleWheelScroll}>
 
         <button className={styles.closeBtnFixed} onClick={onClose}>
-          <img src={closeIcon} alt="Close" />
+          <img src={closeIcon} alt={t('common.close')} />
         </button>
 
         {/* LEFT COLUMN */}
@@ -305,14 +307,14 @@ const AddArtModal = ({
 
             {/* NAME */}
             <div className={styles.formGroup}>
-              <p>Name</p>
+              <p>{t('upload.name')}</p>
               <textarea
                 className={`${styles.formInput} ${errors.name ? styles.errorBorderInput : ''}`}
                 value={name}
                 onChange={e => setName(e.target.value)}
                 maxLength={150}
                 rows={2}
-                placeholder="Name..."
+                placeholder={t('upload.namePlaceholder')}
               />
               <span className={styles.charCounter}>{name.length} / 150</span>
               {errors.name && <span className={styles.error}>{errors.name}</span>}
@@ -320,7 +322,7 @@ const AddArtModal = ({
 
             {/* CATEGORY */}
             <div className={styles.formGroup}>
-              <p>Category</p>
+              <p>{t('art.category')}</p>
               <select
                 className={styles.formSelect}
                 value={category}
@@ -334,13 +336,13 @@ const AddArtModal = ({
 
             {/* STYLE */}
             <div className={styles.formGroup}>
-              <p>Style</p>
+              <p>{t('art.style')}</p>
               <select
                 className={styles.formSelect}
                 value={style}
                 onChange={e => setStyle(e.target.value)}
               >
-                <option value="">Select...</option>
+                <option value="">{t('upload.select')}</option>
                 {styleOptions.map(s => (
                   <option key={s}>{s}</option>
                 ))}
@@ -350,13 +352,13 @@ const AddArtModal = ({
 
             {/* FORMAT */}
             <div className={styles.formGroup}>
-              <p>Format</p>
+              <p>{t('art.format')}</p>
               <select
                 className={styles.formSelect}
                 value={fileFormat}
                 onChange={e => setFileFormat(e.target.value)}
               >
-                <option value="">Select...</option>
+                <option value="">{t('upload.select')}</option>
                 {formatOptions.map(f => (
                   <option key={f}>{f}</option>
                 ))}
@@ -366,7 +368,7 @@ const AddArtModal = ({
 
             {/* SIZE */}
             <div className={styles.formGroup}>
-              <p>Size</p>
+              <p>{t('art.size')}</p>
               <div className={`${styles.sizeInputGroup} ${errors.size ? styles.errorBorderInput : ''}`}>
                 <input
                   type="text"
@@ -387,7 +389,7 @@ const AddArtModal = ({
 
             {/* ABOUT */}
             <div className={styles.formGroup}>
-              <p>About</p>
+              <p>{t('commission.about')}</p>
               <textarea
                 className={`${styles.formInput} ${errors.about ? styles.errorBorderInput : ''}`}
                 value={about}
@@ -402,7 +404,7 @@ const AddArtModal = ({
               <div className={styles.priceInputWrapper}>
                 <input
                   type="text"
-                  placeholder="Price"
+                  placeholder={t('upload.pricePlaceholder')}
                   value={price}
                   onChange={e => setPrice(e.target.value.replace(/\D/g, ''))}
                   className={`${styles.priceInput} ${errors.price ? styles.errorBorderInput : ''}`}
@@ -415,7 +417,7 @@ const AddArtModal = ({
                 disabled={submitting}
                 onClick={handleAddArt}
               >
-                {submitting ? "Saving..." : existingPaintingId ? "Update" : "Add"}
+                {submitting ? t('common.saving') : existingPaintingId ? t('upload.update') : t('common.add')}
               </button>
 
             </div>

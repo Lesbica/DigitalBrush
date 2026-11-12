@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import styles from './AdvancedFilters.module.css';
+import { useTranslation } from 'react-i18next';
 
 // selected: { [columnTitle]: value }; onSelect(columnTitle, value) is called for plain options and for
 // sub-options (e.g. a style); without onSelect the panel is display-only.
 function AdvancedFilters({ filterConfig, selected = {}, onSelect }) {
+    const { t } = useTranslation();
     const [isOpen, setIsOpen] = useState(false);
     const [openSubMenu, setOpenSubMenu] = useState(null);
 
@@ -14,7 +16,7 @@ function AdvancedFilters({ filterConfig, selected = {}, onSelect }) {
                 className={styles.toggleButton}
                 onClick={() => setIsOpen(!isOpen)}
             >
-                ADDITIONAL FILTERS
+                {t('filters.additional')}
                 <svg
                     width="11"
                     height="18"
@@ -32,7 +34,7 @@ function AdvancedFilters({ filterConfig, selected = {}, onSelect }) {
                 <div className={styles.filtersContainer}>
                     {filterConfig.map((column, index) => (
                         <div key={column.title} className={styles.filterColumn}>
-                            <h4 className={styles.columnTitle}>{column.title}</h4>
+                            <h4 className={styles.columnTitle}>{t(`labels.${column.title}`, { defaultValue: column.title })}</h4>
                             <ul className={styles.filterList}>
                                 {column.options.map(opt => {
                                     const picked = selected[column.title];
@@ -46,7 +48,7 @@ function AdvancedFilters({ filterConfig, selected = {}, onSelect }) {
                                             else if (onSelect) onSelect(column.title, opt.name);
                                         }}
                                     >
-                                        {pickedSub || opt.name}
+                                        {pickedSub || t(`labels.${opt.name}`, { defaultValue: opt.name })}
                                         {opt.subOptions && <span>{openSubMenu === opt.name ? '‹' : '›'}</span>}
 
                                         {opt.subOptions && (

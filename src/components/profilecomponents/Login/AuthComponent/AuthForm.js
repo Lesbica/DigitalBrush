@@ -1,8 +1,10 @@
 import React from "react";
 import styles from "./AuthForm.module.css"; // <-- Використовуємо новий CSS
 import logo from "../../../../assets/logoWithText.svg";
+import { useTranslation } from 'react-i18next';
 
 function AuthLayout({ children, onCreateAccount }) {
+    const { t } = useTranslation();
     return (
         <div className={styles.authCard}>
 
@@ -21,7 +23,7 @@ function AuthLayout({ children, onCreateAccount }) {
                 className={styles.secondaryBtn}
                 onClick={onCreateAccount}
             >
-                Create account
+                {t('auth.createAccount')}
             </button>
         </div>
     );

@@ -3,11 +3,12 @@ import styles from "./Gallery.module.css";
 import { useNavigate } from "react-router-dom";
 import ArtCard from '../ArtCard/ArtCard';
 import axios from 'axios';
+import { useTranslation } from 'react-i18next';
 
 const placeholderFeaturedCards = [
-    { id: 'card-back', imageUrl: '/images/card-center.webp', className: styles.cardBack, title: "We build the", likes: "253.5k" },
-    { id: 'card-middle', imageUrl: '/images/card-right.webp', className: styles.cardMiddle, title: "We build the", likes: "253.5k" },
-    { id: 'card-front', imageUrl: '/images/card-left.webp', className: styles.cardFront, title: "We build the", likes: "253.5k" }
+    { id: 'card-back', imageUrl: '/images/card-center.webp', className: styles.cardBack, title: "DigitalBrush", likes: "253.5k" },
+    { id: 'card-middle', imageUrl: '/images/card-right.webp', className: styles.cardMiddle, title: "DigitalBrush", likes: "253.5k" },
+    { id: 'card-front', imageUrl: '/images/card-left.webp', className: styles.cardFront, title: "DigitalBrush", likes: "253.5k" }
 ];
 
 const placeholderScatteredImages = [
@@ -19,6 +20,7 @@ const placeholderScatteredImages = [
 ];
 
 const Gallery = () => {
+    const { t } = useTranslation();
     const [paintings, setPaintings] = useState([]);
     const [loading, setLoading] = useState(true);
     const [currentSlide, setCurrentSlide] = useState(0);
@@ -150,12 +152,11 @@ const Gallery = () => {
                     {/* RESTORED: Artist registration section */}
                     <div className={styles.contentSection}>
                         <div className={styles.textContainer}>
-                            <div className={styles.textHeader1}>Are you an artist? <br /> Sell your work here!</div>
+                            <div className={styles.textHeader1}>{t('home.artistTitle1')} <br /> {t('home.artistTitle2')}</div>
                             <div className={styles.text1}>
-                                Create a profile, upload your paintings, and find buyers all over the world.
-                                DigitalBrush is a space where your talent becomes visible and valuable.
+                                {t('home.artistText')}
                             </div>
-                            <button className={styles.button1} onClick={() => handleNavigation('/profile')}>Registration</button>
+                            <button className={styles.button1} onClick={() => handleNavigation('/profile')}>{t('common.registration')}</button>
                         </div>
                         <div className={styles.imageCardsContainer}>
                             {placeholderFeaturedCards.map(card => (
@@ -184,12 +185,11 @@ const Gallery = () => {
                             ))}
                         </div>
                         <div className={styles.textContainer}>
-                            <div className={styles.textHeader1}>Don't you draw? <br /> No problem.</div>
+                            <div className={styles.textHeader1}>{t('home.buyerTitle1')} <br /> {t('home.buyerTitle2')}</div>
                             <div className={styles.text1}>
-                                Choose works that resonate with your emotions. Here, art is not just a commodity, but a
-                                way to tell the world something important.
+                                {t('home.buyerText')}
                             </div>
-                            <button className={styles.button1} onClick={() => handleNavigation('/profile')}>Registration</button>
+                            <button className={styles.button1} onClick={() => handleNavigation('/profile')}>{t('common.registration')}</button>
                         </div>
                     </div>
                 </div>
@@ -197,12 +197,12 @@ const Gallery = () => {
                 {/* --- TRENDS SECTION (Real Images) --- */}
                 <div className={styles.trendsContentWrapper}>
                     <div className={styles.TrendsContainer}>
-                        <div className={styles.TrendsHeader}>TRENDS</div>
+                        <div className={styles.TrendsHeader}>{t('home.trends')}</div>
                         <div className={styles.searchBarContainer}>
                             <input
                                 type="text"
                                 className={styles.searchInput}
-                                placeholder="Search by title, artist, style..."
+                                placeholder={t('home.searchPlaceholder')}
                                 value={searchQuery}
                                 onChange={handleSearchChange}
                             />
@@ -215,7 +215,7 @@ const Gallery = () => {
                     </div>
 
                     {loading ? (
-                        <div className={styles.noResults}>Loading masterpieces...</div>
+                        <div className={styles.noResults}>{t('home.loading')}</div>
                     ) : slides.length > 0 ? (
                         <div className={styles.artGridSection}>
                             <div className={styles.artGridCarouselWrapper}>
@@ -242,7 +242,7 @@ const Gallery = () => {
                             </div>
                         </div>
                     ) : (
-                        <div className={styles.noResults}>No results found for your search.</div>
+                        <div className={styles.noResults}>{t('home.noResults')}</div>
                     )}
                 </div>
             </div>

@@ -3,6 +3,7 @@ import styles from './Footer.module.css';
 import twitterIcon from '../../assets/twitterIcon.svg';
 import instagramIcon from '../../assets/instagram-icon.svg';
 import facebookIcon from '../../assets/icons/facebook-icon.svg';
+import { useTranslation } from 'react-i18next';
 
 /*
  * Цей компонент SocialIcon використовує <img> теги,
@@ -28,26 +29,22 @@ const SocialIcon = ({ type }) => {
 
 
 function Footer() {
+    const { t } = useTranslation();
     return (
         <footer className={styles.footer}>
             <div className={styles.footerTop}>
                 <div className={styles.footerContainer}>
                     <div className={styles.footerLeft}>
                         <div className={styles.footerLogo}>Digital Brush</div>
-                        <p className={styles.footerText}>
-                            This is a space that unites artists and customers,
-                            ensures transparency, security, and convenience
-                            of collaboration, promotes the development of the
-                            creative economy and supports digital culture.
-                        </p>
+                        <p className={styles.footerText}>{t('footer.about')}</p>
                     </div>
                     <div className={styles.footerRight}>
                         <div className={styles.footerContact}>
-                            <p>Contact us if you have any problems:</p>
+                            <p>{t('footer.contact')}</p>
                             <a href="mailto:digital_brush@gmail.com">digital_brush@gmail.com</a>
                         </div>
                         <div className={styles.footerSocial}>
-                            <p>Follow us:</p>
+                            <p>{t('footer.follow')}</p>
                             <div className={styles.socialIconsContainer}>
                                 <SocialIcon type="twitter" />
                                 <SocialIcon type="facebook" />

@@ -3,10 +3,12 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useCart } from '../Cart/CartContext';
 import useOrderStatus from './useOrderStatus';
 import styles from './PaymentResult.module.css';
+import { useTranslation } from 'react-i18next';
 
 // Landing page after the payment provider. The outcome comes from the server (which only trusts
 // the provider), never from the URL.
 const PaymentSuccess = () => {
+    const { t } = useTranslation();
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
     const { state, order } = useOrderStatus(searchParams.get('order'));
@@ -18,17 +20,14 @@ const PaymentSuccess = () => {
     }, [paidPaintings, removeManyFromCart]);
 
     if (state === 'loading') {
-        return <main className={styles.page}><p className={styles.text}>Checking your payment…</p></main>;
+        return <main className={styles.page}><p className={styles.text}>{t('payment.checking')}</p></main>;
     }
 
     if (state === 'pending') {
         return (
             <main className={styles.page}>
-                <h1 className={styles.title}>Payment is being processed</h1>
-                <p className={styles.text}>
-                    The payment provider has not confirmed the payment yet. This page updates by itself,
-                    and you will get a notification as soon as it is confirmed.
-                </p>
+                <h1 className={styles.title}>{t('payment.pendingTitle')}</h1>
+                <p className={styles.text}>{t('payment.pendingText')}</p>
             </main>
         );
     }
@@ -36,11 +35,11 @@ const PaymentSuccess = () => {
     if (state === 'failed') {
         return (
             <main className={styles.page}>
-                <h1 className={styles.title}>Payment was not completed</h1>
-                <p className={styles.text}>No money was taken for this order. You can try again.</p>
+                <h1 className={styles.title}>{t('payment.notCompletedTitle')}</h1>
+                <p className={styles.text}>{t('payment.notCompletedText')}</p>
                 <div className={styles.actions}>
                     <button className={styles.button} onClick={() => navigate(order?.type === 'commission' ? `/profile?commission=${order.commissionId}` : '/checkout')}>
-                        Try again
+                        {t('payment.tryAgain')}
                     </button>
                 </div>
             </main>
@@ -51,19 +50,17 @@ const PaymentSuccess = () => {
         const isCommission = order.type === 'commission';
         return (
             <main className={styles.page}>
-                <h1 className={styles.title}>Payment successful</h1>
+                <h1 className={styles.title}>{t('payment.successTitle')}</h1>
                 <p className={styles.text}>
-                    {isCommission
-                        ? 'The commission is paid. The final artwork is available in the commission chat.'
-                        : 'Thank you! The paintings are in your profile, where you can download the originals.'}
+                    {isCommission ? t('payment.successCommission') : t('payment.successPaintings')}
                 </p>
                 <div className={styles.actions}>
                     {isCommission ? (
-                        <button className={styles.button} onClick={() => navigate(`/profile?commission=${order.commissionId}`)}>Open the chat</button>
+                        <button className={styles.button} onClick={() => navigate(`/profile?commission=${order.commissionId}`)}>{t('payment.openChat')}</button>
                     ) : (
-                        <button className={styles.button} onClick={() => navigate('/profile?tab=images')}>My paintings</button>
+                        <button className={styles.button} onClick={() => navigate('/profile?tab=images')}>{t('payment.myPaintings')}</button>
                     )}
-                    <button className={`${styles.button} ${styles.secondary}`} onClick={() => navigate('/shop')}>Back to shop</button>
+                    <button className={`${styles.button} ${styles.secondary}`} onClick={() => navigate('/shop')}>{t('payment.backToShop')}</button>
                 </div>
             </main>
         );
@@ -71,10 +68,10 @@ const PaymentSuccess = () => {
 
     return (
         <main className={styles.page}>
-            <h1 className={styles.title}>Payment status unknown</h1>
-            <p className={styles.text}>We could not find this order. If money was taken, it will appear in your profile shortly.</p>
+            <h1 className={styles.title}>{t('payment.unknownTitle')}</h1>
+            <p className={styles.text}>{t('payment.unknownText')}</p>
             <div className={styles.actions}>
-                <button className={styles.button} onClick={() => navigate('/profile')}>Go to profile</button>
+                <button className={styles.button} onClick={() => navigate('/profile')}>{t('payment.toProfile')}</button>
             </div>
         </main>
     );

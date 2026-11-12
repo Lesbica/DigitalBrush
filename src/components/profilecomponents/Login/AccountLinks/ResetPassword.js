@@ -2,9 +2,11 @@ import React, {useState} from "react";
 import {Link, useSearchParams} from "react-router-dom";
 import axios from "axios";
 import styles from "../../Register/Register.module.css";
+import { useTranslation } from 'react-i18next';
 
 // /reset-password?token=... — opened from the password reset email
 export default function ResetPassword() {
+    const { t } = useTranslation();
     const [params] = useSearchParams();
     const [password, setPassword] = useState('');
     const [repeat, setRepeat] = useState('');
@@ -14,7 +16,7 @@ export default function ResetPassword() {
     const submit = async (e) => {
         e.preventDefault();
         if (password !== repeat) {
-            setResult({ok: false, message: 'Passwords do not match.'});
+            setResult({ok: false, message: t('auth.passwordsDiffer')});
             return;
         }
         setLoading(true);
@@ -22,7 +24,7 @@ export default function ResetPassword() {
             const res = await axios.post('/auth/reset-password', {token: params.get('token') || '', password});
             setResult({ok: true, message: res.data.message});
         } catch (err) {
-            setResult({ok: false, message: err.response?.data?.message || 'Could not change the password.'});
+            setResult({ok: false, message: err.response?.data?.message || t('auth.resetFailed')});
         } finally {
             setLoading(false);
         }
@@ -32,29 +34,29 @@ export default function ResetPassword() {
         <div style={{display: 'flex', justifyContent: 'center', padding: '60px 16px'}}>
             {result?.ok ? (
                 <div className={styles.authCard}>
-                    <h2 className={styles.mainTitle}>Password changed</h2>
+                    <h2 className={styles.mainTitle}>{t('auth.passwordChanged')}</h2>
                     <p className={styles.emailTitle} style={{textAlign: 'left'}}>{result.message}</p>
                     <div className={styles.buttonsRow}>
-                        <Link to="/profile" className={styles.submitBtn} style={{textAlign: 'center', textDecoration: 'none'}}>Log in</Link>
+                        <Link to="/profile" className={styles.submitBtn} style={{textAlign: 'center', textDecoration: 'none'}}>{t('auth.logIn')}</Link>
                     </div>
                 </div>
             ) : (
                 <form className={styles.authCard} onSubmit={submit}>
-                    <h2 className={styles.mainTitle}>New password</h2>
+                    <h2 className={styles.mainTitle}>{t('auth.newPassword')}</h2>
                     <div className={styles.field}>
-                        <label htmlFor="new-password">New password</label>
+                        <label htmlFor="new-password">{t('auth.newPassword')}</label>
                         <input id="new-password" type="password" value={password} minLength="6" maxLength="72" required
                                onChange={(e) => setPassword(e.target.value)} disabled={loading}/>
                     </div>
                     <div className={styles.field}>
-                        <label htmlFor="repeat-password">Repeat password</label>
+                        <label htmlFor="repeat-password">{t('auth.repeatPassword')}</label>
                         <input id="repeat-password" type="password" value={repeat} minLength="6" maxLength="72" required
                                onChange={(e) => setRepeat(e.target.value)} disabled={loading}/>
                     </div>
                     {result && <p role="alert" style={{color: '#ff8a8a', margin: 0}}>{result.message}</p>}
                     <div className={styles.buttonsRow}>
                         <button type="submit" className={styles.submitBtn} disabled={loading}>
-                            {loading ? 'Saving…' : 'Save password'}
+                            {loading ? t('common.saving') : t('auth.savePassword')}
                         </button>
                     </div>
                 </form>

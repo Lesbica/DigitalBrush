@@ -6,10 +6,12 @@ import axios from "axios";
 import { CATEGORIES } from '../../../constants/categories';
 import { useToast } from '../../../context/ToastContext';
 import { STYLES, COMMISSION_FORMATS } from '../../../constants/filters';
+import { useTranslation } from 'react-i18next';
 
 const categories = CATEGORIES;
 
 const AddCommissionModal = ({ onClose, targetCreatorId = null }) => {
+    const { t } = useTranslation();
     const toast = useToast();
     const [name, setName] = useState('');
     const [category, setCategory] = useState(categories[0]);
@@ -62,7 +64,7 @@ const AddCommissionModal = ({ onClose, targetCreatorId = null }) => {
         const currentImageCount = images.length;
         const allowedFiles = files.slice(0, MAX_IMAGES - currentImageCount);
         if (allowedFiles.length < files.length) {
-            toast.error(`You can only upload a maximum of ${MAX_IMAGES} images in total.`);
+            toast.error(t('upload.maxImages', { count: MAX_IMAGES }));
         }
         if (allowedFiles.length === 0) {
             e.target.value = null;
@@ -91,15 +93,15 @@ const AddCommissionModal = ({ onClose, targetCreatorId = null }) => {
 
     const validate = () => {
         const newErrors = {};
-        if (!name.trim()) newErrors.name = "Name is required";
-        if (!category) newErrors.category = "Category is required";
-        if (!style) newErrors.style = "Style is required";
-        if (!fileFormat) newErrors.fileFormat = "Format is required";
-        if (!sizeW.trim() || !sizeH.trim()) newErrors.size = "Size is required";
-        if (!about.trim()) newErrors.about = "About is required";
-        if (!price.trim()) newErrors.price = "Price is required";
+        if (!name.trim()) newErrors.name = t('upload.required.name');
+        if (!category) newErrors.category = t('upload.required.category');
+        if (!style) newErrors.style = t('upload.required.style');
+        if (!fileFormat) newErrors.fileFormat = t('upload.required.format');
+        if (!sizeW.trim() || !sizeH.trim()) newErrors.size = t('upload.required.size');
+        if (!about.trim()) newErrors.about = t('upload.required.about');
+        if (!price.trim()) newErrors.price = t('upload.required.price');
         if (images.length === 0) {
-            newErrors.images = "At least one image is required";
+            newErrors.images = t('upload.required.image');
         }
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
@@ -141,7 +143,7 @@ const AddCommissionModal = ({ onClose, targetCreatorId = null }) => {
 
             if (response.data.success) {
                 // Показуємо повідомлення залежно від типу
-                toast.success(targetCreatorId ? "Direct commission request sent!" : "Public commission created!");
+                toast.success(targetCreatorId ? t('upload.directSent') : t('upload.publicCreated'));
                 onClose();
                 window.location.reload();
             }
@@ -149,9 +151,9 @@ const AddCommissionModal = ({ onClose, targetCreatorId = null }) => {
             console.error("Error creating commission:", error);
             // Виводимо конкретну помилку з бекенду (наприклад, про самозамовлення)
             if (error.response && error.response.data && error.response.data.message) {
-                toast.error("Error: " + error.response.data.message);
+                toast.error(error.response.data.message);
             } else {
-                toast.error("Server error. Check console for details.");
+                toast.error(t('upload.serverError'));
             }
         } finally {
             setSubmitting(false);
@@ -212,9 +214,9 @@ const AddCommissionModal = ({ onClose, targetCreatorId = null }) => {
                     <div className={styles.rightColumn}>
                         <div className={styles.formGroup}>
                             <div className={styles.formHeader}>
-                                <p>Name</p>
+                                <p>{t('upload.name')}</p>
                                 <button className={styles.closeBtn} onClick={onClose}>
-                                    <img src={closeIcon} alt="Close" />
+                                    <img src={closeIcon} alt={t('common.close')} />
                                 </button>
                             </div>
                             <input
@@ -231,25 +233,25 @@ const AddCommissionModal = ({ onClose, targetCreatorId = null }) => {
                         </div>
                         {/* ... Інші поля форми (category, style, format, size) ... */}
                         <div className={styles.formGroup}>
-                            <p>Category</p>
+                            <p>{t('art.category')}</p>
                             <select id="category" className={styles.formSelect} value={category} onChange={(e) => setCategory(e.target.value)}>
                                 {categories.map(c => <option key={c} value={c}>{c}</option>)}
                             </select>
                         </div>
                         <div className={styles.formGroup}>
-                            <p>Style</p>
+                            <p>{t('art.style')}</p>
                             <select id="style" className={styles.formSelect} value={style} onChange={(e) => setStyle(e.target.value)}>
                                 {STYLES.map(s => <option key={s} value={s}>{s}</option>)}
                             </select>
                         </div>
                         <div className={styles.formGroup}>
-                            <p>File format</p>
+                            <p>{t('art.format')}</p>
                             <select id="fileFormat" className={styles.formSelect} value={fileFormat} onChange={(e) => setFileFormat(e.target.value)}>
                                 {COMMISSION_FORMATS.map(f => <option key={f} value={f}>{f}</option>)}
                             </select>
                         </div>
                         <div className={styles.formGroup}>
-                            <p>Size</p>
+                            <p>{t('art.size')}</p>
                             <div className={`${styles.sizeInputGroup} ${errors.size ? styles.errorBorderInput : ''}`}>
                                 <input
                                     type="text"
@@ -269,7 +271,7 @@ const AddCommissionModal = ({ onClose, targetCreatorId = null }) => {
                             </div>
                         </div>
                         <div className={styles.formGroup}>
-                            <p>Deadline (optional)</p>
+                            <p>{t('upload.deadline')}</p>
                             <input
                                 type="date"
                                 className={styles.formInput}
@@ -281,7 +283,7 @@ const AddCommissionModal = ({ onClose, targetCreatorId = null }) => {
                     </div>
                 </div>
                 <div className={styles.formGroup}>
-                    <p>About</p>
+                    <p>{t('commission.about')}</p>
                     <textarea
                         id="about"
                         className={`${styles.formInput} ${styles.formInputAbout} ${errors.about ? styles.errorBorder : ''}`}
@@ -300,12 +302,12 @@ const AddCommissionModal = ({ onClose, targetCreatorId = null }) => {
                             className={`${styles.priceInput} ${errors.price ? styles.errorBorderInput : ''}`}
                             value={price}
                             onChange={handlePriceChange}
-                            placeholder="Price"
+                            placeholder={t('upload.pricePlaceholder')}
                         />
                         {errors.price && <span className={styles.errorPrice}>{errors.price}</span>}
                     </div>
                     <button className={styles.createBtn} onClick={handleCreate} disabled={submitting}>
-                        {submitting ? 'Uploading...' : 'Create'}
+                        {submitting ? t('upload.uploading') : t('upload.create')}
                     </button>
                 </div>
             </div>

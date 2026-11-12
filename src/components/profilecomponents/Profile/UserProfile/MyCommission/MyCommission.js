@@ -5,10 +5,13 @@ import CategoryFilters from "../../../../CategoryFilters/CategoryFilters";
 import CommissionModalDetails from "../../../../Commission/CommissionModals/CommissionModalDetails";
 import logo from '../../../../../assets/logo.svg'
 import { useSocket } from '../../../../../context/SocketContext';
+import { useTranslation } from 'react-i18next';
+import { formatPrice } from '../../../../../i18n/format';
 
 const commissionFilters = ['MY ORDERS', 'MY TASKS'];
 
 function MyCommission({ user, onOpenChat}) {
+    const { t } = useTranslation();
     const currentUserId = Number(user?.id) || null;
     const socket = useSocket();
 
@@ -120,10 +123,10 @@ function MyCommission({ user, onOpenChat}) {
             description: item.Description,
             price: item.Price,
             imageUrl: item.ReferenceImage, // Це поле ми обробили на бекенді
-            category: item.Category || "Unknown",
-            style: item.Style || "Unknown",
-            fileFormat: item.Format || "Unknown",
-            size: item.Size || "Unknown",
+            category: item.Category || "",
+            style: item.Style || "",
+            fileFormat: item.Format || "",
+            size: item.Size || "",
             // Додаємо статус, якщо потрібно відобразити в модалці
             status: item.Status
         };
@@ -182,7 +185,7 @@ function MyCommission({ user, onOpenChat}) {
                                     />
                                 </div>
                                 <div className={styles.priceOverlay}>
-                                    <span className={styles.cardPrice}>${item.Price}</span>
+                                    <span className={styles.cardPrice}>{formatPrice(item.Price)}</span>
                                 </div>
                             </div>
 
@@ -194,7 +197,7 @@ function MyCommission({ user, onOpenChat}) {
 
                                 <div className={styles.statusRow}>
                                     <span className={styles.statusLabel}>
-                                        {item.Status || item.status || "Unknown"}
+                                        {t(`status.${item.Status || item.status || 'Unknown'}`, { defaultValue: item.Status || item.status })}
                                     </span>
                                     {renderDots(item.Status || item.status)}
                                 </div>
@@ -204,9 +207,7 @@ function MyCommission({ user, onOpenChat}) {
                 </div>
             ) : (
                 <div className={styles.noResults}>
-                    {activeFilter === 'MY ORDERS'
-                        ? "You haven't ordered any commissions yet."
-                        : "You don't have any active tasks."}
+                    {activeFilter === 'MY ORDERS' ? t('profile.noOrders') : t('profile.noTasks')}
                 </div>
             )}
 

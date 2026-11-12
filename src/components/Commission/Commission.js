@@ -10,6 +10,8 @@ import logo from '../../assets/logo.svg';
 import { CATEGORIES } from '../../constants/categories';
 import { COMMISSION_FILTERS, filtersToParams, toggleFilter } from '../../constants/filters';
 import { useAuth } from '../../context/AuthContext';
+import { useTranslation } from 'react-i18next';
+import { formatPrice } from '../../i18n/format';
 
 const PAGE_SIZE = 48;
 
@@ -29,6 +31,7 @@ const toCard = (c) => ({
 });
 
 function Commission() {
+    const { t } = useTranslation();
     const { isLoggedIn } = useAuth();
     const [activeCategory, setActiveCategory] = useState(null);
     const [searchQuery, setSearchQuery] = useState('');
@@ -76,12 +79,12 @@ function Commission() {
             <div className={styles.contentWrapper}>
                 <header className={styles.header}>
                     <div className={styles.headerLeft}>
-                        <h1 className={styles.commissionTitle}>COMMISSION</h1>
+                        <h1 className={styles.commissionTitle}>{t('nav.commission')}</h1>
                         <div className={styles.searchBarContainer}>
                             <input
                                 type="text"
                                 className={styles.searchInput}
-                                placeholder="Title of the art..."
+                                placeholder={t('commissions.searchPlaceholder')}
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                             />
@@ -97,7 +100,7 @@ function Commission() {
                             <svg width="25" height="25" viewBox="0 0 25 25" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <path d="M12.4158 0C5.56994 0 0 5.56994 0 12.4158C0 19.2617 5.56994 24.8317 12.4158 24.8317C19.2617 24.8317 24.8317 19.2617 24.8317 12.4158C24.8317 5.56994 19.2617 0 12.4158 0ZM12.4158 1.91013C18.2293 1.91013 22.9216 6.60236 22.9216 12.4158C22.9216 18.2293 18.2293 22.9216 12.4158 22.9216C6.60236 22.9216 1.91013 18.2293 1.91013 12.4158C1.91013 6.60236 6.60236 1.91013 12.4158 1.91013ZM11.4608 6.68545V11.4608H6.68545V13.3709H11.4608V18.1462H13.3709V13.3709H18.1462V11.4608H13.3709V6.68545H11.4608Z" fill="white"/>
                             </svg>
-                            ADD COMMISSION
+                            {t('commissions.add')}
                         </button>
                     )}
                 </header>
@@ -120,7 +123,7 @@ function Commission() {
 
                 {loading ? (
                     <div className={styles.loadingSpinnerContainer}>
-                        <img src={logo} alt="Loading" className={styles.loadingLogo} />
+                        <img src={logo} alt={t('common.loading')} className={styles.loadingLogo} />
                     </div>
                 ) : (
                     commissions.length > 0 ? (
@@ -140,7 +143,7 @@ function Commission() {
                                                 />
                                             </div>
                                             <div className={styles.priceOverlay}>
-                                                <span className={styles.cardPrice}>${commission.price}</span>
+                                                <span className={styles.cardPrice}>{formatPrice(commission.price)}</span>
                                             </div>
                                         </div>
                                         <div className={styles.cardContent}>
@@ -152,7 +155,7 @@ function Commission() {
                                                 className={styles.takeButton}
                                                 onClick={() => handleOpenModal(commission)}
                                             >
-                                                Take
+                                                {t('commissions.take')}
                                             </button>
                                         </div>
                                     </div>
@@ -167,7 +170,7 @@ function Commission() {
                         </>
                     ) : (
                         <div className={styles.noResults}>
-                            {error ? 'Could not load the commissions. Please try again later.' : 'No commissions match your search'}
+                            {error ? t('commissions.loadError') : t('commissions.empty')}
                         </div>
                     )
                 )}

@@ -5,7 +5,7 @@
 
 | Частина | Стек |
 |---|---|
-| Фронтенд (`src/`) | React 19, React Router 7, Vite, axios, socket.io-client; тести — Vitest + Testing Library |
+| Фронтенд (`src/`) | React 19, React Router 7, Vite, axios, socket.io-client, react-i18next (укр/англ); тести — Vitest + Testing Library |
 | Бекенд (`server/`) | Node.js 22, Express 5, mysql2, express-session (сесії в MySQL), socket.io, sharp |
 | База даних | MySQL 8, міграції в `server/migrations/` |
 | Оплата | WayForPay (Fondy — резервний провайдер) |
@@ -76,6 +76,7 @@ src/                       React-застосунок
 - Сповіщення в застосунку (наживо через socket.io) і email.
 - Гаманець художника: доходи з продажів і комішенів (ескроу до завершення), заявки на виведення на IBAN.
 - Оплата через WayForPay.
+- Інтерфейс українською та англійською (перемикач у меню, вибір запамʼятовується), ціни в гривнях.
 
 Листи без налаштованого SMTP (`SMTP_HOST`) лише пишуться в лог бекенду — звідти можна відкрити посилання.
 

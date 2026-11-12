@@ -3,8 +3,10 @@ import React, { useState } from "react";
 import { EyeIcon, EyeSlashIcon } from "../Register/AuthIcons";
 import AuthLayout from "./AuthComponent/AuthForm";
 import styles from "./AuthComponent/AuthForm.module.css";
+import { useTranslation } from 'react-i18next';
 
 function Login({ toggleForm, handleLogin, handleInputChange, onForgotPassword }) {
+    const { t } = useTranslation();
     const [showPassword, setShowPassword] = useState(false);
 
     const handleSubmit = (e) => {
@@ -17,7 +19,7 @@ function Login({ toggleForm, handleLogin, handleInputChange, onForgotPassword })
             {/* 4. <form> тепер всередині */}
             <form className={styles.formContainer} onSubmit={handleSubmit}>
                 <div className={styles.field}>
-                    <label htmlFor="login-email">Login</label>
+                    <label htmlFor="login-email">{t('auth.email')}</label>
                     <input
                         id="login-email"
                         type="email"
@@ -28,7 +30,7 @@ function Login({ toggleForm, handleLogin, handleInputChange, onForgotPassword })
                 </div>
 
                 <div className={styles.field}>
-                    <label htmlFor="login-password">Password</label>
+                    <label htmlFor="login-password">{t('auth.password')}</label>
                     <div className={styles.passwordWrapper}>
                         <input
                             id="login-password"
@@ -50,14 +52,14 @@ function Login({ toggleForm, handleLogin, handleInputChange, onForgotPassword })
                 <div className={styles.actionsRow}>
                     {/* Використовуємо нові уніфіковані класи */}
                     <button type="submit" className={styles.primaryBtn}>
-                        Log in
+                        {t('auth.logIn')}
                     </button>
                     <button
                         type="button"
                         className={styles.secondaryBtn} // <-- Це тепер теж secondaryBtn
                         onClick={onForgotPassword}
                     >
-                        Password forgotten?
+                        {t('auth.forgot')}
                     </button>
                 </div>
             </form>

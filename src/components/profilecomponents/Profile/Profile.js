@@ -8,11 +8,13 @@ import styles from './Profile.module.css';
 import DigitalBrushProfile from './UserProfile/DigitalBrushProfile';
 import { useAuth } from '../../../context/AuthContext';
 import { useToast } from '../../../context/ToastContext';
+import { useTranslation } from 'react-i18next';
 
 // Only same-site paths are allowed as a post-login destination
 const safeNext = (value) => (value && value.startsWith('/') && !value.startsWith('//') ? value : null);
 
 function Profile() {
+    const { t } = useTranslation();
     const toast = useToast();
     const { user, loading, login, logout } = useAuth();
     const navigate = useNavigate();
@@ -41,13 +43,13 @@ function Profile() {
                         const res = await axios.post('/auth/resend-verification', { email });
                         toast.success(res.data.message);
                     } catch {
-                        toast.error('Could not send the link. Try again later.');
+                        toast.error(t('auth.linkFailed'));
                     }
                 };
-                toast.error(data.message, { action: { label: 'Send the link again', onClick: resend } });
+                toast.error(data.message, { action: { label: t('register.sendAgain'), onClick: resend } });
                 return;
             }
-            toast.error(data?.message || 'Login failed');
+            toast.error(data?.message || t('auth.loginFailed'));
         }
     };
 

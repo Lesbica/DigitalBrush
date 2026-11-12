@@ -6,11 +6,16 @@ import trash from '../../assets/trashBin.svg'
 import axios from "axios";
 import { useModal } from '../../context/ModalContext';
 import { useToast } from '../../context/ToastContext';
+import { useTranslation } from 'react-i18next';
+import { formatPrice } from '../../i18n/format';
+import { useAuth } from '../../context/AuthContext';
 
 const CheckoutPage = () => {
+    const { t } = useTranslation();
     const toast = useToast();
     const { cartItems, removeFromCart } = useCart();
     const { openModal } = useModal();
+    const { user } = useAuth();
     const navigate = useNavigate();
 
     const subtotalNumber = cartItems.reduce((acc, item) => {
@@ -38,12 +43,11 @@ const CheckoutPage = () => {
             if (url) {
                 window.location.href = url;
             } else {
-                console.error('Fondy response:', res.data);
-                toast.error('Failed to get payment URL');
+                toast.error(t('checkout.noPaymentUrl'));
             }
         } catch (err) {
             console.error('Payment error:', err);
-            toast.error('Error while creating payment');
+            toast.error(err.response?.data?.error === 'payments_unavailable' ? t('checkout.unavailable') : t('checkout.createFailed'));
         }
     };
 
@@ -51,10 +55,10 @@ const CheckoutPage = () => {
         <div className={styles.checkoutPage}>
             <div className={styles.content}>
                 <div className={styles.itemsColumn}>
-                    <h2 className={styles.title}>BASKET</h2>
+                    <h2 className={styles.title}>{t('basket.title')}</h2>
                     <div className={styles.itemList}>
                         {cartItems.length === 0 ? (
-                            <p className={styles.emptyMessage}>Your basket is empty. <span onClick={() => navigate('/shop')}>Go shopping.</span></p>
+                            <p className={styles.emptyMessage}>{t('basket.empty')} <span onClick={() => navigate('/shop')}>{t('checkout.goShopping')}</span></p>
                         ) : (
                             cartItems.map((item) => (
                                 <div
@@ -67,10 +71,10 @@ const CheckoutPage = () => {
                                         <div className={styles.infoText}>
                                             <span className={styles.itemTitle}>{item.title}</span>
                                             <span className={styles.itemArtist}>{item.artistName}</span>
-                                            <p className={styles.itemDesc}>{item.description.substring(0, 100)}...</p>
+                                            <p className={styles.itemDesc}>{(item.description || '').length > 100 ? `${item.description.substring(0, 100)}…` : item.description}</p>
                                         </div>
                                         <div className={styles.itemActions}>
-                                            <span className={styles.itemPrice}>{item.price}$</span>
+                                            <span className={styles.itemPrice}>{formatPrice(item.price)}</span>
                                             <button
                                                 className={styles.removeBtn}
                                                 onClick={(e) => {
@@ -78,7 +82,7 @@ const CheckoutPage = () => {
                                                     removeFromCart(item.id);
                                                 }}
                                             >
-                                                <img width="36" height="36" src={trash} alt="Remove" />
+                                                <img width="36" height="36" src={trash} alt={t('common.remove')} />
                                             </button>
                                         </div>
                                     </div>
@@ -92,24 +96,24 @@ const CheckoutPage = () => {
                 <div className={styles.paymentColumn}>
                     <form className={styles.paymentForm} onSubmit={handlePay}>
                         <div className={styles.formGroup}>
-                            <label htmlFor="name">User's name</label>
-                            <input type="text" id="name" required placeholder="Kira Kudo" />
+                            <label htmlFor="checkout-name">{t('checkout.buyer')}</label>
+                            <input type="text" id="checkout-name" value={user?.name || ''} readOnly />
                         </div>
                         <div className={styles.formGroup}>
-                            <label htmlFor="email">Email</label>
-                            <input type="email" id="email" required placeholder="kudo.kira@gmail.com" />
+                            <label htmlFor="checkout-email">{t('checkout.email')}</label>
+                            <input type="email" id="checkout-email" value={user?.email || ''} readOnly />
                         </div>
 
                         <div className={styles.subtotal}>
-                            <span className={styles.subtotalText}>Subtotal</span>
-                            <span>{subtotal}$</span>
+                            <span className={styles.subtotalText}>{t('common.subtotal')}</span>
+                            <span>{formatPrice(subtotal)}</span>
                         </div>
                         <button
                             type="submit"
                             className={styles.payBtn}
                             disabled={cartItems.length === 0}
                         >
-                            Pay with
+                            {t('checkout.pay')}
                         </button>
                     </form>
                 </div>
