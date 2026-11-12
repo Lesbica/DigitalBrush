@@ -6,6 +6,7 @@ import plusIcon from "../../../../../assets/icons/plusIcon.svg";
 import arrowIcon from "../../../../../assets/icons/arrowIcon.svg";
 import uploadIconPlaceholder from "../../../../../assets/image-placeholder-icon.svg";
 import {useAuth} from "../../../../../context/AuthContext";
+import { useToast } from '../../../../../context/ToastContext';
 
 const AVAILABLE_STYLES = [
     "Retro", "Psychedelia", "Minimalism", "Cyberpunk", "Realism", "Abstract", "Pop Art"
@@ -16,6 +17,7 @@ const AVAILABLE_LANGUAGES = [
 ];
 
 function ProfileSettings({user}) {
+    const toast = useToast();
     const {refresh} = useAuth();
     const fileInputRef = useRef(null);
 
@@ -150,7 +152,7 @@ function ProfileSettings({user}) {
 
             if (response.data.success) {
                 await refresh();
-                alert("Profile updated successfully!");
+                toast.success("Profile updated successfully!");
             }
         } catch (error) {
             console.error("Error updating profile:", error);
@@ -161,10 +163,10 @@ function ProfileSettings({user}) {
                 } else if (msg.includes("email")) {
                     setErrors({email: error.response.data.message});
                 } else {
-                    alert(error.response.data.message);
+                    toast.error(error.response.data.message);
                 }
             } else {
-                alert("Failed to update profile. Please try again.");
+                toast.error("Failed to update profile. Please try again.");
             }
         }
     };

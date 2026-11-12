@@ -6,6 +6,7 @@ import ImageViewer from "../../../../../ArtCard/ImageViewer/ImageViewer";
 import CommissionModalDetails from "../../../../../Commission/CommissionModals/CommissionModalDetails";
 import ReviewBox from './ReviewBox';
 import { useSocket, useCommissionRoom } from '../../../../../../context/SocketContext';
+import { useToast } from '../../../../../../context/ToastContext';
 // Іконки
 const CheckIcon = () => (<svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" /></svg>);
 const CrossIcon = () => (<svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" /></svg>);
@@ -23,6 +24,7 @@ const mapServerMsg = (m) => {
 };
 
 const CommissionChat = ({ commissionId, user, onBack }) => {
+    const toast = useToast();
     const [commission, setCommission] = useState(null);
     const [loading, setLoading] = useState(true);
     const [status, setStatus] = useState('Sketch');
@@ -247,7 +249,7 @@ const CommissionChat = ({ commissionId, user, onBack }) => {
             // Optional: limit file size (e.g., 5MB)
             const MAX_SIZE = 5 * 1024 * 1024;
             if (file.size > MAX_SIZE) {
-                alert('File is too large. Max 5MB');
+                toast.error('File is too large. Max 5MB');
                 return;
             }
 
@@ -266,11 +268,11 @@ const CommissionChat = ({ commissionId, user, onBack }) => {
                         setStageDecision(null);
                     } else {
                         console.error('Stage submit failed', res.data);
-                        alert('Failed to submit for review');
+                        toast.error('Failed to submit for review');
                     }
                 } catch (err) {
                     console.error('Error submitting stage:', err);
-                    alert('Error submitting for review');
+                    toast.error('Error submitting for review');
                 } finally {
                     setSubmittingStage(false);
                 }
@@ -289,7 +291,7 @@ const CommissionChat = ({ commissionId, user, onBack }) => {
         if (!file) return;
         const MAX_SIZE = 5 * 1024 * 1024;
         if (file.size > MAX_SIZE) {
-            alert('File is too large. Max 5MB');
+            toast.error('File is too large. Max 5MB');
             return;
         }
         const reader = new FileReader();
@@ -310,11 +312,11 @@ const CommissionChat = ({ commissionId, user, onBack }) => {
                     setMessages(prev => prev.some(x => String(x.id) === String(mapped.id)) ? prev : [...prev, mapped]);
                     scrollToBottom();
                 } else {
-                    alert('Failed to upload image');
+                    toast.error('Failed to upload image');
                 }
             } catch (err) {
                 console.error('Chat image upload error:', err);
-                alert('Error uploading image');
+                toast.error('Error uploading image');
             }
         };
         reader.readAsDataURL(file);
@@ -405,7 +407,7 @@ const CommissionChat = ({ commissionId, user, onBack }) => {
             setStatus(newStatus); // Якщо у вас є окремий стейт для статусу
         } catch (error) {
             console.error("Failed to update status", error);
-            alert("Error updating status");
+            toast.error("Error updating status");
         }
     };
 
@@ -439,11 +441,11 @@ const CommissionChat = ({ commissionId, user, onBack }) => {
             if (res.data && res.data.checkoutUrl) {
                 window.location.href = res.data.checkoutUrl;
             } else {
-                alert('Error creating payment session');
+                toast.error('Error creating payment session');
             }
         } catch (err) {
             console.error('Payment error:', err);
-            alert('Failed to initiate payment');
+            toast.error('Failed to initiate payment');
         }
     };
 

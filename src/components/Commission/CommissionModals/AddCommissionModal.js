@@ -4,12 +4,14 @@ import closeIcon from '../../../assets/closeCross.svg';
 import addImageIcon from '../../../assets/image-placeholder-icon.svg';
 import axios from "axios";
 import { CATEGORIES } from '../../../constants/categories';
+import { useToast } from '../../../context/ToastContext';
 
 const categories = CATEGORIES;
 const mockStyles = ["Retro", "Cyberpunk", "Fantasy", "Minimalism", "3D Render"];
 const mockFormats = ["PNG", "JPG", "Figma", "PSD", "AI"];
 
 const AddCommissionModal = ({ onClose, targetCreatorId = null }) => {
+    const toast = useToast();
     const [name, setName] = useState('');
     const [category, setCategory] = useState(categories[0]);
     const [style, setStyle] = useState(mockStyles[0]);
@@ -61,7 +63,7 @@ const AddCommissionModal = ({ onClose, targetCreatorId = null }) => {
         const currentImageCount = images.length;
         const allowedFiles = files.slice(0, MAX_IMAGES - currentImageCount);
         if (allowedFiles.length < files.length) {
-            alert(`You can only upload a maximum of ${MAX_IMAGES} images in total.`);
+            toast.error(`You can only upload a maximum of ${MAX_IMAGES} images in total.`);
         }
         if (allowedFiles.length === 0) {
             e.target.value = null;
@@ -140,7 +142,7 @@ const AddCommissionModal = ({ onClose, targetCreatorId = null }) => {
 
             if (response.data.success) {
                 // Показуємо повідомлення залежно від типу
-                alert(targetCreatorId ? "Direct commission request sent!" : "Public commission created!");
+                toast.success(targetCreatorId ? "Direct commission request sent!" : "Public commission created!");
                 onClose();
                 window.location.reload();
             }
@@ -148,9 +150,9 @@ const AddCommissionModal = ({ onClose, targetCreatorId = null }) => {
             console.error("Error creating commission:", error);
             // Виводимо конкретну помилку з бекенду (наприклад, про самозамовлення)
             if (error.response && error.response.data && error.response.data.message) {
-                alert("Error: " + error.response.data.message);
+                toast.error("Error: " + error.response.data.message);
             } else {
-                alert("Server error. Check console for details.");
+                toast.error("Server error. Check console for details.");
             }
         } finally {
             setSubmitting(false);

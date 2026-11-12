@@ -3,10 +3,12 @@ import {useNavigate} from "react-router-dom";
 import styles from "./Register.module.css";
 import {EyeIcon, EyeSlashIcon} from "./AuthIcons";
 import axios from 'axios';
+import { useToast } from '../../../context/ToastContext';
 
 // Registration: the server creates the account and emails a confirmation link
 // (the account becomes active after the link is opened).
 function Register({toggleForm}) {
+    const toast = useToast();
     const navigate = useNavigate();
     const goBack = toggleForm || (() => navigate('/profile'));
 
@@ -32,7 +34,7 @@ function Register({toggleForm}) {
             if (data.verificationRequired) {
                 setStep(2);
             } else {
-                alert("Registration successful! You can log in now.");
+                toast.success("Registration successful! You can log in now.");
                 goBack();
             }
         } catch (err) {

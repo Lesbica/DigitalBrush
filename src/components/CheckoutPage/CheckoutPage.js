@@ -5,8 +5,10 @@ import { useNavigate } from 'react-router-dom';
 import trash from '../../assets/trashBin.svg'
 import axios from "axios";
 import { useModal } from '../../context/ModalContext';
+import { useToast } from '../../context/ToastContext';
 
 const CheckoutPage = () => {
+    const toast = useToast();
     const { cartItems, removeFromCart } = useCart();
     const { openModal } = useModal();
     const navigate = useNavigate();
@@ -37,11 +39,11 @@ const CheckoutPage = () => {
                 window.location.href = url;
             } else {
                 console.error('Fondy response:', res.data);
-                alert('Failed to get payment URL');
+                toast.error('Failed to get payment URL');
             }
         } catch (err) {
             console.error('Payment error:', err);
-            alert('Error while creating payment');
+            toast.error('Error while creating payment');
         }
     };
 

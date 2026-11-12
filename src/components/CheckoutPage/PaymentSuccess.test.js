@@ -3,6 +3,7 @@ import { MemoryRouter } from 'react-router-dom';
 import axios from 'axios';
 import { CartProvider, useCart } from '../Cart/CartContext';
 import PaymentSuccess from './PaymentSuccess';
+import { ToastProvider } from '../../context/ToastContext';
 
 vi.mock('axios');
 
@@ -15,10 +16,12 @@ function CartCount() {
 
 const renderPage = (search) => render(
     <MemoryRouter initialEntries={[`/success${search}`]}>
-        <CartProvider>
-            <PaymentSuccess />
-            <CartCount />
-        </CartProvider>
+        <ToastProvider>
+            <CartProvider>
+                <PaymentSuccess />
+                <CartCount />
+            </CartProvider>
+        </ToastProvider>
     </MemoryRouter>
 );
 

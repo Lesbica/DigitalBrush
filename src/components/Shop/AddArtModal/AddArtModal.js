@@ -3,6 +3,7 @@ import styles from './AddArtModal.module.css';
 import axios from "axios";
 import closeIcon from '../../../assets/closeCross.svg';
 import addImageIcon from '../../../assets/image-placeholder-icon.svg';
+import { useToast } from '../../../context/ToastContext';
 
 const getOptions = (config, title) => {
   const section = config.find(f => f.title === title);
@@ -18,6 +19,7 @@ const AddArtModal = ({
   filterConfig,
   existingPaintingId = null
 }) => {
+  const toast = useToast();
   const styleOptions = getOptions(filterConfig, "STYLE");
   const formatOptions = ["PNG", "JPG", "JPEG", "WEBP", "SVG"];
 
@@ -212,7 +214,7 @@ const AddArtModal = ({
 
     try {
       if (existingPaintingId) {
-        alert('Оновлення картини наразі не підтримується API. Будь ласка, створіть нову картину.');
+        toast.info('Оновлення картини наразі не підтримується API. Будь ласка, створіть нову картину.');
         setSubmitting(false);
         return;
       }
@@ -247,11 +249,11 @@ const AddArtModal = ({
         onClose();
         window.location.reload();
       } else {
-        alert(res.data.message || "Failed to save");
+        toast.error(res.data.message || "Failed to save");
       }
     } catch (err) {
       console.error(err);
-      alert("Error saving artwork");
+      toast.error("Error saving artwork");
     } finally {
       setSubmitting(false);
     }

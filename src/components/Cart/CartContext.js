@@ -1,4 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { useToast } from '../../context/ToastContext';
 
 const CartContext = createContext(null);
 const STORAGE_KEY = 'digitalbrush.cart';
@@ -21,6 +22,7 @@ function loadCart() {
 }
 
 export const CartProvider = ({ children }) => {
+    const toast = useToast();
     const [cartItems, setCartItems] = useState(loadCart);
 
     useEffect(() => {
@@ -36,13 +38,13 @@ export const CartProvider = ({ children }) => {
     // Returns false when the item was already in the basket
     const addToCart = useCallback((item) => {
         if (isInCart(item.id)) {
-            alert('This item is already in your basket.');
+            toast.info('This item is already in your basket.');
             return false;
         }
         setCartItems(prev => [...prev, toCartItem(item)]);
-        alert('Item added to basket!');
+        toast.success('Item added to basket!');
         return true;
-    }, [isInCart]);
+    }, [isInCart, toast]);
 
     const removeFromCart = useCallback((id) => {
         setCartItems(prev => prev.filter(item => String(item.id) !== String(id)));

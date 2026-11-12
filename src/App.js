@@ -6,23 +6,26 @@ import { CartProvider } from './components/Cart/CartContext';
 import { ModalProvider } from './context/ModalContext';
 import { AuthProvider } from './context/AuthContext';
 import { SocketProvider } from './context/SocketContext';
+import { ToastProvider } from './context/ToastContext';
 
 function App() {
     return (
         <BrowserRouter>
-            <AuthProvider>
-                <SocketProvider>
-                    <CartProvider>
-                        <ModalProvider>
-                            <div className="App">
-                                <Nav />
-                                <AppRouter />
-                                <Footer />
-                            </div>
-                        </ModalProvider>
-                    </CartProvider>
-                </SocketProvider>
-            </AuthProvider>
+            <ToastProvider>
+                <AuthProvider>
+                    <SocketProvider>
+                        <CartProvider>
+                            <ModalProvider>
+                                <div className="App">
+                                    <Nav />
+                                    <AppRouter />
+                                    <Footer />
+                                </div>
+                            </ModalProvider>
+                        </CartProvider>
+                    </SocketProvider>
+                </AuthProvider>
+            </ToastProvider>
         </BrowserRouter>
     );
 }

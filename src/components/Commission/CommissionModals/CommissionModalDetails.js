@@ -4,10 +4,12 @@ import closeIcon from '../../../assets/closeCross.svg';
 import axios from 'axios';
 import ImageViewer from "../../ArtCard/ImageViewer/ImageViewer";
 import logo from '../../../assets/logo.svg'
+import { useToast } from '../../../context/ToastContext';
 
 // respondAsArtist: artist of a direct open commission can accept or decline it
 // canCancel: customer can cancel an unpaid commission; onStatusChange(newStatus) refreshes the caller
 const CommissionModalDetails = ({ commission, onClose, disableTake = false, respondAsArtist = false, canCancel = false, onStatusChange }) => {
+    const toast = useToast();
 
     const [isLoading, setIsLoading] = useState(true);
     const [details, setDetails] = useState(() => ({
@@ -145,7 +147,7 @@ const CommissionModalDetails = ({ commission, onClose, disableTake = false, resp
             );
 
             if (response.data.success) {
-                alert("Commission accepted successfully!");
+                toast.success("Commission accepted successfully!");
                 if (onStatusChange) onStatusChange('Sketch');
                 onClose();
             }
@@ -153,9 +155,9 @@ const CommissionModalDetails = ({ commission, onClose, disableTake = false, resp
             console.error(err);
             // Якщо сесія прострочена, бекенд поверне 401, і ми це обробимо тут
             if (err.response && err.response.status === 401) {
-                alert("Please log in to accept commissions.");
+                toast.info("Please log in to accept commissions.");
             } else {
-                alert("Failed to accept commission: " + (err.response?.data?.message || err.message));
+                toast.error("Failed to accept commission: " + (err.response?.data?.message || err.message));
             }
         }
     };
@@ -178,7 +180,7 @@ const CommissionModalDetails = ({ commission, onClose, disableTake = false, resp
             if (onStatusChange) onStatusChange(newStatus);
             onClose();
         } catch (err) {
-            alert(err.response?.data?.message || 'Could not update the commission');
+            toast.error(err.response?.data?.message || 'Could not update the commission');
         }
     };
 

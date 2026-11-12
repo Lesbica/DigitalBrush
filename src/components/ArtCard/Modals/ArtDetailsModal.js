@@ -5,12 +5,14 @@ import closeIcon from '../../../assets/closeCross.svg';
 import ImageViewer from "../ImageViewer/ImageViewer";
 import { useCart } from '../../Cart/CartContext';
 import { useNavigate } from "react-router-dom";
+import { useToast } from '../../../context/ToastContext';
 
 const lerp = (current, target, factor) => {
     return current * (1 - factor) + target * factor;
 };
 
 const ArtDetailsModal = ({art, onClose, isLoggedIn}) => {
+    const toast = useToast();
 
     const [isViewerOpen, setIsViewerOpen] = useState(false);
     const [viewerInitialIndex, setViewerInitialIndex] = useState(0);
@@ -68,7 +70,7 @@ const ArtDetailsModal = ({art, onClose, isLoggedIn}) => {
     const [likeLoading, setLikeLoading] = useState(false);
     const handleLikeClick = async () => {
         if (!isLoggedIn) {
-            alert('Увійдіть, щоб ставити лайки.');
+            toast.info('Увійдіть, щоб ставити лайки.');
             return;
         }
         if (!art?.id || likeLoading) return;
@@ -172,7 +174,7 @@ const ArtDetailsModal = ({art, onClose, isLoggedIn}) => {
 
     const handleBuyClick = () => {
         if (!isLoggedIn) {
-            alert("Please sign in to add items to your basket.");
+            toast.info("Please sign in to add items to your basket.");
             onClose();
             return;
         }
@@ -218,7 +220,7 @@ const ArtDetailsModal = ({art, onClose, isLoggedIn}) => {
             window.URL.revokeObjectURL(blobUrl);
         } catch (e) {
             console.error('Download failed:', e);
-            alert('Failed to download file. Please try again later.');
+            toast.error('Failed to download file. Please try again later.');
         }
     };
 

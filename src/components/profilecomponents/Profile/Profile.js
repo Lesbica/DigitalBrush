@@ -7,11 +7,13 @@ import ForgotPassword from '../Login/ForgotPassword/ForgotPassword';
 import styles from './Profile.module.css';
 import DigitalBrushProfile from './UserProfile/DigitalBrushProfile';
 import { useAuth } from '../../../context/AuthContext';
+import { useToast } from '../../../context/ToastContext';
 
 // Only same-site paths are allowed as a post-login destination
 const safeNext = (value) => (value && value.startsWith('/') && !value.startsWith('//') ? value : null);
 
 function Profile() {
+    const toast = useToast();
     const { user, loading, login, logout } = useAuth();
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
@@ -33,17 +35,19 @@ function Profile() {
         } catch (error) {
             const data = error.response?.data;
             if (data?.code === 'EMAIL_NOT_VERIFIED') {
-                if (window.confirm(`${data.message}\n\nSend the confirmation link again?`)) {
+                const email = credentials.email;
+                const resend = async () => {
                     try {
-                        const res = await axios.post('/auth/resend-verification', { email: credentials.email });
-                        alert(res.data.message);
+                        const res = await axios.post('/auth/resend-verification', { email });
+                        toast.success(res.data.message);
                     } catch {
-                        alert('Could not send the link. Try again later.');
+                        toast.error('Could not send the link. Try again later.');
                     }
-                }
+                };
+                toast.error(data.message, { action: { label: 'Send the link again', onClick: resend } });
                 return;
             }
-            alert(data?.message || 'Login failed');
+            toast.error(data?.message || 'Login failed');
         }
     };
 
