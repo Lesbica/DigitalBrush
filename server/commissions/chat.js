@@ -5,6 +5,7 @@ const { MESSAGE_COLUMNS, rowToMessage } = require('../utils/chatHelpers');
 const { requireCommissionParticipant, getSessionUserId } = require('../utils/commissionAccess');
 const { isStage, normalizeStatus, reviewStage } = require('../services/commissionStages');
 const events = require('../services/commissionEvents');
+const { commissionEvents: notifyCommission } = require('../services/notifications');
 const { detectImageMime: detectRealImage } = require('../config/multerConfig');
 
 const router = express.Router();
@@ -109,6 +110,11 @@ router.post('/:commissionId/submit-stage', async (req, res) => {
       logger.warn('[chat] socket emit failed (stageSubmitted):', e.message);
     }
 
+    await notifyCommission.stageSubmitted(
+      { Commission_ID: Number(commissionId), Customer_ID: customerId, Creator_ID: creatorId },
+      normalizeStatus(commissionStatus)
+    );
+
     res.status(201).json({ success: true, message: out });
   } catch (err) {
     logger.error('[chat] submit-stage error:', err);
@@ -137,6 +143,7 @@ router.post('/:commissionId/review', requireCommissionParticipant(), async (req,
       return res.status(result.status).json({ success: false, message: result.error });
     }
     events.stageReviewed(req.commission, { messageId: result.messageId, decision, nextStatus: result.nextStatus });
+    await notifyCommission.stageReviewed(req.commission, { decision, nextStatus: result.nextStatus });
     res.status(201).json({ success: true, decision, messageId: Number(result.messageId), nextStatus: result.nextStatus });
   } catch (err) {
     logger.error('[chat] review error:', err);
@@ -209,6 +216,7 @@ router.post('/:commissionId/messages', async (req, res) => {
             const { getIO } = require('../socket');
             const io = getIO();
             io.to(`commission_${commissionId}`).emit('newMessage', out);
+            await notifyCommission.message({ Commission_ID: Number(commissionId), Customer_ID: customerId, Creator_ID: creatorId }, senderId, type === 'text' ? content : null);
           } catch (e) {
             logger.warn('[chat] socket emit failed:', e.message);
           }
@@ -232,6 +240,7 @@ router.post('/:commissionId/messages', async (req, res) => {
         const { getIO } = require('../socket');
         const io = getIO();
         io.to(`commission_${commissionId}`).emit('newMessage', out);
+            await notifyCommission.message({ Commission_ID: Number(commissionId), Customer_ID: customerId, Creator_ID: creatorId }, senderId, type === 'text' ? content : null);
       } catch (e) {
         logger.warn('[chat] socket emit failed:', e.message);
       }

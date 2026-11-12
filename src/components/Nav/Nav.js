@@ -4,6 +4,7 @@ import styles from "./Nav.module.css";
 import logo from "../../assets/mainIconNavbar.svg";
 import {useCart} from "../Cart/CartContext";
 import BasketModal from "./BasketModal/BasketModal";
+import NotificationBell from "./NotificationBell/NotificationBell";
 
 export function Navbar({ isLoggedIn, onViewArtDetails }) {
     const navigate = useNavigate();
@@ -98,6 +99,7 @@ export function Navbar({ isLoggedIn, onViewArtDetails }) {
 
                     <div className={styles.navbarRight}>
                         <div className={styles.iconsLeft}>
+                            {isLoggedIn && <NotificationBell />}
                             {isLoggedIn && (
                                 <div
                                     className={styles.settingsAndBasket}

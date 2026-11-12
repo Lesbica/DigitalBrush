@@ -5,6 +5,7 @@ const logger = require('../utils/logger');
 const auth = require('../middleware/authMiddleware');
 const { getSessionUserId } = require('../utils/commissionAccess');
 const { avatarUrl } = require('../utils/imageUrls');
+const { commissionEvents: notifyCommission } = require('../services/notifications');
 
 const router = express.Router();
 
@@ -42,6 +43,7 @@ router.post('/', auth, async (req, res) => {
             'INSERT INTO reviews (Commission_ID, Artist_ID, Customer_ID, Rating, Text) VALUES (?, ?, ?, ?, ?)',
             [commissionId, c.Creator_ID, userId, rating, text || null]
         );
+        await notifyCommission.reviewReceived({ Commission_ID: commissionId, Customer_ID: userId, Creator_ID: c.Creator_ID }, rating);
         res.status(201).json({ success: true, reviewId: result.insertId });
     } catch (err) {
         if (err && err.code === 'ER_DUP_ENTRY') {

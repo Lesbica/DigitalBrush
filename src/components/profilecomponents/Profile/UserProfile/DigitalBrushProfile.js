@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import styles from "./DigitalBrushProfile.module.css";
 import MyImages from "./MyImages/MyImages";
 import ProfileSettings from "./SettingsProfile/SettingsProfile";
@@ -44,6 +45,20 @@ function DigitalBrushProfile({ user, onLogout }) {
     const [activeChatCommissionId, setActiveChatCommissionId] = useState(null);
 
     const [totalLikes, setTotalLikes] = useState(0);
+
+    // Links from notifications: /profile?commission=<id> opens that chat, /profile?tab=wallet a tab
+    const [searchParams, setSearchParams] = useSearchParams();
+    useEffect(() => {
+        const commissionId = searchParams.get('commission');
+        const tab = searchParams.get('tab');
+        if (commissionId) {
+            setActiveChatCommissionId(Number(commissionId));
+            setActiveTab('chat');
+        } else if (tab && ['settings', 'images', 'commission', 'wallet'].includes(tab)) {
+            setActiveTab(tab);
+        }
+        if (commissionId || tab) setSearchParams({}, { replace: true });
+    }, [searchParams, setSearchParams]);
 
     const handleOpenChat = (commissionId) => {
         setActiveChatCommissionId(commissionId);

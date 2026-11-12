@@ -16,6 +16,7 @@ const {
 const express = require('express');
 const { normalizeStatus, TERMINAL, autoApproveDays } = require('../services/commissionStages');
 const events = require('../services/commissionEvents');
+const { commissionEvents: notifyCommission } = require('../services/notifications');
 const router = express.Router();
 
 function validateCommissionFields(body) {
@@ -111,6 +112,10 @@ router.post(
                 file('referenceImage'), file('image2'), file('image3'), file('image4'), file('image5'),
                 commissionType, user.id, targetCreator
             ]);
+
+            if (targetCreator) {
+                await notifyCommission.newDirectOrder({ Commission_ID: result.insertId, Customer_ID: user.id, Creator_ID: targetCreator, Title: values.title });
+            }
 
             res.status(201).json({
                 success: true,
@@ -347,6 +352,9 @@ router.patch('/:id/accept', auth, requireArtist, async (req, res) => {
             // socket not initialized — игнорируем
         }
 
+        const accepted = await loadCommissionAccess(id);
+        if (accepted) await notifyCommission.accepted(accepted);
+
         res.json({ success: true, message: `Commission ${id} accepted by artist ${creatorId}` });
     } catch (err) {
         logger.error('Error accepting commission:', err);
@@ -371,6 +379,7 @@ router.patch('/:id/decline', requireCommissionParticipant('id'), async (req, res
         );
         if (r.affectedRows === 0) return res.status(409).json({ success: false, message: 'Commission is no longer open' });
         events.statusChanged(commission, 'Declined');
+        await notifyCommission.declined(commission);
         res.json({ success: true, status: 'Declined' });
     } catch (err) {
         logger.error('Decline commission error:', err);
@@ -401,6 +410,7 @@ router.patch('/:id/status', requireCommissionParticipant('id'), async (req, res)
         await db.query(`UPDATE commissions SET Status = 'Cancelled', Updated_At = NOW() WHERE Commission_ID = ?`, [id]);
 
         events.statusChanged(commission, 'Cancelled');
+        await notifyCommission.cancelled(commission, req.userId);
 
         res.json({ success: true, status: 'Cancelled' });
     } catch (err) {
