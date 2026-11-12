@@ -3,9 +3,9 @@ import styles from './AddCommissionModal.module.css';
 import closeIcon from '../../../assets/closeCross.svg';
 import addImageIcon from '../../../assets/image-placeholder-icon.svg';
 import axios from "axios";
-import url from '../../../URL';
+import { CATEGORIES } from '../../../constants/categories';
 
-const categories = ["2D AVATARS", "3D MODELS", "BOOKS", "ANIME", "ICONS", "GAMES", "MOCKUPS", "UI/UX"];
+const categories = CATEGORIES;
 const mockStyles = ["Retro", "Cyberpunk", "Fantasy", "Minimalism", "3D Render"];
 const mockFormats = ["PNG", "JPG", "Figma", "PSD", "AI"];
 

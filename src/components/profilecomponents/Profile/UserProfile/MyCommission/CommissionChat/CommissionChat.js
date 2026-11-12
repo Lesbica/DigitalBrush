@@ -5,7 +5,6 @@ import placeholderImg from '../../../../../../assets/image-placeholder-icon.svg'
 import ImageViewer from "../../../../../ArtCard/ImageViewer/ImageViewer";
 import CommissionModalDetails from "../../../../../Commission/CommissionModals/CommissionModalDetails";
 import { io } from 'socket.io-client';
-import url from '../../../../../../URL';
 import ReviewBox from './ReviewBox';
 import { SOCKET_BASE } from '../../../../../../config';
 // Іконки

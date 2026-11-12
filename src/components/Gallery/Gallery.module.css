@@ -84,7 +84,7 @@
     position: relative;
     width: 100%;
     height: 92vh;
-    background-image: url("../../../public/MainImg.png");
+    background-image: url("/MainImg.webp");
     background-size: contain;
     background-repeat: no-repeat;
     background-position: top center;

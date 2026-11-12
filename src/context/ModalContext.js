@@ -1,7 +1,6 @@
 import React, { createContext, useContext, useState } from 'react';
 import axios from 'axios';
 import ArtDetailsModal from '../components/ArtCard/Modals/ArtDetailsModal';
-import URL from '../URL';
 
 const ModalContext = createContext();
 

@@ -1,7 +1,6 @@
 import React from 'react';
 import styles from './ArtCard.module.css';
 import { useModal } from '../../context/ModalContext'; // Імпортуємо хук
-import URL from '../../URL';
 
 function ArtCard(props) {
     const { openModal } = useModal(); // Дістаємо функцію відкриття
@@ -29,7 +28,7 @@ function ArtCard(props) {
     };
 
     const {
-        imageUrl = '/images/placeholder.png',
+        imageUrl = '/images/placeholder.svg',
         title = '',
         artistName = '',
         artistStyle = '',

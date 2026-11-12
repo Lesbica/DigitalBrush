@@ -70,7 +70,7 @@ const BasketModal = ({ onClose, onViewItemDetails, position}) => {
                                      onViewItemDetails(item);
                                  }}
                             >
-                                <img src={item.imageUrl || "/images/placeholder.png"} alt={item.title} className={styles.itemImage} />
+                                <img src={item.imageUrl || "/images/placeholder.svg"} alt={item.title} className={styles.itemImage} />
 
                                 <div className={styles.itemInfo}>
 

@@ -3,7 +3,6 @@ import styles from './AddArtModal.module.css';
 import axios from "axios";
 import closeIcon from '../../../assets/closeCross.svg';
 import addImageIcon from '../../../assets/image-placeholder-icon.svg';
-// import URL from '../../../URL';
 
 const getOptions = (config, title) => {
   const section = config.find(f => f.title === title);

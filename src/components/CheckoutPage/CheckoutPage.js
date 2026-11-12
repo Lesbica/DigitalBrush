@@ -4,7 +4,6 @@ import { useCart } from '../Cart/CartContext';
 import { useNavigate } from 'react-router-dom';
 import trash from '../../assets/trashBin.svg'
 import axios from "axios";
-import url from '../../URL';
 
 const CheckoutPage = ({ onViewArtDetails }) => {
     const { cartItems, removeFromCart } = useCart();
@@ -59,7 +58,7 @@ const CheckoutPage = ({ onViewArtDetails }) => {
                                     key={item.id}
                                     onClick={() => onViewArtDetails(item)}
                                 >
-                                    <img src={item.imageUrl || "/images/placeholder.png"} alt={item.title} className={styles.itemImage} />
+                                    <img src={item.imageUrl || "/images/placeholder.svg"} alt={item.title} className={styles.itemImage} />
                                     <div className={styles.itemInfo}>
                                         <div className={styles.infoText}>
                                             <span className={styles.itemTitle}>{item.title}</span>

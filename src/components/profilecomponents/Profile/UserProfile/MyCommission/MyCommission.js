@@ -179,10 +179,10 @@ function MyCommission({ user, onOpenChat}) {
                             <div className={styles.imagePriceWrapper}>
                                 <div className={styles.imageWrapper}>
                                     <img
-                                        src={item.ReferenceImage || "/images/placeholder.png"}
+                                        src={item.ReferenceImage || "/images/placeholder.svg"}
                                         alt={item.Title}
                                         className={styles.cardImage}
-                                        onError={(e) => { e.target.src = "/images/placeholder.png"; }}
+                                        onError={(e) => { e.target.src = "/images/placeholder.svg"; }}
                                     />
                                 </div>
                                 <div className={styles.priceOverlay}>

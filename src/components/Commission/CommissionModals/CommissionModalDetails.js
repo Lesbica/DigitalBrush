@@ -4,7 +4,6 @@ import closeIcon from '../../../assets/closeCross.svg';
 import axios from 'axios';
 import ImageViewer from "../../ArtCard/ImageViewer/ImageViewer";
 import logo from '../../../assets/logo.svg'
-import URL from "../../../URL";
 
 // respondAsArtist: artist of a direct open commission can accept or decline it
 // canCancel: customer can cancel an unpaid commission; onStatusChange(newStatus) refreshes the caller
@@ -127,8 +126,8 @@ const CommissionModalDetails = ({ commission, onClose, disableTake = false, resp
     }
 
     const onImageError = (e) => {
-        if (!e.target.src.endsWith("/images/placeholder.png")) {
-            e.target.src = "/images/placeholder.png";
+        if (!e.target.src.endsWith("/images/placeholder.svg")) {
+            e.target.src = "/images/placeholder.svg";
         }
     };
 
@@ -201,7 +200,7 @@ const CommissionModalDetails = ({ commission, onClose, disableTake = false, resp
                         // або .singleImage, якщо є ТІЛЬКИ головне зображення
                         <div className={hasMultipleImages ? styles.imageColumn : styles.singleImageWrapper}>
                             <img
-                                src={mainImage || "/images/placeholder.png"}
+                                src={mainImage || "/images/placeholder.svg"}
                                 alt={commission.title}
                                 // Використовуємо різні класи для компонування
                                 className={hasMultipleImages ? styles.image : styles.singleImage}
@@ -215,7 +214,7 @@ const CommissionModalDetails = ({ commission, onClose, disableTake = false, resp
                                     {previewImages.map((img, index) => (
                                         <img
                                             key={index}
-                                            src={img || "/images/placeholder.png"}
+                                            src={img || "/images/placeholder.svg"}
                                             alt={`preview ${index + 1}`}
                                             // .activePreview більше не потрібен
                                             className={styles.previewImg}

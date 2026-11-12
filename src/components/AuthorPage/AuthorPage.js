@@ -11,7 +11,7 @@ import infoIcon from '../../assets/infoIcon.svg'
 import globeIcon from '../../assets/icons/globeIcon.svg'
 import heartIcon from '../../assets/icons/heartIcon.svg'
 import AddCommissionModal from '../Commission/CommissionModals/AddCommissionModal';
-import URL from '../../URL';
+import { CATEGORIES } from '../../constants/categories';
 
 // Конфіг
 const additionalFilterConfig = [
@@ -27,7 +27,7 @@ const additionalFilterConfig = [
     }
 ];
 
-const categories = ['ICONS', 'UI/UX', 'ADVERTISING', 'BRENDING'];
+const categories = CATEGORIES;
 
 const AuthorPage = () => {
     const { id } = useParams();

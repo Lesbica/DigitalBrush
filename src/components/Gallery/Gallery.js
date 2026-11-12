@@ -3,20 +3,19 @@ import styles from "./Gallery.module.css";
 import { useNavigate } from "react-router-dom";
 import ArtCard from '../ArtCard/ArtCard';
 import axios from 'axios';
-import url from '../../URL';
 
 const placeholderFeaturedCards = [
-    { id: 'card-back', imageUrl: '/images/card-center.png', className: styles.cardBack, title: "We build the", likes: "253.5k" },
-    { id: 'card-middle', imageUrl: '/images/card-right.png', className: styles.cardMiddle, title: "We build the", likes: "253.5k" },
-    { id: 'card-front', imageUrl: '/images/card-left.png', className: styles.cardFront, title: "We build the", likes: "253.5k" }
+    { id: 'card-back', imageUrl: '/images/card-center.webp', className: styles.cardBack, title: "We build the", likes: "253.5k" },
+    { id: 'card-middle', imageUrl: '/images/card-right.webp', className: styles.cardMiddle, title: "We build the", likes: "253.5k" },
+    { id: 'card-front', imageUrl: '/images/card-left.webp', className: styles.cardFront, title: "We build the", likes: "253.5k" }
 ];
 
 const placeholderScatteredImages = [
-    { id: 'scatter-1', imageUrl: '/images/image1.png', className: styles.image1 },
-    { id: 'scatter-2', imageUrl: '/images/image5.png', className: styles.image2 },
-    { id: 'scatter-3', imageUrl: '/images/image4.png', className: styles.image3 },
-    { id: 'scatter-4', imageUrl: '/images/image2.png', className: styles.image4 },
-    { id: 'scatter-5', imageUrl: '/images/image3.png', className: styles.image5 }
+    { id: 'scatter-1', imageUrl: '/images/image1.webp', className: styles.image1 },
+    { id: 'scatter-2', imageUrl: '/images/image5.webp', className: styles.image2 },
+    { id: 'scatter-3', imageUrl: '/images/image4.webp', className: styles.image3 },
+    { id: 'scatter-4', imageUrl: '/images/image2.webp', className: styles.image4 },
+    { id: 'scatter-5', imageUrl: '/images/image3.webp', className: styles.image5 }
 ];
 
 const Gallery = () => {
@@ -62,7 +61,7 @@ const Gallery = () => {
                         artistName: p.author_name || p.creatorName || 'Artist',
                         artistId: p.Creator_ID || p.creator_id || p.artistId || null,
                         description: p.Description || p.description || '',
-                        imageUrl: imageSrc || '/images/placeholder.png',
+                        imageUrl: imageSrc || '/images/placeholder.svg',
                         likes: p.likes ?? p.Likes ?? 0,
                         price: p.Price ?? p.price ?? '',
                         style: p.Style ?? p.style ?? '',

@@ -5,7 +5,6 @@ import closeIcon from '../../../assets/closeCross.svg';
 import ImageViewer from "../ImageViewer/ImageViewer";
 import { useCart } from '../../Cart/CartContext';
 import { useNavigate } from "react-router-dom";
-import URL from '../../../URL';
 
 const lerp = (current, target, factor) => {
     return current * (1 - factor) + target * factor;
@@ -240,7 +239,7 @@ const ArtDetailsModal = ({art, onClose, isLoggedIn}) => {
                                 alt={`${art.title} preview ${index + 1}`}
                                 className={styles.artImage}
                                 onError={(e) => {
-                                    e.target.src = "/images/placeholder.png";
+                                    e.target.src = "/images/placeholder.svg";
                                 }}
                                 onClick={() => openImageViewer(index)}
                             />

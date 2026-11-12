@@ -19,6 +19,7 @@ import plusIcon from "../../../../assets/icons/plusIcon.svg";
 import MyCommission from "./MyCommission/MyCommission";
 import AddArtModal from "../../../Shop/AddArtModal/AddArtModal";
 import AddCommissionModal from "../../../Commission/CommissionModals/AddCommissionModal";
+import { CATEGORIES } from '../../../../constants/categories';
 
 
 const filterConfig = [
@@ -31,10 +32,7 @@ const filterConfig = [
             ] }]}
 ];
 
-const categories = [
-    "2D AVATARS", "3D MODELS", "BOOKS", "ANIME", "ICONS", "GAMES", "MOCKUPS", "UI/UX",
-    "ADVERTISING", "BRENDING", "POSTER", "ARCHITECTURE", "FASHION", "SKETCH", "PHOTOGRAPHY"
-];
+const categories = CATEGORIES;
 
 function DigitalBrushProfile({ user, onLogout }) {
     // Стан для відстеження поточної вкладки

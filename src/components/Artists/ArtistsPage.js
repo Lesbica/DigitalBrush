@@ -9,13 +9,9 @@ import Pagination from '../hooks/Pagination/Pagination';
 import leftArrow from '../../assets/leftArrow.svg';
 import rightArrow from '../../assets/rightArrow.svg';
 import axios from 'axios';
-import URL from "../../URL";
+import { CATEGORIES } from '../../constants/categories';
 
-const categories = [
-    "2D AVATARS", "3D MODELS", "BOOKS", "ANIME", "ICONS", "GAMES",
-    "MOCKUPS", "UI/UX", "ADVERTISING", "BRENDING", "POSTER",
-    "ARCHITECTURE", "FASHION", "SKETCH", "PHOTOGRAPHY"
-];
+const categories = CATEGORIES;
 
 const artistFilterConfig = [
     { title: "SORT BY", options: [

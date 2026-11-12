@@ -8,7 +8,7 @@ import Pagination from '../hooks/Pagination/Pagination';
 import axios from 'axios';
 import AddArtModal from "./AddArtModal/AddArtModal";
 import logo from "../../assets/logo.svg";
-import URL from "../../URL";
+import { CATEGORIES } from '../../constants/categories';
 
 
 const shopFilterConfig = [
@@ -21,10 +21,7 @@ const shopFilterConfig = [
     ] }]}
 ];
 
-const categories = [
-    "2D AVATARS", "3D MODELS", "BOOKS", "ANIME", "ICONS", "GAMES", "MOCKUPS", "UI/UX",
-    "ADVERTISING", "BRENDING", "POSTER", "ARCHITECTURE", "FASHION", "SKETCH", "PHOTOGRAPHY"
-];
+const categories = CATEGORIES;
 
 const Shop = () => {
     const [cards, setCards] = useState([]);
@@ -85,7 +82,7 @@ const Shop = () => {
                     artistName: p.author_name || p.creatorName || 'Artist',
                     artistId: p.Creator_ID || p.creator_id || p.artistId || null,
                     description: p.Description || p.description || '',
-                    imageUrl: imageSrc || '/images/placeholder.png',
+                    imageUrl: imageSrc || '/images/placeholder.svg',
                     images,
                     // Лайки ТІЛЬКИ з БД, без рандому
                     likes: p.likes ?? p.Likes ?? 0,
