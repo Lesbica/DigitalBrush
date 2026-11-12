@@ -6,10 +6,10 @@ import CategoryFilters from "../../../../CategoryFilters/CategoryFilters";
 import Pagination from "../../../../hooks/Pagination/Pagination";
 import { usePagination } from "../../../../hooks/Pagination/usePagination";
 
-function MyImages({ user, onTotalLikesChange }) {
+function MyImages({ user, onTotalLikesChange, initialView = 'created' }) {
     const [paintings, setPaintings] = useState([]);
     const [activeCategory, setActiveCategory] = useState(null);
-    const [viewMode, setViewMode] = useState('created'); // 'created' | 'bought'
+    const [viewMode, setViewMode] = useState(initialView); // 'created' | 'bought'
     const itemsPerPage = 24;
     const viewFilters = ['MyImages', 'BoughtImages'];
 

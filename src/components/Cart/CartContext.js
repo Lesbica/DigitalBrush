@@ -1,38 +1,65 @@
-import React, { createContext, useState, useContext } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 
-const CartContext = createContext();
+const CartContext = createContext(null);
+const STORAGE_KEY = 'digitalbrush.cart';
+
+// Only what the basket and checkout display; prices are re-checked by the server on payment.
+const CART_FIELDS = ['id', 'title', 'price', 'imageUrl', 'artistName', 'artistId', 'description'];
+const toCartItem = (item) => {
+    const out = { quantity: 1 };
+    for (const key of CART_FIELDS) if (item[key] !== undefined) out[key] = item[key];
+    return out;
+};
+
+function loadCart() {
+    try {
+        const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+        return Array.isArray(parsed) ? parsed.filter(i => i && i.id != null) : [];
+    } catch {
+        return [];
+    }
+}
 
 export const CartProvider = ({ children }) => {
-    const [cartItems, setCartItems] = useState([]);
+    const [cartItems, setCartItems] = useState(loadCart);
 
-    const addToCart = (item) => {
-        setCartItems((prevItems) => {
-            const isItemInCart = prevItems.find((cartItem) => cartItem.id === item.id);
+    useEffect(() => {
+        try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(cartItems));
+        } catch {
+            // storage disabled or full: the cart still works for this visit
+        }
+    }, [cartItems]);
 
-            if (isItemInCart) {
-                alert("This item is already in your basket.");
-                return prevItems;
-            }
+    const isInCart = useCallback((id) => cartItems.some(i => String(i.id) === String(id)), [cartItems]);
 
-            // Якщо товару немає, додаємо його
-            alert("Item added to basket!");
-            return [...prevItems, { ...item, quantity: 1 }];
-        });
-    };
+    // Returns false when the item was already in the basket
+    const addToCart = useCallback((item) => {
+        if (isInCart(item.id)) {
+            alert('This item is already in your basket.');
+            return false;
+        }
+        setCartItems(prev => [...prev, toCartItem(item)]);
+        alert('Item added to basket!');
+        return true;
+    }, [isInCart]);
 
-    const removeFromCart = (id) => {
-        setCartItems((prevItems) =>
-            prevItems.filter((item) => item.id !== id)
-        );
-    };
+    const removeFromCart = useCallback((id) => {
+        setCartItems(prev => prev.filter(item => String(item.id) !== String(id)));
+    }, []);
 
-    return (
-        <CartContext.Provider value={{ cartItems, addToCart, removeFromCart }}>
-            {children}
-        </CartContext.Provider>
+    // After a successful payment: drop the paintings that were bought
+    const removeManyFromCart = useCallback((ids) => {
+        const bought = new Set(ids.map(String));
+        setCartItems(prev => prev.filter(item => !bought.has(String(item.id))));
+    }, []);
+
+    const value = useMemo(
+        () => ({ cartItems, addToCart, removeFromCart, removeManyFromCart, isInCart }),
+        [cartItems, addToCart, removeFromCart, removeManyFromCart, isInCart]
     );
+
+    return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 };
 
-export const useCart = () => {
-    return useContext(CartContext);
-};
+export const useCart = () => useContext(CartContext);

@@ -1,5 +1,6 @@
 const express = require('express');
 const logger = require('../utils/logger');
+const db = require('../config/db');
 const auth = require('../middleware/authMiddleware');
 const { CURRENCY, priceCart, priceCommission, createOrder, applyPaymentResult } = require('../payments/core');
 const { getProvider, getActiveProvider } = require('../payments');
@@ -81,12 +82,44 @@ async function handleReturn(providerName, req, res) {
             return res.redirect(302, appUrl + '/fail');
         }
         await applyPaymentResult(provider.name, result);
-        return res.redirect(302, appUrl + (result.status === 'approved' ? '/success' : '/fail'));
+        // The result page asks GET /payments/orders/:id for the outcome; a payment that is still
+        // processing lands there too and is polled until the provider confirms it.
+        const page = ['approved', 'pending'].includes(result.status) ? '/success' : '/fail';
+        return res.redirect(302, `${appUrl}${page}?order=${encodeURIComponent(result.orderId)}`);
     } catch (err) {
         logger.error(`[payments] ${providerName} return error:`, err);
         return res.redirect(302, appUrl + '/fail');
     }
 }
+
+// GET /api/payments/orders/:orderId — outcome of the buyer's own order (for the payment result page)
+const ORDER_ID_RE = /^order_[0-9a-f]{32}$/;
+router.get('/orders/:orderId', auth, async (req, res) => {
+    try {
+        const userId = req.session.user?.id;
+        const { orderId } = req.params;
+        if (!ORDER_ID_RE.test(orderId)) return res.status(404).json({ error: 'not_found' });
+        const [[order]] = await db.query(
+            'SELECT Order_ID, User_ID, Status, Type, Target_ID, Amount, Currency FROM payment_orders WHERE Order_ID = ?',
+            [orderId]
+        );
+        // Somebody else's order looks the same as a missing one
+        if (!order || Number(order.User_ID) !== Number(userId)) return res.status(404).json({ error: 'not_found' });
+        const [items] = await db.query('SELECT Painting_ID FROM payment_order_items WHERE Order_ID = ? ORDER BY Painting_ID', [orderId]);
+        return res.json({
+            orderId: order.Order_ID,
+            status: order.Status,
+            type: order.Type,
+            commissionId: order.Type === 'commission' ? order.Target_ID : null,
+            paintingIds: items.map((i) => i.Painting_ID),
+            amount: order.Amount,
+            currency: order.Currency,
+        });
+    } catch (err) {
+        logger.error('[payments] order status failed:', err);
+        return res.status(500).json({ error: 'internal_error' });
+    }
+});
 
 router.post('/callback/:provider', rawBody, (req, res) => handleCallback(req.params.provider, req, res));
 router.all('/return/:provider', (req, res) => handleReturn(req.params.provider, req, res));

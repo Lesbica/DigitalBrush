@@ -113,8 +113,20 @@ describe('payments (WayForPay)', () => {
     });
     test('return while payment is still processing grants nothing', async () => {
         const r = await call('GET', `/payments/return/wayforpay?order=${orderId}`);
-        assert.ok(r.headers.get('location').endsWith('/fail'));
+        // the result page polls the order until the provider confirms it
+        assert.ok(r.headers.get('location').endsWith(`/success?order=${orderId}`));
         assert.deepEqual(await purchasesOf(f.outsider.id), []);
+    });
+    test('order status is visible to the buyer only', async () => {
+        const mine = await call('GET', `/payments/orders/${orderId}`, { cookie: as.outsider });
+        assert.equal(mine.status, 200);
+        assert.equal(mine.data.status, 'pending');
+        assert.equal(mine.data.type, 'cart');
+        assert.deepEqual(mine.data.paintingIds, [f.paintings.a, f.paintings.b].sort((x, y) => x - y));
+        assert.equal(mine.data.amount, 24600);
+        assert.equal((await call('GET', `/payments/orders/${orderId}`, { cookie: as.customer })).status, 404);
+        assert.equal((await call('GET', `/payments/orders/${orderId}`)).status, 401);
+        assert.equal((await call('GET', '/payments/orders/junk', { cookie: as.outsider })).status, 404);
     });
     test('callback with a forged signature is rejected', async () => {
         assert.equal((await call('POST', '/payments/callback/wayforpay', { json: wfp.callback(orderId, 246, 'Approved', { badSignature: true }) })).status, 400);
@@ -142,7 +154,9 @@ describe('payments (WayForPay)', () => {
         const r = await call('POST', '/payments/create-session', { cookie: as.outsider, json: { paintingIds: [f.paintings.c] } });
         wfp.statuses[r.data.orderId] = { transactionStatus: 'Approved', amount: 123 };
         const ret = await call('POST', `/payments/return/wayforpay?order=${r.data.orderId}`, { form: { transactionStatus: 'Approved' } });
-        assert.ok(ret.headers.get('location').endsWith('/success'));
+        assert.ok(ret.headers.get('location').endsWith(`/success?order=${r.data.orderId}`));
+        const st = await call('GET', `/payments/orders/${r.data.orderId}`, { cookie: as.outsider });
+        assert.equal(st.data.status, 'approved');
         assert.ok((await purchasesOf(f.outsider.id)).includes(f.paintings.c));
     });
     test('commission price comes from the DB', async () => {

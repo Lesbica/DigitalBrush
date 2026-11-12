@@ -94,8 +94,10 @@ const Shop = () => {
         .catch(err => {
             console.error('Failed to fetch paintings:', err);
             if (mounted) setCards([]);
+        })
+        .finally(() => {
+            if (mounted) setLoading(false);
         });
-        setLoading(false);
     return () => { mounted = false; };
 }, []);
 

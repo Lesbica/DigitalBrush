@@ -52,7 +52,7 @@ function DigitalBrushProfile({ user, onLogout }) {
         if (commissionId) {
             setActiveChatCommissionId(Number(commissionId));
             setActiveTab('chat');
-        } else if (tab && ['settings', 'images', 'commission', 'wallet'].includes(tab)) {
+        } else if (tab && ['settings', 'images', 'purchases', 'commission', 'wallet'].includes(tab)) {
             setActiveTab(tab);
         }
         if (commissionId || tab) setSearchParams({}, { replace: true });
@@ -91,6 +91,8 @@ function DigitalBrushProfile({ user, onLogout }) {
                 return <ProfileSettings user={user} />;
             case 'images':
                 return <MyImages user={user} onTotalLikesChange={setTotalLikes} />;
+            case 'purchases':
+                return <MyImages user={user} initialView="bought" />;
             case 'commission':
                 return <MyCommission user={user} onOpenChat={handleOpenChat} />;
             case 'chat':

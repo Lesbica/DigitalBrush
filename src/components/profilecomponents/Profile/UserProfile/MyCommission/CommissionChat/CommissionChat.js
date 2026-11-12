@@ -486,7 +486,7 @@ const CommissionChat = ({ commissionId, user, onBack }) => {
 
                         {/* Ціна */}
                         <div className={styles.priceTag}>
-                            {commission?.price || "45"}$
+                            {commission?.price != null ? `${commission.price}$` : '—'}
                         </div>
                     </div>
                 </div>
