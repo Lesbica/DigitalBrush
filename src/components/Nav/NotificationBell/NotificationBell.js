@@ -4,6 +4,7 @@ import axios from "axios";
 import styles from "./NotificationBell.module.css";
 import {useSocket} from "../../../context/SocketContext";
 import { useTranslation } from 'react-i18next';
+import {formatDateTime} from "../../../i18n/format";
 
 // Bell with unread counter. New notifications arrive live over socket.io (the server puts every
 // logged-in socket into its user room); the counter is also refreshed every minute as a fallback.
@@ -100,7 +101,7 @@ export default function NotificationBell() {
                                     <button type="button" className={`${styles.item} ${n.read ? '' : styles.unread}`} onClick={() => openItem(n)}>
                                         <span className={styles.title}>{n.title}</span>
                                         {n.body && <span className={styles.body}>{n.body}</span>}
-                                        <span className={styles.time}>{new Date(n.createdAt).toLocaleString()}</span>
+                                        <span className={styles.time}>{formatDateTime(n.createdAt)}</span>
                                     </button>
                                 </li>
                             ))}

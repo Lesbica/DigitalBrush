@@ -41,11 +41,18 @@
 - **Ролі**: `creators.Role` = artist | customer. Дії художника (завантаження картин, прийняття
   комішенів) — через `middleware/requireArtist.js`. Вхід — лише з підтвердженим email
   (`REQUIRE_EMAIL_VERIFICATION`); одноразові токени — `services/accountTokens.js`, листи — `utils/mailer.js`.
+  Вхід через Google — `routes/googleAuthRoutes.js` (вмикається `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET`).
 - **Комішени**: статуси й переходи — лише через `services/commissionStages.js`
   (Sketch → Lineart → Color → Final → Completed, Declined, Cancelled); фонове автозатвердження — `services/scheduler.js`.
-- **Сповіщення** — `services/notifications.js` (`notify`, `commissionEvents`), не надсилати сокет-події/листи вручну.
+- **Сповіщення** — `services/notifications.js` (`notify`, `commissionEvents`, `walletEvents`), не надсилати
+  сокет-події/листи вручну. Тексти сповіщень і листів — ключі з `server/i18n/{uk,en}.json` (`{ key, params }`),
+  вони рендеряться мовою отримувача (`creators.Language`) і мовою читача в списку.
+- **Тексти API** пишемо англійською в коді (`message`/`error`); переклад — у `server/i18n/uk.json` → `api`
+  (англійський текст як ключ, змінні частини `{{name}}`). Тест `tests/i18n.test.js` падає, якщо перекладу немає.
+  Машинні коди (`not_found`) не перекладаються.
 - **Гаманець** — `services/wallet.js` (копійки, ідемпотентні записи через унікальний `Ref`, ескроу для
-  комішенів до завершення). Виведення обробляється вручну: `npm run withdrawals`.
+  комішенів до завершення). Виведення на IBAN — вручну (`npm run withdrawals`); на картку — автоматично через
+  `services/payouts.js` (WayForPay Card Verify + Account2Card, `PAYOUTS=wayforpay`; токен картки лише зашифрований).
 - Після змін у бекенді — `npm run lint:server` і `npm run test:api`; нова поведінка → новий тест у `server/tests/`.
 - Логи — через `server/utils/logger.js` (рівень `LOG_LEVEL`), не `console.*`.
 - Нові залежності бекенду — у `server/package.json`, фронтенду — в кореневий `package.json`.
@@ -65,5 +72,6 @@
 ## План покращень
 Фази 0–6 завершені (безпека, баги, БД, продуктивність, архітектура/CI, функції з use cases:
 відгуки, життєвий цикл комішену, акаунти, сповіщення, гаманець; фронтенд: Vite, AuthContext, серверна
-пагінація, тости, i18n uk/en). Не зроблено: вхід через Google (потрібні ключі Google Cloud), автоматичні
-виплати через платіжний API, переклад текстів, які формує сервер (повідомлення API, сповіщення, листи).
+пагінація, тости, i18n uk/en), а також серверні тексти uk/en, вхід через Google і автоматичні виплати
+на картку. Для запуску в бою потрібні лише ключі: Google OAuth (`GOOGLE_CLIENT_*`) і ввімкнені виплати
+на картки в мерчанта WayForPay (`PAYOUTS=wayforpay`).
