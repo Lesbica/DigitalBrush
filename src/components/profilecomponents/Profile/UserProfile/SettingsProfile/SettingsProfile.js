@@ -19,6 +19,8 @@ function ProfileSettings({user}) {
 
     // Availability for commissions: open | busy | vacation (saved with the profile)
     const [status, setStatus] = useState('open');
+    // artist = sells art and takes commissions; customer = buys and orders
+    const [isArtist, setIsArtist] = useState(false);
     const [avatarPreview, setAvatarPreview] = useState(user.profileImage || "https://via.placeholder.com/220");
     const [selectedFile, setSelectedFile] = useState(null);
 
@@ -51,6 +53,7 @@ function ProfileSettings({user}) {
                 setAvatarPreview(user.profileImage);
             }
             setStatus(user.availability || 'open');
+            setIsArtist(user.role === 'artist');
 
             // Завантаження стилів
             if (user.styles && Array.isArray(user.styles) && user.styles.length > 0) {
@@ -119,6 +122,7 @@ function ProfileSettings({user}) {
         dataToSend.append('email', formData.email);
         dataToSend.append('description', formData.description);
         dataToSend.append('availability', status);
+        dataToSend.append('role', isArtist ? 'artist' : 'customer');
 
         // Додаємо нові соцмережі
         dataToSend.append('instagram', formData.instagram);
@@ -172,7 +176,16 @@ function ProfileSettings({user}) {
 
                     {/* ТЕПЕР ЧЕКБОКСИ ТУТ (Верх лівої колонки) */}
                     <div className={styles.statusSection}>
-                        {[['open', 'available'], ['busy', 'busy'], ['vacation', 'on vacation']].map(([value, label]) => (
+                        <label className={styles.checkboxLabel}>
+                            <input
+                                type="checkbox"
+                                className={styles.checkboxInput}
+                                checked={isArtist}
+                                onChange={(e) => setIsArtist(e.target.checked)}
+                            />
+                            artist account
+                        </label>
+                        {isArtist && [['open', 'available'], ['busy', 'busy'], ['vacation', 'on vacation']].map(([value, label]) => (
                             <label key={value} className={styles.checkboxLabel}>
                                 <input
                                     type="checkbox"

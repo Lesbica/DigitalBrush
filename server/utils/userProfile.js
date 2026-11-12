@@ -28,7 +28,7 @@ function parseJsonArray(value) {
 }
 
 // Avatar bytes are not loaded here: only a short hash that versions the avatar URL
-const USER_COLUMNS = 'Creator_ID, Name, Email, Other_Details, LEFT(MD5(Image), 8) AS imageVersion, styles, languages, likes, Instagram, Behance, TikTok, Availability';
+const USER_COLUMNS = 'Creator_ID, Name, Email, Other_Details, LEFT(MD5(Image), 8) AS imageVersion, styles, languages, likes, Instagram, Behance, TikTok, Availability, Role, Email_Verified';
 
 function toUserPayload(row) {
     return {
@@ -45,6 +45,8 @@ function toUserPayload(row) {
         behance: row.Behance || '',
         tiktok: row.TikTok || '',
         availability: row.Availability || 'open',
+        role: row.Role || 'customer',
+        emailVerified: Boolean(row.Email_Verified),
     };
 }
 

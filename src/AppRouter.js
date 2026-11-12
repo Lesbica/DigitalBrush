@@ -10,6 +10,8 @@ import CheckoutPage from './components/CheckoutPage/CheckoutPage';
 import AuthorPage from "./components/AuthorPage/AuthorPage";
 import PaymentSuccess from "./components/CheckoutPage/PaymentSuccess";
 import PaymentFail from "./components/CheckoutPage/PaymentFail";
+import VerifyEmail from "./components/profilecomponents/Login/AccountLinks/VerifyEmail";
+import ResetPassword from "./components/profilecomponents/Login/AccountLinks/ResetPassword";
 
 export default function AppRouter({ onViewArtDetails, setIsLoggedIn }) {
     return (
@@ -28,6 +30,8 @@ export default function AppRouter({ onViewArtDetails, setIsLoggedIn }) {
             <Route path='success' element={<PaymentSuccess />} />
             <Route path='fail' element={<PaymentFail />} />
             <Route path='author/:id' element={<AuthorPage />} />
+            <Route path='verify-email' element={<VerifyEmail />} />
+            <Route path='reset-password' element={<ResetPassword />} />
         </Routes>
     )
 }

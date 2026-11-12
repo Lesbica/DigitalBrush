@@ -2,6 +2,7 @@ const db = require('../config/db');
 const logger = require('../utils/logger');
 const { imageUpload, withImageUpload } = require('../config/multerConfig');
 const auth = require('../middleware/authMiddleware');
+const requireArtist = require('../middleware/requireArtist');
 const { imageToFile } = require('../utils/images');
 const { commissionImageUrl, LIST_WIDTH } = require('../utils/imageUrls');
 const { getIO } = require('../socket');
@@ -83,9 +84,15 @@ router.post(
                 if (Number(user.id) === targetCreator) {
                     return res.status(400).json({ success: false, message: 'You cannot request a commission from yourself.' });
                 }
-                const [artist] = await db.query('SELECT 1 FROM creators WHERE Creator_ID = ?', [targetCreator]);
+                const [artist] = await db.query('SELECT Role, Availability FROM creators WHERE Creator_ID = ?', [targetCreator]);
                 if (artist.length === 0) {
                     return res.status(404).json({ success: false, message: 'Artist not found' });
+                }
+                if (artist[0].Role !== 'artist') {
+                    return res.status(400).json({ success: false, message: 'This user does not take commissions' });
+                }
+                if (artist[0].Availability === 'vacation') {
+                    return res.status(409).json({ success: false, message: 'The artist is on vacation and does not take commissions now' });
                 }
                 commissionType = 'direct';
             }
@@ -297,7 +304,7 @@ router.get('/:id', async (req, res) => {
 
 
 // PATCH endpoint to accept a commission
-router.patch('/:id/accept', async (req, res) => {
+router.patch('/:id/accept', auth, requireArtist, async (req, res) => {
     const { id } = req.params;
     const user = req.session.user;
 

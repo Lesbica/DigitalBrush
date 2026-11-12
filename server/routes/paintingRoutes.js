@@ -2,6 +2,7 @@ const express = require('express');
 const logger = require('../utils/logger');
 const db = require('../config/db');
 const auth = require('../middleware/authMiddleware');
+const requireArtist = require('../middleware/requireArtist');
 const { imageUpload, withImageUpload, MAX_FILES } = require('../config/multerConfig');
 const { paintingImageUrl, paintingExtraImageUrl, avatarUrl, DETAIL_WIDTH } = require('../utils/imageUrls');
 
@@ -116,7 +117,7 @@ function validatePaintingFields(body) {
     };
 }
 
-router.post("/upload", auth, withImageUpload(imageUpload.any()), async (req, res) => {
+router.post("/upload", auth, requireArtist, withImageUpload(imageUpload.any()), async (req, res) => {
     const Author = req.session.user?.name || null;
     const Creator_ID = req.session.user?.id || null;
 

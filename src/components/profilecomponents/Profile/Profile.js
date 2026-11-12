@@ -74,7 +74,19 @@ function Profile({ setIsLoggedIn }) {
             }
         } catch (error) {
             console.error('Login failed:', error);
-            alert(error.response?.data?.message || 'Помилка авторизації');
+            const data = error.response?.data;
+            if (data?.code === 'EMAIL_NOT_VERIFIED') {
+                if (window.confirm(`${data.message}\n\nSend the confirmation link again?`)) {
+                    try {
+                        const res = await axios.post(`/auth/resend-verification`, { email: formData.email });
+                        alert(res.data.message);
+                    } catch {
+                        alert('Could not send the link. Try again later.');
+                    }
+                }
+                return;
+            }
+            alert(data?.message || 'Помилка авторизації');
         }
     };
 
@@ -147,6 +159,7 @@ function Profile({ setIsLoggedIn }) {
                     {view === 'forgotPassword' && (
                         <ForgotPassword
                             onBack={showLogin}
+                            toggleForm={showRegister}
                         />
                     )}
                 </div>

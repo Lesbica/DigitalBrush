@@ -92,7 +92,8 @@ function applyArtistFilters(list, query) {
 // GET all artists + artworks: two queries instead of one per artist
 router.get('/getartists', async (req, res) => {
   try {
-    const [artists] = await db.query(`SELECT ${PUBLIC_CREATOR_COLUMNS} FROM creators ORDER BY Creator_ID`);
+    // Only artist accounts are listed (customers are not artists)
+    const [artists] = await db.query(`SELECT ${PUBLIC_CREATOR_COLUMNS} FROM creators WHERE Role = 'artist' ORDER BY Creator_ID`);
     const [paintings] = await db.query(`SELECT ${PAINTING_COLUMNS} FROM paintings ORDER BY Painting_ID DESC`);
 
     const byArtist = new Map();

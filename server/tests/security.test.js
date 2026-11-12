@@ -61,7 +61,8 @@ describe('commission access control', () => {
         assert.equal((await call('GET', `/commissions/${f.commissions.paid}`, { cookie: as.outsider })).status, 403);
     });
     test('outsider cannot accept a direct commission addressed to another artist', async () => {
-        assert.equal((await call('PATCH', `/commissions/${f.commissions.directOpen}/accept`, { cookie: as.outsider })).status, 404);
+        // outsider is a customer account (403); an artist that is not addressed would get 404
+        assert.equal((await call('PATCH', `/commissions/${f.commissions.directOpen}/accept`, { cookie: as.outsider })).status, 403);
         const [[c]] = await db.query('SELECT Creator_ID FROM commissions WHERE Commission_ID = ?', [f.commissions.directOpen]);
         assert.equal(c.Creator_ID, f.artist.id);
     });

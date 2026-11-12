@@ -5,6 +5,7 @@ const { imageUpload, withImageUpload, detectImageMime } = require('../config/mul
 const auth = require('../middleware/authMiddleware');
 const AdmZip = require('adm-zip');
 const { loadUserPayload, toSessionUser } = require('../utils/userProfile');
+const { sendVerificationEmail } = require('../services/accountTokens');
 const { paintingImageUrl } = require('../utils/imageUrls');
 
 const router = express.Router();
@@ -18,7 +19,7 @@ router.post('/update-profile', auth, withImageUpload(imageUpload.single('profile
 
     try {
         // 2. Отримуємо дані з фронтенду
-        const { username, email, description, instagram, behance, tiktok, styleTags, languageTags, availability } = req.body;
+        const { username, email, description, instagram, behance, tiktok, styleTags, languageTags, availability, role } = req.body;
 
         // Валідація (ТЗ: біо до 500 символів)
         if (username !== undefined && String(username).trim().length > 50) {
@@ -26,6 +27,9 @@ router.post('/update-profile', auth, withImageUpload(imageUpload.single('profile
         }
         if (email !== undefined && String(email).trim() !== '' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email).trim())) {
             return res.status(400).json({ success: false, message: 'Invalid email address' });
+        }
+        if (role !== undefined && !['artist', 'customer'].includes(role)) {
+            return res.status(400).json({ success: false, message: 'Role must be artist or customer' });
         }
         if (availability !== undefined && !['open', 'busy', 'vacation'].includes(availability)) {
             return res.status(400).json({ success: false, message: 'Availability must be open, busy or vacation' });
@@ -96,16 +100,24 @@ router.post('/update-profile', auth, withImageUpload(imageUpload.single('profile
             `UPDATE creators
              SET Name = ?, Email = ?, Other_Details = ?,
                  Instagram = ?, Behance = ?, TikTok = ?,
-                 Image = ?, styles = ?, languages = ?, Availability = ?
+                 Image = ?, styles = ?, languages = ?, Availability = ?, Role = ?
              WHERE Creator_ID = ?`,
             [
                 finalName, finalEmail, finalBio,
                 finalInsta, finalBehance, finalTikTok,
                 finalImage, finalStyles, finalLanguages,
                 availability || currentUser.Availability || 'open',
+                role || currentUser.Role || 'customer',
                 userId
             ]
         );
+
+        // Changed email must be confirmed again (unless verification is turned off)
+        if (finalEmail.toLowerCase() !== String(currentUser.Email || '').toLowerCase()
+            && process.env.REQUIRE_EMAIL_VERIFICATION !== 'false') {
+            await db.query('UPDATE creators SET Email_Verified = 0 WHERE Creator_ID = ?', [userId]);
+            await sendVerificationEmail({ id: userId, name: finalName, email: finalEmail });
+        }
 
         // 6. Свіжі дані з БД; у сесії — лише id/name/email
         const payload = await loadUserPayload(userId);

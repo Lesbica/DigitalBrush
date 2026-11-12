@@ -114,8 +114,9 @@ async function createFixtures() {
     const user = async (role) => {
         const email = `${tag}-${role}@example.test`;
         const [r] = await db.query(
-            'INSERT INTO creators (Name, Email, Password, styles, languages) VALUES (?, ?, ?, ?, ?)',
-            [`${tag}-${role}`, email, hash, JSON.stringify(role === 'artist' ? ['Retro', `${tag}-style`] : []), '[]']
+            'INSERT INTO creators (Name, Email, Password, Role, Email_Verified, styles, languages) VALUES (?, ?, ?, ?, 1, ?, ?)',
+            [`${tag}-${role}`, email, hash, role === 'artist' ? 'artist' : 'customer',
+                JSON.stringify(role === 'artist' ? ['Retro', `${tag}-style`] : []), '[]']
         );
         return { id: r.insertId, email, name: `${tag}-${role}` };
     };
@@ -209,6 +210,8 @@ async function cleanupFixtures(f) {
         await db.query('DELETE FROM creators WHERE Creator_ID IN (?)', [ids]); // purchases/likes cascade
     }
     if (f.sessionIds.length) await db.query('DELETE FROM sessions WHERE session_id IN (?)', [f.sessionIds]);
+    // sessions created by logins inside tests (their data contains the fixture emails)
+    await db.query('DELETE FROM sessions WHERE data LIKE ?', [`%${f.tag}-%`]);
 }
 
 module.exports = {

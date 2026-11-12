@@ -76,9 +76,9 @@ describe('availability and artist filters', () => {
         assert.deepEqual(await ids('minRating=4'), [f.artist.id]);
         assert.deepEqual(await ids('minRating=4.5'), []);
         assert.deepEqual(await ids('availability=busy'), [f.artist.id]);
-        assert.deepEqual(await ids('availability=open'), [f.customer.id, f.outsider.id]);
-        assert.deepEqual(await ids('maxPrice=79'), [f.customer.id]); // customer's own painting costs 50
-        assert.deepEqual(await ids('maxPrice=100'), [f.customer.id, f.artist.id]);
+        assert.deepEqual(await ids('availability=open'), []); // customers are not listed as artists
+        assert.deepEqual(await ids('maxPrice=79'), []); // artist's cheapest painting costs 80
+        assert.deepEqual(await ids('maxPrice=100'), [f.artist.id]);
         const sorted = await ids('sort=rating');
         assert.equal(sorted[0], f.artist.id);
     });

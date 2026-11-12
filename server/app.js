@@ -57,6 +57,9 @@ app.use('/api', limiter(1, 300));
 app.use('/api/auth/login', limiter(15, 20));
 app.use('/api/auth/register', limiter(60, 10));
 app.use('/api/auth/check-email', limiter(15, 30));
+app.use('/api/auth/resend-verification', limiter(15, 5));
+app.use('/api/auth/forgot-password', limiter(15, 5));
+app.use('/api/auth/reset-password', limiter(15, 10));
 app.use('/api/payments/create-session', limiter(15, 20));
 
 // Body parsers: chat accepts images as data URIs (up to 10 MB), everything else is small
