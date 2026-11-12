@@ -56,7 +56,7 @@
     },
     "withdrawal_paid": {
       "title": "Withdrawal sent",
-      "body": "{{amount}} was sent to your card."
+      "body": "{{amount}} has been paid out to you."
     },
     "withdrawal_rejected": {
       "title": "Withdrawal rejected",

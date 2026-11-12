@@ -56,7 +56,7 @@
     },
     "withdrawal_paid": {
       "title": "Кошти виведено",
-      "body": "{{amount}} надіслано на вашу картку."
+      "body": "{{amount}} виплачено вам."
     },
     "withdrawal_rejected": {
       "title": "Виведення відхилено",
@@ -88,6 +88,7 @@
     "Availability must be open, busy or vacation": "Статус має бути: вільний, зайнятий або у відпустці",
     "Bad request": "Некоректний запит",
     "Bio is too long (max 500 characters)": "Опис задовгий (максимум 500 символів)",
+    "Card payouts are not available": "Виплати на картку недоступні",
     "Check your email to confirm the account": "Перевірте пошту, щоб підтвердити акаунт",
     "Commission is already {{status}}": "Комішен уже має статус «{{status}}»",
     "Commission is no longer open": "Комішен більше не відкритий",
@@ -142,6 +143,7 @@
     "Invalid image payload": "Некоректні дані зображення",
     "Invalid painting id": "Некоректний ідентифікатор картини",
     "Language must be uk or en": "Мова має бути uk або en",
+    "Link a card for payouts first": "Спершу привʼяжіть картку для виплат",
     "Login successful": "Вхід виконано",
     "Logout successful": "Вихід виконано",
     "Message must be non-empty text up to 5000 characters": "Повідомлення має бути непорожнім, до 5000 символів",

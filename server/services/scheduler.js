@@ -3,6 +3,7 @@ const logger = require('../utils/logger');
 const { runAutoApprove } = require('./commissionStages');
 const events = require('./commissionEvents');
 const { commissionEvents: notifyCommission } = require('./notifications');
+const payouts = require('./payouts');
 
 // Hooks other features can attach to (e.g. notifications) when a stage is auto-approved
 const onAutoApproved = [];
@@ -26,6 +27,14 @@ function start() {
     const timer = setInterval(run, minutes * 60 * 1000);
     timer.unref();
     logger.info(`[scheduler] auto-approve every ${minutes} min`);
+
+    // Card payouts whose result is not known yet (PAYOUTS=wayforpay)
+    if (payouts.isEnabled()) {
+        const payoutMinutes = Math.max(Number(process.env.PAYOUT_CHECK_INTERVAL_MINUTES) || 5, 1);
+        const checkPayouts = () => payouts.payoutTick().catch((err) => logger.error('[scheduler] payouts failed:', err));
+        setInterval(checkPayouts, payoutMinutes * 60 * 1000).unref();
+        logger.info(`[scheduler] card payouts checked every ${payoutMinutes} min`);
+    }
     return timer;
 }
 

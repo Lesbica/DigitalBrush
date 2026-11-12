@@ -31,14 +31,58 @@ const Wallet = () => {
     const [activeYear, setActiveYear] = useState(String(new Date().getFullYear()));
     const [selectedMonth, setSelectedMonth] = useState(null);
     const [form, setForm] = useState({ amount: '', iban: '' });
+    // Automatic payouts to a linked card (when the server has them on)
+    const [payout, setPayout] = useState({ enabled: false, card: null });
+    const [method, setMethod] = useState('iban');
+    const [linking, setLinking] = useState(false);
     const [formMessage, setFormMessage] = useState(null);
     const [sending, setSending] = useState(false);
 
     const load = useCallback(() => {
         axios.get('/wallet')
             .then(res => setData(res.data))
-            .catch(err => setError(err.response?.data?.message || 'Could not load the wallet'));
-    }, []);
+            .catch(err => setError(err.response?.data?.message || tr('wallet.loadFailed')));
+        axios.get('/payouts/card')
+            .then(res => {
+                const next = { enabled: Boolean(res.data?.enabled), card: res.data?.card || null };
+                setPayout(next);
+                setMethod(next.enabled && next.card ? 'card' : 'iban');
+            })
+            .catch(() => setPayout({ enabled: false, card: null }));
+    }, [tr]);
+
+    // WayForPay collects the card on its own page: post the signed form there
+    const linkCard = async () => {
+        setLinking(true);
+        try {
+            const { data: d } = await axios.post('/payouts/card/verify');
+            const formEl = document.createElement('form');
+            formEl.method = 'POST';
+            formEl.action = d.action;
+            Object.entries(d.fields).forEach(([name, value]) => {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = name;
+                input.value = value;
+                formEl.appendChild(input);
+            });
+            document.body.appendChild(formEl);
+            formEl.submit();
+        } catch (err) {
+            setLinking(false);
+            setFormMessage({ ok: false, text: err.response?.data?.message || tr('wallet.card.linkFailed') });
+        }
+    };
+
+    const removeCard = async () => {
+        if (!window.confirm(tr('wallet.card.confirmRemove'))) return;
+        try {
+            await axios.delete('/payouts/card');
+            load();
+        } catch {
+            setFormMessage({ ok: false, text: tr('wallet.card.removeFailed') });
+        }
+    };
     useEffect(() => { load(); }, [load]);
 
     const transactions = useMemo(() => (data?.transactions || []).map(t => {
@@ -83,8 +127,14 @@ const Wallet = () => {
         setSending(true);
         setFormMessage(null);
         try {
-            await axios.post('/wallet/withdrawals', { amount: Number(form.amount), iban: form.iban });
-            setFormMessage({ ok: true, text: tr('wallet.requested') });
+            const { data: r } = await axios.post('/wallet/withdrawals', method === 'card'
+                ? { amount: Number(form.amount), method: 'card' }
+                : { amount: Number(form.amount), iban: form.iban });
+            const status = r.withdrawal?.status;
+            if (method !== 'card') setFormMessage({ ok: true, text: tr('wallet.requested') });
+            else if (status === 'paid') setFormMessage({ ok: true, text: tr('wallet.card.paid') });
+            else if (status === 'rejected') setFormMessage({ ok: false, text: tr('wallet.card.rejected') });
+            else setFormMessage({ ok: true, text: tr('wallet.card.processing') });
             setForm({ amount: '', iban: '' });
             load();
         } catch (err) {
@@ -116,6 +166,31 @@ const Wallet = () => {
                 </div>
                 <form className={styles.withdrawForm} onSubmit={submitWithdrawal}>
                     <span className={styles.balanceLabel}>{tr('wallet.withdrawTitle')}</span>
+                    {payout.enabled && (
+                        <div className={styles.cardRow}>
+                            {payout.card ? (
+                                <>
+                                    <span>{tr('wallet.card.linked', { mask: payout.card.mask })}</span>
+                                    <button type="button" className={styles.linkBtn} onClick={linkCard} disabled={linking}>{tr('wallet.card.change')}</button>
+                                    <button type="button" className={styles.linkBtn} onClick={removeCard}>{tr('common.remove')}</button>
+                                </>
+                            ) : (
+                                <button type="button" className={styles.linkBtn} onClick={linkCard} disabled={linking}>
+                                    {linking ? tr('auth.sending') : tr('wallet.card.link')}
+                                </button>
+                            )}
+                        </div>
+                    )}
+                    {payout.enabled && payout.card && (
+                        <div className={styles.methodRow} role="radiogroup" aria-label={tr('wallet.card.method')}>
+                            {['card', 'iban'].map(m => (
+                                <label key={m} className={styles.methodOption}>
+                                    <input type="radio" name="withdraw-method" value={m} checked={method === m} onChange={() => setMethod(m)} />
+                                    {tr(`wallet.card.to_${m}`)}
+                                </label>
+                            ))}
+                        </div>
+                    )}
                     <input
                         className={styles.withdrawInput}
                         type="number"
@@ -128,14 +203,16 @@ const Wallet = () => {
                         required
                         aria-label={tr('wallet.amountLabel')}
                     />
-                    <input
-                        className={styles.withdrawInput}
-                        placeholder="IBAN (UA…)"
-                        value={form.iban}
-                        onChange={(e) => setForm(f => ({ ...f, iban: e.target.value }))}
-                        required
-                        aria-label="IBAN"
-                    />
+                    {method === 'iban' && (
+                        <input
+                            className={styles.withdrawInput}
+                            placeholder="IBAN (UA…)"
+                            value={form.iban}
+                            onChange={(e) => setForm(f => ({ ...f, iban: e.target.value }))}
+                            required
+                            aria-label="IBAN"
+                        />
+                    )}
                     <button className={styles.withdrawBtn} type="submit" disabled={sending || data.balance.available < data.minWithdrawal}>
                         {sending ? tr('auth.sending') : tr('wallet.request')}
                     </button>

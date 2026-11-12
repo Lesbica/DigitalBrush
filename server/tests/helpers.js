@@ -33,6 +33,8 @@ const PNG = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR
 const realFetch = globalThis.fetch;
 const wfp = {
     statuses: {},      // orderReference -> { transactionStatus, amount }
+    nextCredits: [],   // answers for the next P2P_CREDIT requests: { transactionStatus, reason?, badSignature? }
+    lastCredit: null,
     lastPurchase: null,
     sign: wayforpay._internal.sign,
     callback(orderReference, amount, transactionStatus = 'Approved', { badSignature = false } = {}) {
@@ -64,6 +66,17 @@ globalThis.fetch = async (url, opts = {}) => {
     }
     if (u === 'https://api.wayforpay.com/api') {
         const req = JSON.parse(opts.body);
+        if (req.transactionType === 'P2P_CREDIT') {
+            wfp.lastCredit = req;
+            const st = wfp.nextCredits.shift() || { transactionStatus: 'Approved' };
+            const d = {
+                merchantAccount: 'test_merch_n1', orderReference: req.orderReference, amount: Number(req.amount), currency: 'UAH',
+                authCode: '221562', transactionStatus: st.transactionStatus, reason: st.reason || 'ok', reasonCode: st.reasonCode || 1100,
+            };
+            d.merchantSignature = st.badSignature ? 'deadbeef' : wayforpay._internal.sign(
+                [d.merchantAccount, d.orderReference, d.amount, d.currency, d.authCode, d.transactionStatus, d.reasonCode]);
+            return { json: async () => d };
+        }
         const st = wfp.statuses[req.orderReference] || { transactionStatus: 'InProcessing', amount: 0 };
         const d = {
             merchantAccount: 'test_merch_n1', orderReference: req.orderReference, amount: st.amount, currency: 'UAH',

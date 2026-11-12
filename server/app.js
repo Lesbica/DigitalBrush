@@ -19,6 +19,7 @@ const commissionsRoutes = require('./commissions/Commissions');
 const chatRoutes = require('./commissions/chat');
 const artistsRoutes = require('./Artists/Artists');
 const paymentRoutes = require('./routes/paymentRoutes');
+const payoutRoutes = require('./routes/payoutRoutes');
 
 if (!process.env.SESSION_SECRET) {
   throw new Error('SESSION_SECRET env var is required');
@@ -68,6 +69,7 @@ app.use('/api/auth/forgot-password', limiter(15, 5));
 app.use('/api/auth/reset-password', limiter(15, 10));
 app.use('/api/payments/create-session', limiter(15, 20));
 app.use('/api/wallet/withdrawals', limiter(60, 10));
+app.use('/api/payouts/card/verify', limiter(60, 10));
 
 // Body parsers: chat accepts images as data URIs (up to 10 MB), everything else is small
 app.use('/api/commissions/chat', express.json({ limit: '15mb' }));
@@ -113,6 +115,7 @@ app.use('/api/reviews', require('./routes/reviewRoutes'));
 app.use('/api/notifications', require('./routes/notificationRoutes'));
 app.use('/api/wallet', require('./routes/walletRoutes'));
 app.use('/api/payments', paymentRoutes);
+app.use('/api/payouts', payoutRoutes);
 app.use('/api/fondy', paymentRoutes.legacyFondyRouter);
 // Image files (sets its own Cache-Control, overriding no-store above)
 app.use('/api/images', require('./routes/imageRoutes'));

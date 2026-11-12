@@ -183,5 +183,5 @@ module.exports = {
     createCheckout,
     parseCallback,
     handleReturn,
-    _internal: { sign, statusSignatureValues, checkStatus, toMajor, toMinor },
+    _internal: { sign, statusSignatureValues, checkStatus, toMajor, toMinor, extractCallbackBody },
 };

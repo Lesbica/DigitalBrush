@@ -6,6 +6,7 @@ const logger = require('../utils/logger');
 const auth = require('../middleware/authMiddleware');
 const wallet = require('../services/wallet');
 const { getSessionUserId } = require('../utils/commissionAccess');
+const payouts = require('../services/payouts');
 
 const router = express.Router();
 router.use(auth);
@@ -28,7 +29,7 @@ router.get('/', async (req, res) => {
             [userId]
         );
         const [withdrawals] = await db.query(
-            `SELECT Withdrawal_ID, Amount, Destination, Status, Note, Created_At, Processed_At
+            `SELECT Withdrawal_ID, Amount, Method, Destination, Status, Note, Created_At, Processed_At
                FROM withdrawals WHERE User_ID = ? ORDER BY Created_At DESC LIMIT 50`,
             [userId]
         );
@@ -53,8 +54,9 @@ router.get('/', async (req, res) => {
             withdrawals: withdrawals.map((w) => ({
                 id: w.Withdrawal_ID,
                 amount: uah(w.Amount),
-                // only the end of the account number is shown back
-                destination: `${w.Destination.slice(0, 4)} •••• ${w.Destination.slice(-4)}`,
+                method: w.Method,
+                // only the end of the account number is shown back (a card is already masked)
+                destination: w.Method === 'card' ? w.Destination : `${w.Destination.slice(0, 4)} •••• ${w.Destination.slice(-4)}`,
                 status: w.Status,
                 note: w.Note || '',
                 createdAt: w.Created_At,
@@ -67,16 +69,30 @@ router.get('/', async (req, res) => {
     }
 });
 
-// POST /api/wallet/withdrawals { amount (UAH), iban }
+// POST /api/wallet/withdrawals { amount (UAH), method: 'iban' (default) + iban | 'card' }
+// IBAN withdrawals are paid by hand (npm run withdrawals); card withdrawals go out automatically.
 router.post('/withdrawals', async (req, res) => {
     const amountUah = Number(req.body?.amount);
     if (!Number.isFinite(amountUah) || amountUah <= 0) {
         return res.status(400).json({ success: false, message: 'Enter the amount to withdraw' });
     }
+    const userId = getSessionUserId(req);
     try {
-        const result = await wallet.requestWithdrawal(getSessionUserId(req), Math.round(amountUah * 100), req.body?.iban);
+        let destination = req.body?.iban;
+        if (req.body?.method === 'card') {
+            if (!payouts.isEnabled()) return res.status(400).json({ success: false, message: 'Card payouts are not available' });
+            const card = await payouts.getCard(userId);
+            if (!card) return res.status(400).json({ success: false, message: 'Link a card for payouts first' });
+            destination = { method: 'card', cardMask: card.mask };
+        }
+        const result = await wallet.requestWithdrawal(userId, Math.round(amountUah * 100), destination);
         if (result.error) return res.status(result.status).json({ success: false, message: result.error });
-        res.status(201).json({ success: true, withdrawal: { ...result.withdrawal, amount: uah(result.withdrawal.amount) } });
+        let { status } = result.withdrawal;
+        if (result.withdrawal.method === 'card') {
+            const done = await payouts.sendPayout(result.withdrawal.id);
+            status = done ? done.Status : 'processing';
+        }
+        res.status(201).json({ success: true, withdrawal: { ...result.withdrawal, status, amount: uah(result.withdrawal.amount) } });
     } catch (err) {
         logger.error('Withdrawal error:', err);
         res.status(500).json({ success: false, message: 'Error creating the withdrawal request' });

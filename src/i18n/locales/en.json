@@ -292,7 +292,25 @@
       "rejected": "rejected",
       "cancelled": "cancelled"
     },
-    "monthIncome": "Income: {{amount}}"
+    "monthIncome": "Income: {{amount}}",
+    "loadFailed": "Could not load the wallet",
+    "card": {
+      "link": "Link a card for instant payouts",
+      "linked": "Card {{mask}}",
+      "change": "Change",
+      "confirmRemove": "Unlink this card? Payouts will go to IBAN by hand.",
+      "removeFailed": "Could not unlink the card",
+      "linkFailed": "Could not open the card page. Try again later.",
+      "method": "Where to send the money",
+      "to_card": "To the card (instant)",
+      "to_iban": "To IBAN (within 3 business days)",
+      "paid": "Done! The money is on its way to your card.",
+      "processing": "The payout is being processed. We will notify you when it is done.",
+      "rejected": "The bank declined the payout; the amount is back in your balance.",
+      "ok": "The card is linked. Payouts to it are instant.",
+      "pending": "The card is being checked. It will appear in a minute.",
+      "fail": "The card was not linked. Try again."
+    }
   },
   "review": {
     "thanks": "Thank you for your review!",

@@ -15,9 +15,11 @@ async function main() {
 
     if (cmd === 'list') {
         const [rows] = await db.query(
-            `SELECT w.Withdrawal_ID AS id, c.Name AS artist, c.Email AS email, w.Amount / 100 AS uah, w.Destination AS iban, w.Created_At AS created
+            // IBAN requests wait to be paid by hand; card payouts are listed only while their result is unknown
+            `SELECT w.Withdrawal_ID AS id, c.Name AS artist, c.Email AS email, w.Amount / 100 AS uah, w.Method AS method,
+                    w.Destination AS destination, w.Status AS status, w.Provider_Status AS provider, w.Created_At AS created
                FROM withdrawals w JOIN creators c ON c.Creator_ID = w.User_ID
-              WHERE w.Status = 'pending' ORDER BY w.Created_At`
+              WHERE w.Status IN ('pending', 'processing') ORDER BY w.Created_At`
         );
         console.table(rows);
         return;

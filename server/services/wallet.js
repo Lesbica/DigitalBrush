@@ -72,10 +72,18 @@ function normalizeIban(value) {
     return remainder === 1 ? iban : null;
 }
 
-/** Creates a withdrawal request. Returns { withdrawal } or { error, status }. */
-async function requestWithdrawal(userId, amount, ibanInput) {
-    const iban = normalizeIban(ibanInput);
-    if (!iban) return { error: 'Enter a valid Ukrainian IBAN (UA + 27 digits)', status: 400 };
+/**
+ * Creates a withdrawal request. Returns { withdrawal } or { error, status }.
+ * destination: an IBAN string (paid by hand) or { method: 'card', cardMask } (paid out automatically).
+ */
+async function requestWithdrawal(userId, amount, destination) {
+    const toCard = destination && typeof destination === 'object' && destination.method === 'card';
+    const target = toCard ? String(destination.cardMask || '') : normalizeIban(destination);
+    if (!target) {
+        return toCard
+            ? { error: 'Link a card for payouts first', status: 400 }
+            : { error: 'Enter a valid Ukrainian IBAN (UA + 27 digits)', status: 400 };
+    }
     if (!Number.isInteger(amount) || amount < minWithdrawal()) {
         return { error: `The minimum withdrawal is ${minWithdrawal() / 100} UAH`, status: 400 };
     }
@@ -91,16 +99,16 @@ async function requestWithdrawal(userId, amount, ibanInput) {
             return { error: 'The amount is larger than the available balance', status: 409 };
         }
         const [w] = await conn.query(
-            'INSERT INTO withdrawals (User_ID, Amount, Destination) VALUES (?, ?, ?)',
-            [userId, amount, iban]
+            'INSERT INTO withdrawals (User_ID, Amount, Method, Destination) VALUES (?, ?, ?, ?)',
+            [userId, amount, toCard ? 'card' : 'iban', target]
         );
         await conn.query(
             `INSERT INTO wallet_transactions (User_ID, Type, Amount, Status, Ref, Withdrawal_ID, Description)
              VALUES (?, 'withdrawal', ?, 'pending', ?, ?, ?)`,
-            [userId, -amount, `withdrawal:${w.insertId}`, w.insertId, `Withdrawal to ${iban.slice(0, 6)}…${iban.slice(-4)}`]
+            [userId, -amount, `withdrawal:${w.insertId}`, w.insertId, toCard ? `Withdrawal to card ${target}` : `Withdrawal to ${target.slice(0, 6)}…${target.slice(-4)}`]
         );
         await conn.commit();
-        return { withdrawal: { id: w.insertId, amount, destination: iban, status: 'pending' } };
+        return { withdrawal: { id: w.insertId, amount, method: toCard ? 'card' : 'iban', destination: target, status: 'pending' } };
     } catch (err) {
         await conn.rollback();
         throw err;
@@ -109,15 +117,19 @@ async function requestWithdrawal(userId, amount, ibanInput) {
     }
 }
 
-/** Admin action: mark a pending withdrawal paid or rejected (rejected money returns to the balance). */
-async function processWithdrawal(withdrawalId, outcome, note = null) {
+/**
+ * Marks a pending (or, for card payouts, processing) withdrawal paid or rejected; rejected money returns
+ * to the balance. Used by the admin script and by automatic card payouts. Returns null if already done.
+ */
+async function processWithdrawal(withdrawalId, outcome, note = null, providerStatus = null) {
     if (!['paid', 'rejected'].includes(outcome)) throw new Error('outcome must be paid or rejected');
     const conn = await db.getConnection();
     try {
         await conn.beginTransaction();
         const [r] = await conn.query(
-            `UPDATE withdrawals SET Status = ?, Note = ?, Processed_At = NOW() WHERE Withdrawal_ID = ? AND Status = 'pending'`,
-            [outcome, note, withdrawalId]
+            `UPDATE withdrawals SET Status = ?, Note = ?, Provider_Status = COALESCE(?, Provider_Status), Processed_At = NOW()
+              WHERE Withdrawal_ID = ? AND Status IN ('pending', 'processing')`,
+            [outcome, note, providerStatus, withdrawalId]
         );
         if (!r.affectedRows) { await conn.rollback(); return null; }
         await conn.query(

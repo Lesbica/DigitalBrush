@@ -22,6 +22,7 @@ import AddCommissionModal from "../../../Commission/CommissionModals/AddCommissi
 import { CATEGORIES } from '../../../../constants/categories';
 import { SHOP_FILTERS } from '../../../../constants/filters';
 import { useTranslation } from 'react-i18next';
+import { useToast } from '../../../../context/ToastContext';
 
 
 const filterConfig = SHOP_FILTERS;
@@ -30,6 +31,7 @@ const categories = CATEGORIES;
 
 function DigitalBrushProfile({ user, onLogout }) {
     const { t } = useTranslation();
+    const toast = useToast();
     // Стан для відстеження поточної вкладки
     // Можливі варіанти: 'settings', 'images', 'commission', 'payment', 'calendar'
     const [activeTab, setActiveTab] = useState('images');
@@ -44,6 +46,11 @@ function DigitalBrushProfile({ user, onLogout }) {
     useEffect(() => {
         const commissionId = searchParams.get('commission');
         const tab = searchParams.get('tab');
+        // back from linking a payout card on the WayForPay page
+        const card = searchParams.get('card');
+        if (card === 'ok') toast.success(t('wallet.card.ok'));
+        else if (card === 'pending') toast.info(t('wallet.card.pending'));
+        else if (card === 'fail') toast.error(t('wallet.card.fail'));
         if (commissionId) {
             setActiveChatCommissionId(Number(commissionId));
             setActiveTab('chat');
@@ -51,7 +58,7 @@ function DigitalBrushProfile({ user, onLogout }) {
             setActiveTab(tab);
         }
         if (commissionId || tab) setSearchParams({}, { replace: true });
-    }, [searchParams, setSearchParams]);
+    }, [searchParams, setSearchParams, toast, t]);
 
     const handleOpenChat = (commissionId) => {
         setActiveChatCommissionId(commissionId);
