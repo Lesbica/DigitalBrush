@@ -9,10 +9,8 @@ ENV NODE_ENV=production
 COPY server/package.json server/package-lock.json ./
 RUN npm ci --omit=dev && npm cache clean --force
 
-# Backend code. Secrets come from `docker run --env-file`, never from the image.
+# Backend code (incl. assets/baseAvatar.png). Secrets come from `docker run --env-file`, never from the image.
 COPY server ./
-# Default avatar for new accounts (looked up in ./public by utils/userProfile.js)
-COPY src/assets/baseAvatar.png ./public/baseAvatar.png
 
 USER node
 EXPOSE 8080

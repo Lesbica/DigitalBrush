@@ -6,15 +6,11 @@ const path = require('path');
 const db = require('../config/db');
 const { avatarUrl, imageVersion } = require('./imageUrls');
 
+// Default avatar for accounts without their own image (served by /api/images/avatar/:id)
 let DEFAULT_AVATAR_BUFFER = null;
-for (const p of [
-    path.join(__dirname, '..', '..', 'src', 'assets', 'baseAvatar.png'),
-    path.join(__dirname, '..', 'public', 'baseAvatar.png'),
-]) {
-    try {
-        if (fs.existsSync(p)) { DEFAULT_AVATAR_BUFFER = fs.readFileSync(p); break; }
-    } catch { /* ignore */ }
-}
+try {
+    DEFAULT_AVATAR_BUFFER = fs.readFileSync(path.join(__dirname, '..', 'assets', 'baseAvatar.png'));
+} catch { /* no default avatar: the image route answers 404 */ }
 
 function parseJsonArray(value) {
     if (Array.isArray(value)) return value;
