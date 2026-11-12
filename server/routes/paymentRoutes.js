@@ -1,4 +1,5 @@
 const express = require('express');
+const logger = require('../utils/logger');
 const auth = require('../middleware/authMiddleware');
 const { CURRENCY, priceCart, priceCommission, createOrder, applyPaymentResult } = require('../payments/core');
 const { getProvider, getActiveProvider } = require('../payments');
@@ -19,7 +20,7 @@ router.post('/create-session', auth, async (req, res) => {
 
         const provider = getActiveProvider();
         if (!provider || !provider.isConfigured()) {
-            console.error('[payments] provider is not configured:', process.env.PAYMENT_PROVIDER || 'wayforpay');
+            logger.error('[payments] provider is not configured:', process.env.PAYMENT_PROVIDER || 'wayforpay');
             return res.status(503).json({ error: 'payments_unavailable' });
         }
 
@@ -44,7 +45,7 @@ router.post('/create-session', auth, async (req, res) => {
 
         return res.json({ checkoutUrl, orderId });
     } catch (err) {
-        console.error('[payments] create-session failed:', err.message, err.providerResponse || '');
+        logger.error('[payments] create-session failed:', err.message, err.providerResponse || '');
         return res.status(502).json({ error: 'payment_create_failed' });
     }
 });
@@ -56,13 +57,13 @@ async function handleCallback(providerName, req, res) {
     try {
         const parsed = provider.parseCallback(req);
         if (!parsed.valid) {
-            console.warn(`[payments] ${provider.name} callback: invalid signature`);
+            logger.warn(`[payments] ${provider.name} callback: invalid signature`);
             return res.status(400).send('invalid signature');
         }
         await applyPaymentResult(provider.name, parsed.result);
         return parsed.respond(res);
     } catch (err) {
-        console.error(`[payments] ${providerName} callback error:`, err);
+        logger.error(`[payments] ${providerName} callback error:`, err);
         return res.sendStatus(500);
     }
 }
@@ -76,13 +77,13 @@ async function handleReturn(providerName, req, res) {
     try {
         const result = await provider.handleReturn(req);
         if (!result) {
-            console.warn(`[payments] ${provider.name} return: unverified`);
+            logger.warn(`[payments] ${provider.name} return: unverified`);
             return res.redirect(302, appUrl + '/fail');
         }
         await applyPaymentResult(provider.name, result);
         return res.redirect(302, appUrl + (result.status === 'approved' ? '/success' : '/fail'));
     } catch (err) {
-        console.error(`[payments] ${providerName} return error:`, err);
+        logger.error(`[payments] ${providerName} return error:`, err);
         return res.redirect(302, appUrl + '/fail');
     }
 }

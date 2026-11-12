@@ -1,4 +1,5 @@
 const express = require('express');
+const logger = require('../utils/logger');
 const db = require('../config/db');
 const router = express.Router();
 const { avatarUrl } = require('../utils/imageUrls');
@@ -45,7 +46,7 @@ router.get('/creators', async (req, res) => {
 
         res.json({ success: true, count: formatted.length, creators: formatted });
     } catch (err) {
-        console.error('Error searching creators:', err);
+        logger.error('Error searching creators:', err);
         res.status(500).json({ success: false, message: 'Database error during search' });
     }
 });

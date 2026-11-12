@@ -1,4 +1,5 @@
 const express = require('express');
+const logger = require('../utils/logger');
 const db = require('../config/db');
 const { imageUpload, withImageUpload, detectImageMime } = require('../config/multerConfig');
 const auth = require('../middleware/authMiddleware');
@@ -113,7 +114,7 @@ router.post('/update-profile', auth, withImageUpload(imageUpload.single('profile
         });
 
     } catch (err) {
-        console.error('Profile update error:', err);
+        logger.error('Profile update error:', err);
         res.status(500).json({ success: false, message: 'Error updating profile' });
     }
 });
@@ -155,7 +156,7 @@ router.get('/getuserpaintings', auth, async (req, res) => {
 
         res.json({ success: true, paintings });
     } catch (err) {
-        console.error('Error fetching user paintings:', err);
+        logger.error('Error fetching user paintings:', err);
         res.status(500).json({ success: false, message: 'Error fetching user paintings' });
     }
 });
@@ -202,7 +203,7 @@ router.get('/getboughtpaintings', auth, async (req, res) => {
 
         res.json({ success: true, paintings });
     } catch (err) {
-        console.error('Error fetching bought paintings:', err);
+        logger.error('Error fetching bought paintings:', err);
         res.status(500).json({ success: false, message: 'Error fetching bought paintings' });
     }
 });
@@ -220,7 +221,7 @@ router.get('/check-ownership/:paintingId', auth, async (req, res) => {
         );
         res.json({ owned: rows.length > 0 });
     } catch (err) {
-        console.error('Ownership check error:', err);
+        logger.error('Ownership check error:', err);
         res.status(500).json({ owned: false });
     }
 });
@@ -250,7 +251,7 @@ router.get('/download/:paintingId', auth, async (req, res) => {
         if (paintingRows.length === 0) return res.status(404).send('Painting not found');
 
         const painting = paintingRows[0];
-        let imagesToDownload = [];
+        const imagesToDownload = [];
 
         // Добавляем основное изображение
         const ext = (buf) => ({ 'image/jpeg': 'jpg', 'image/png': 'png', 'image/gif': 'gif', 'image/webp': 'webp' }[detectImageMime(buf)] || 'png');
@@ -305,7 +306,7 @@ router.get('/download/:paintingId', auth, async (req, res) => {
         }
 
     } catch (err) {
-        console.error('Download error:', err);
+        logger.error('Download error:', err);
         res.status(500).send('Server Error');
     }
 });

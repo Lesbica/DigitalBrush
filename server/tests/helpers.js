@@ -9,6 +9,7 @@ require('dotenv').config({ path: path.join(__dirname, '..', '.env'), quiet: true
 
 // Test-only overrides: plain-HTTP cookies and the public WayForPay test merchant.
 Object.assign(process.env, {
+    LOG_LEVEL: process.env.LOG_LEVEL || 'warn',
     COOKIE_SECURE: 'false',
     PAYMENT_PROVIDER: 'wayforpay',
     WAYFORPAY_MERCHANT_ACCOUNT: 'test_merch_n1',

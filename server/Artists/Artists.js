@@ -1,4 +1,5 @@
 const db = require('../config/db');
+const logger = require('../utils/logger');
 const express = require('express');
 const { avatarUrl, paintingImageUrl } = require('../utils/imageUrls');
 
@@ -61,7 +62,7 @@ router.get('/getartists', async (req, res) => {
     }
     res.json(artists.map((a) => toArtist(a, byArtist.get(a.Creator_ID) || [])));
   } catch (error) {
-    console.error('Error fetching artists:', error);
+    logger.error('Error fetching artists:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -80,7 +81,7 @@ router.get('/artist/:id', async (req, res) => {
     );
     res.json(toArtist(artistRows[0], paintings.map(toPainting)));
   } catch (error) {
-    console.error('Error fetching artist:', error);
+    logger.error('Error fetching artist:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });

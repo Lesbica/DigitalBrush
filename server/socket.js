@@ -1,4 +1,5 @@
 const { Server } = require('socket.io');
+const logger = require('./utils/logger');
 const { loadCommissionAccess, getRole, getSessionUserId } = require('./utils/commissionAccess');
 
 let io = null;
@@ -49,7 +50,7 @@ function init(server, { sessionMiddleware, corsOrigin, ...options } = {}) {
         socket.join(room);
         respond({ ok: true });
       } catch (err) {
-        console.error('[socket] join error:', err);
+        logger.error('[socket] join error:', err);
         respond({ ok: false, error: 'server_error' });
       }
     });

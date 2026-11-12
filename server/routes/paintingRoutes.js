@@ -1,4 +1,5 @@
 const express = require('express');
+const logger = require('../utils/logger');
 const db = require('../config/db');
 const auth = require('../middleware/authMiddleware');
 const { imageUpload, withImageUpload, MAX_FILES } = require('../config/multerConfig');
@@ -72,7 +73,7 @@ router.get('', async (req, res) => {
 
     res.json({ success: true, paintings, total, page, limit, totalPages: Math.max(Math.ceil(total / limit), 1) });
   } catch (err) {
-    console.error('Error fetching paintings:', err);
+    logger.error('Error fetching paintings:', err);
     res.status(500).json({ success: false, message: 'Error fetching paintings' });
   }
 });
@@ -167,7 +168,7 @@ router.post("/upload", auth, withImageUpload(imageUpload.any()), async (req, res
         });
     } catch (err) {
         await conn.rollback();
-        console.error("Upload error:", err);
+        logger.error("Upload error:", err);
         res.status(500).json({ success: false, message: "Database error" });
     } finally {
         conn.release();
@@ -244,7 +245,7 @@ router.get('/:id', async (req, res) => {
       }
     });
   } catch (err) {
-    console.error('Error fetching painting:', err);
+    logger.error('Error fetching painting:', err);
     res.status(500).json({ success: false, message: 'Error fetching painting' });
   }
 });
@@ -303,7 +304,7 @@ router.post('/:id/like', auth, async (req, res) => {
     const [[{ Likes } = { Likes: 0 }]] = await db.query('SELECT COALESCE(Likes, 0) AS Likes FROM paintings WHERE Painting_ID = ?', [paintingId]);
     return res.json({ success: true, liked, likes: Likes });
   } catch (err) {
-    console.error('Error toggling like:', err);
+    logger.error('Error toggling like:', err);
     return res.status(500).json({ success: false, message: 'Error toggling like' });
   }
 });
@@ -345,7 +346,7 @@ router.delete('/delete/:id', auth, async (req, res) => {
         res.json({ success: true, message: 'Painting deleted successfully' });
     } catch (err) {
         await conn.rollback();
-        console.error('Error deleting painting:', err);
+        logger.error('Error deleting painting:', err);
         res.status(500).json({ success: false, message: 'Error deleting painting' });
     } finally {
         conn.release();

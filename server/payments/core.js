@@ -1,6 +1,7 @@
 // Логіка оплати, що не залежить від платіжного провайдера:
 // розрахунок суми з БД, створення замовлення, фіксація результату.
 const crypto = require('crypto');
+const logger = require('../utils/logger');
 const db = require('../config/db');
 const { getIO } = require('../socket');
 
@@ -125,13 +126,13 @@ async function applyPaymentResult(provider, result) {
 
     const [orders] = await db.query('SELECT * FROM payment_orders WHERE Order_ID = ?', [orderId]);
     if (orders.length === 0) {
-        console.warn(`[payments] unknown order ${orderId}`);
+        logger.warn(`[payments] unknown order ${orderId}`);
         return { applied: false, reason: 'unknown_order' };
     }
     const order = orders[0];
 
     if (order.Provider && order.Provider !== provider) {
-        console.error(`[payments] ${orderId}: provider mismatch (${provider} vs ${order.Provider})`);
+        logger.error(`[payments] ${orderId}: provider mismatch (${provider} vs ${order.Provider})`);
         return { applied: false, reason: 'provider_mismatch' };
     }
 
@@ -143,7 +144,7 @@ async function applyPaymentResult(provider, result) {
             );
         }
         if (status === 'refunded' && order.Status === 'approved') {
-            console.warn(`[payments] ${orderId} was refunded after approval — review manually`);
+            logger.warn(`[payments] ${orderId} was refunded after approval — review manually`);
         }
         return { applied: false, reason: status };
     }
@@ -152,7 +153,7 @@ async function applyPaymentResult(provider, result) {
     if (order.Amount === null || order.Amount === undefined
         || Number(result.amount) !== Number(order.Amount)
         || String(result.currency || '').toUpperCase() !== String(order.Currency || CURRENCY).toUpperCase()) {
-        console.error(`[payments] ${orderId}: amount/currency mismatch: got ${result.amount} ${result.currency}, expected ${order.Amount} ${order.Currency}`);
+        logger.error(`[payments] ${orderId}: amount/currency mismatch: got ${result.amount} ${result.currency}, expected ${order.Amount} ${order.Currency}`);
         await db.query('UPDATE payment_orders SET Status = ? WHERE Order_ID = ? AND Status = ?', ['amount_mismatch', orderId, 'pending']);
         return { applied: false, reason: 'amount_mismatch' };
     }
@@ -193,7 +194,7 @@ async function applyPaymentResult(provider, result) {
         conn.release();
     }
 
-    console.log(`[payments] order ${orderId} approved (${order.Type}, ${provider})`);
+    logger.info(`[payments] order ${orderId} approved (${order.Type}, ${provider})`);
 
     if (commissionToNotify) {
         try {
@@ -202,7 +203,7 @@ async function applyPaymentResult(provider, result) {
                 is_paid: 1,
             });
         } catch (e) {
-            console.warn('[payments] socket emit error:', e.message);
+            logger.warn('[payments] socket emit error:', e.message);
         }
     }
     return { applied: true };

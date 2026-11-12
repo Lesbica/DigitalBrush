@@ -1,4 +1,5 @@
 const express = require('express');
+const logger = require('../utils/logger');
 const db = require('../config/db');
 const { MESSAGE_COLUMNS, rowToMessage } = require('../utils/chatHelpers');
 const { requireCommissionParticipant, getSessionUserId } = require('../utils/commissionAccess');
@@ -27,7 +28,7 @@ router.get('/:commissionId/messages', requireCommissionParticipant(), async (req
 
     res.json({ success: true, messages: mapped, hasMore });
   } catch (err) {
-    console.error('[chat] GET messages error:', err);
+    logger.error('[chat] GET messages error:', err);
     res.status(500).json({ success: false, message: 'Error fetching messages' });
   }
 });
@@ -98,12 +99,12 @@ router.post('/:commissionId/submit-stage', async (req, res) => {
       const io = getIO();
       io.to(`commission_${commissionId}`).emit('stageSubmitted', { commissionId: Number(commissionId), message: out });
     } catch (e) {
-      console.warn('[chat] socket emit failed (stageSubmitted):', e.message);
+      logger.warn('[chat] socket emit failed (stageSubmitted):', e.message);
     }
 
     res.status(201).json({ success: true, message: out });
   } catch (err) {
-    console.error('[chat] submit-stage error:', err);
+    logger.error('[chat] submit-stage error:', err);
     res.status(500).json({ success: false, code: 'DB_ERROR', message: 'Database error' });
   }
 });
@@ -150,7 +151,7 @@ router.post('/:commissionId/review', async (req, res) => {
 
     // Insert a system review message that references the stage messageId in content
     const reviewType = decision === 'approve' ? 'stage-approve' : 'stage-reject';
-    const [ins] = await db.query(
+    await db.query(
       'INSERT INTO messages (senderId, receiverId, commissionId, type, content, status) VALUES (?, ?, ?, ?, ?, ?)',
       [customerId, creatorId, commissionId, reviewType, String(targetMessageId), 'unread']
     );
@@ -176,7 +177,7 @@ router.post('/:commissionId/review', async (req, res) => {
                 'UPDATE commissions SET ResultImage = ? WHERE Commission_ID = ?',
                 [msgRows[0].image, commissionId]
             );
-            console.log(`[Review] Result image saved for commission ${commissionId}`);
+            logger.info(`[Review] Result image saved for commission ${commissionId}`);
           }
         }
       }
@@ -187,12 +188,12 @@ router.post('/:commissionId/review', async (req, res) => {
       const io = getIO();
       io.to(`commission_${commissionId}`).emit('stageReview', { commissionId: Number(commissionId), messageId: Number(targetMessageId), decision, nextStatus });
     } catch (e) {
-      console.warn('[chat] socket emit failed (stageReview):', e.message);
+      logger.warn('[chat] socket emit failed (stageReview):', e.message);
     }
 
     res.status(201).json({ success: true, decision, messageId: Number(targetMessageId), nextStatus });
   } catch (err) {
-    console.error('[chat] review error:', err);
+    logger.error('[chat] review error:', err);
     res.status(500).json({ success: false, code: 'DB_ERROR', message: 'Database error' });
   }
 });
@@ -213,14 +214,12 @@ router.post('/:commissionId/messages', async (req, res) => {
   const senderId = Number(req.session.user.id);
 
   try {
-    console.log(`[chat] POST /${commissionId}/messages — sender=${senderId} type=${type} contentLen=${String(content || '').length}`);
     // 2. Fetch the commission to find the creator and customer
     const [commRows] = await db.query(
       'SELECT Creator_ID, Customer_ID FROM commissions WHERE Commission_ID = ?',
       [commissionId]
     );
 
-    console.log('[chat] commission rows:', commRows && commRows.length, commRows && commRows[0]);
 
     if (!commRows || commRows.length === 0) {
       return res.status(404).json({ success: false, message: 'Commission not found' });
@@ -238,7 +237,6 @@ router.post('/:commissionId/messages', async (req, res) => {
     // 4. Insert message (Letting MySQL handle the AUTO_INCREMENT ID and TIMESTAMP)
       if (!receiverId) return res.status(400).json({ success: false, message: 'No receiver for this commission' });
 
-      console.log('[chat] inserting message: receiverId=', receiverId, 'type=', type);
 
       // If it's an image message, convert data URI to binary for storage in `image` column
       if (type === 'image' && typeof content === 'string' && content.startsWith('data:')) {
@@ -257,7 +255,6 @@ router.post('/:commissionId/messages', async (req, res) => {
           'INSERT INTO messages (senderId, receiverId, commissionId, type, content, image, status) VALUES (?, ?, ?, ?, ?, ?, ?)',
           [senderId, receiverId, commissionId, type, null, buffer, 'unread']
         );
-        console.log('[chat] insert result:', result && { insertId: result.insertId, affectedRows: result.affectedRows });
 
         const [newMsgRows] = await db.query(`SELECT ${MESSAGE_COLUMNS} FROM messages WHERE id = ?`, [result.insertId]);
         const out = rowToMessage(newMsgRows[0]);
@@ -267,7 +264,7 @@ router.post('/:commissionId/messages', async (req, res) => {
             const io = getIO();
             io.to(`commission_${commissionId}`).emit('newMessage', out);
           } catch (e) {
-            console.warn('[chat] socket emit failed:', e.message);
+            logger.warn('[chat] socket emit failed:', e.message);
           }
           res.status(201).json({ success: true, message: out });
         return;
@@ -281,7 +278,6 @@ router.post('/:commissionId/messages', async (req, res) => {
         'INSERT INTO messages (senderId, receiverId, commissionId, type, content, status) VALUES (?, ?, ?, ?, ?, ?)',
         [senderId, receiverId, commissionId, type, content, 'unread']
       );
-      console.log('[chat] insert result:', result && { insertId: result.insertId, affectedRows: result.affectedRows });
 
       const [newMsgRows] = await db.query(`SELECT ${MESSAGE_COLUMNS} FROM messages WHERE id = ?`, [result.insertId]);
       const row = newMsgRows[0];
@@ -291,11 +287,11 @@ router.post('/:commissionId/messages', async (req, res) => {
         const io = getIO();
         io.to(`commission_${commissionId}`).emit('newMessage', out);
       } catch (e) {
-        console.warn('[chat] socket emit failed:', e.message);
+        logger.warn('[chat] socket emit failed:', e.message);
       }
       res.status(201).json({ success: true, message: out });
   } catch (err) {
-    console.error('[chat] INSERT ERROR:', err); // Check your terminal for this log
+    logger.error('[chat] INSERT ERROR:', err); // Check your terminal for this log
     res.status(500).json({ success: false, message: 'Database error' });
   }
 });
@@ -318,7 +314,7 @@ router.patch('/:commissionId/messages/:id/read', requireCommissionParticipant(),
 
     res.json({ success: true });
   } catch (err) {
-    console.error('[chat] PATCH read error:', err);
+    logger.error('[chat] PATCH read error:', err);
     res.status(500).json({ success: false, message: 'Error updating message' });
   }
 });
@@ -349,7 +345,7 @@ router.get('/unread-count/:userId', async (req, res) => {
     const [rows] = await db.query(sql, params);
     res.json({ success: true, unread: rows[0].cnt });
   } catch (err) {
-    console.error('[chat] GET unread-count error:', err);
+    logger.error('[chat] GET unread-count error:', err);
     res.status(500).json({ success: false, message: 'Error getting unread count' });
   }
 });

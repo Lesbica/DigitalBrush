@@ -1,8 +1,5 @@
-// Use global fetch if available (Node 18+), otherwise lazy-load node-fetch.
-const fetch = (...args) =>
-    (globalThis.fetch
-        ? globalThis.fetch(...args)
-        : import('node-fetch').then(({ default: f }) => f(...args)));
+// Node 20+ has fetch built in. Looked up on each call so tests can replace globalThis.fetch.
+const fetch = (...args) => globalThis.fetch(...args);
 
 // Public base URL of the API *including* the /api prefix, e.g. https://bestartgallery.pp.ua/api
 function publicApiBase() {

@@ -1,4 +1,5 @@
 const db = require('../config/db');
+const logger = require('../utils/logger');
 const { imageUpload, withImageUpload } = require('../config/multerConfig');
 const auth = require('../middleware/authMiddleware');
 const { imageToFile } = require('../utils/images');
@@ -95,7 +96,7 @@ router.post(
                 commissionId: result.insertId
             });
         } catch (err) {
-            console.error('Error creating commission:', err);
+            logger.error('Error creating commission:', err);
             res.status(500).json({ success: false, message: 'Database error' });
         }
     }
@@ -164,7 +165,7 @@ router.get('/public', async (req, res) => {
 
         res.json({ success: true, commissions, total, page, limit, totalPages: Math.max(Math.ceil(total / limit), 1) });
     } catch (err) {
-        console.error('Error fetching public commissions:', err);
+        logger.error('Error fetching public commissions:', err);
         res.status(500).json({ success: false, message: 'Error fetching commissions' });
     }
 });
@@ -197,7 +198,7 @@ router.get('/my', async (req, res) => {
 
         res.json({ success: true, commissions: myCommissions });
     } catch (err) {
-        console.error('Error fetching user commissions:', err);
+        logger.error('Error fetching user commissions:', err);
         res.status(500).json({ success: false, message: 'Database error' });
     }
 });
@@ -258,7 +259,7 @@ router.get('/:id', async (req, res) => {
             }
         });
     } catch (err) {
-        console.error('Error fetching commission details:', err);
+        logger.error('Error fetching commission details:', err);
         res.status(500).json({ success: false, message: 'Error fetching commission details' });
     }
 });
@@ -310,7 +311,7 @@ router.patch('/:id/accept', async (req, res) => {
 
         res.json({ success: true, message: `Commission ${id} accepted by artist ${creatorId}` });
     } catch (err) {
-        console.error('Error accepting commission:', err);
+        logger.error('Error accepting commission:', err);
         res.status(500).json({ success: false, message: 'Database error while accepting commission' });
     }
 });
@@ -345,7 +346,7 @@ router.patch('/:id/status', requireCommissionParticipant('id'), async (req, res)
 
         res.json({ success: true, status: 'Cancelled' });
     } catch (err) {
-        console.error(err);
+        logger.error(err);
         res.status(500).json({ success: false, message: 'Database error' });
     }
 });
@@ -397,7 +398,7 @@ router.get('/download/:id', async (req, res) => {
         return res.send(file.buffer);
 
     } catch (err) {
-        console.error('Download error:', err);
+        logger.error('Download error:', err);
         res.status(500).send('Server Error');
     }
 });

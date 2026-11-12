@@ -1,4 +1,5 @@
 const express = require('express');
+const logger = require('../utils/logger');
 const bcrypt = require('bcrypt');
 const db = require('../config/db');
 const { DEFAULT_AVATAR_BUFFER, toUserPayload, loadUserPayload, toSessionUser } = require('../utils/userProfile');
@@ -44,7 +45,7 @@ router.post('/register', async (req, res) => {
         if (err && err.code === 'ER_DUP_ENTRY') {
             return res.status(409).json({ success: false, message: 'This email is already registered.' });
         }
-        console.error('Error registering user:', err);
+        logger.error('Error registering user:', err);
         res.status(500).json({ success: false, message: 'Database error during registration' });
     }
 });
@@ -83,7 +84,7 @@ router.post('/login', async (req, res) => {
 
         res.json({ success: true, message: 'Login successful', user: payload });
     } catch (err) {
-        console.error('Login error:', err);
+        logger.error('Login error:', err);
         res.status(500).json({ success: false, message: 'Internal server error' });
     }
 });
@@ -102,7 +103,7 @@ router.get('/check-session', async (req, res) => {
         req.session.user = toSessionUser(payload);
         res.json({ loggedIn: true, user: payload });
     } catch (err) {
-        console.error('check-session error:', err);
+        logger.error('check-session error:', err);
         res.status(500).json({ loggedIn: false, message: 'Internal server error' });
     }
 });
