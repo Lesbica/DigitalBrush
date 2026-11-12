@@ -4,6 +4,7 @@ const { imageUpload, withImageUpload, detectImageMime } = require('../config/mul
 const auth = require('../middleware/authMiddleware');
 const AdmZip = require('adm-zip');
 const { loadUserPayload, toSessionUser } = require('../utils/userProfile');
+const { paintingImageUrl } = require('../utils/imageUrls');
 
 const router = express.Router();
 
@@ -127,7 +128,6 @@ router.get('/getuserpaintings', auth, async (req, res) => {
             `SELECT 
                  Painting_ID AS id,
                  Title AS title,
-                 Image AS image_blob,
                  Description AS description,
                  Price AS price,
                  Style AS style,
@@ -138,10 +138,7 @@ router.get('/getuserpaintings', auth, async (req, res) => {
         );
 
         const paintings = rows.map((row) => {
-            const blob = row.image_blob;
-            const image_url = blob
-                ? `data:image/jpeg;base64,${Buffer.from(blob).toString('base64')}`
-                : null;
+            const image_url = paintingImageUrl(row.id);
             const likesNum = Number(row.Likes) || 0;
             return {
                 id: row.id,
@@ -173,7 +170,6 @@ router.get('/getboughtpaintings', auth, async (req, res) => {
             `SELECT 
                  p.Painting_ID AS id,
                  p.Title AS title,
-                 p.Image AS image_blob,
                  p.Description AS description,
                  p.Price AS price,
                  p.Style AS style,
@@ -189,9 +185,7 @@ router.get('/getboughtpaintings', auth, async (req, res) => {
         );
 
         const paintings = rows.map((row) => {
-            const image_url = row.image_blob
-                ? `data:image/jpeg;base64,${Buffer.from(row.image_blob).toString('base64')}`
-                : null;
+            const image_url = paintingImageUrl(row.id);
             return {
                 id: row.id,
                 title: row.title,

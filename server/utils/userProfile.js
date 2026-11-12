@@ -4,7 +4,7 @@
 const fs = require('fs');
 const path = require('path');
 const db = require('../config/db');
-const { imageToDataUri } = require('./images');
+const { avatarUrl, imageVersion } = require('./imageUrls');
 
 let DEFAULT_AVATAR_BUFFER = null;
 for (const p of [
@@ -15,7 +15,6 @@ for (const p of [
         if (fs.existsSync(p)) { DEFAULT_AVATAR_BUFFER = fs.readFileSync(p); break; }
     } catch { /* ignore */ }
 }
-const DEFAULT_AVATAR_DATA_URI = DEFAULT_AVATAR_BUFFER ? imageToDataUri(DEFAULT_AVATAR_BUFFER) : 'img/icons/profile.jpg';
 
 function parseJsonArray(value) {
     if (Array.isArray(value)) return value;
@@ -28,7 +27,8 @@ function parseJsonArray(value) {
     }
 }
 
-const USER_COLUMNS = 'Creator_ID, Name, Email, Other_Details, Image, styles, languages, likes, Instagram, Behance, TikTok';
+// Avatar bytes are not loaded here: only a short hash that versions the avatar URL
+const USER_COLUMNS = 'Creator_ID, Name, Email, Other_Details, LEFT(MD5(Image), 8) AS imageVersion, styles, languages, likes, Instagram, Behance, TikTok';
 
 function toUserPayload(row) {
     return {
@@ -36,7 +36,8 @@ function toUserPayload(row) {
         name: row.Name,
         email: row.Email,
         bio: row.Other_Details || '',
-        profileImage: imageToDataUri(row.Image) || DEFAULT_AVATAR_DATA_URI,
+        // URL of /api/images/avatar/:id (default avatar is served there when none is set)
+        profileImage: avatarUrl(row.Creator_ID, row.imageVersion || imageVersion(row.Image) || 'default'),
         styles: parseJsonArray(row.styles),
         languages: parseJsonArray(row.languages),
         likes: row.likes || 0,

@@ -1,6 +1,7 @@
 const express = require('express');
 const db = require('../config/db');
 const router = express.Router();
+const { avatarUrl } = require('../utils/imageUrls');
 
 // Екрануємо % і _ , щоб користувацький запит шукався буквально.
 const escapeLike = (s) => s.replace(/[\\%_]/g, (c) => '\\' + c);
@@ -20,7 +21,7 @@ router.get('/creators', async (req, res) => {
         // окремих таблиць styles/creator_styles у БД немає.
         const pattern = `%${escapeLike(query)}%`;
         const [results] = await db.query(`
-            SELECT Creator_ID, Name, Other_Details, Image, styles
+            SELECT Creator_ID, Name, Other_Details, LEFT(MD5(Image), 8) AS imageVersion, styles
             FROM creators
             WHERE Name LIKE ? OR styles LIKE ?
             ORDER BY Name
@@ -33,17 +34,12 @@ router.get('/creators', async (req, res) => {
                 const parsed = JSON.parse(c.styles || '[]');
                 if (Array.isArray(parsed)) styles = parsed.map(String);
             } catch { /* legacy non-JSON value */ }
-            const img = c.Image
-                ? (Buffer.isBuffer(c.Image)
-                    ? `data:image/jpeg;base64,${c.Image.toString('base64')}`
-                    : c.Image)
-                : 'img/icons/profile.jpg';
             return {
                 id: c.Creator_ID,
                 name: c.Name,
                 bio: c.Other_Details || '',
                 styles,
-                profileImage: img
+                profileImage: avatarUrl(c.Creator_ID, c.imageVersion || 'default')
             };
         });
 

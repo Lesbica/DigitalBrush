@@ -1,7 +1,8 @@
 const db = require('../config/db');
 const { imageUpload, withImageUpload } = require('../config/multerConfig');
 const auth = require('../middleware/authMiddleware');
-const { imageToDataUri, imageToFile } = require('../utils/images');
+const { imageToFile } = require('../utils/images');
+const { commissionImageUrl, LIST_WIDTH } = require('../utils/imageUrls');
 const { getIO } = require('../socket');
 const {
     getSessionUserId,
@@ -101,150 +102,120 @@ router.post(
 );
 
 
-// Updated GET route for Commissions.js backend
+// Non-BLOB commission columns plus flags telling which images exist
+const COMMISSION_COLUMNS = `
+    c.Commission_ID, c.Title, c.Description, c.Category, c.Style, c.Size, c.Format, c.Price,
+    c.status AS Status, c.Type, c.Customer_ID, c.Creator_ID, c.Created_At, c.Updated_At, c.is_paid,
+    c.ReferenceImage IS NOT NULL AS hasRef, c.Image2 IS NOT NULL AS has2, c.Image3 IS NOT NULL AS has3,
+    c.Image4 IS NOT NULL AS has4, c.Image5 IS NOT NULL AS has5, c.ResultImage IS NOT NULL AS hasResult`;
+
+function normalizeStatus(value) {
+    const raw = String(value || '').toLowerCase();
+    return raw === 'sketch' ? 'Sketch'
+        : raw === 'edits' ? 'Edits'
+            : raw === 'completed' ? 'Completed'
+                : raw === 'cancelled' ? 'Cancelled'
+                    : 'Open';
+}
+
+// Public open commissions. Optional: category, q (title), page (1-based) + limit (max 100).
+// Without page/limit returns everything (up to 500).
 router.get('/public', async (req, res) => {
-    const sql = `
-        SELECT c.*,
-               cr.Name  AS customer_name
-        FROM commissions c
-                 LEFT JOIN creators cr ON c.Customer_ID = cr.Creator_ID
-        WHERE c.Type = 'public'
-          AND LOWER(c.Status) = 'open'
-        ORDER BY c.Created_At DESC
-    `;
+    const where = [`c.Type = 'public'`, `c.status = 'Open'`];
+    const params = [];
+    if (req.query.category) { where.push('c.Category = ?'); params.push(String(req.query.category)); }
+    if (req.query.q) {
+        where.push('c.Title LIKE ?');
+        params.push(`%${String(req.query.q).slice(0, 100).replace(/[\\%_]/g, (ch) => '\\' + ch)}%`);
+    }
+    const paginated = req.query.page !== undefined || req.query.limit !== undefined;
+    const limit = paginated ? Math.min(Math.max(Number.parseInt(req.query.limit, 10) || 24, 1), 100) : 500;
+    const page = paginated ? Math.max(Number.parseInt(req.query.page, 10) || 1, 1) : 1;
 
     try {
-        const [results] = await db.query(sql);
-        const commissionsWithImages = results.map((commission) => {
-            const imageUrl = imageToDataUri(commission.ReferenceImage);
+        const whereSql = where.join(' AND ');
+        const [[{ total }]] = await db.query(`SELECT COUNT(*) AS total FROM commissions c WHERE ${whereSql}`, params);
+        const [results] = await db.query(`
+            SELECT ${COMMISSION_COLUMNS}, cr.Name AS customer_name
+              FROM commissions c
+              LEFT JOIN creators cr ON c.Customer_ID = cr.Creator_ID
+             WHERE ${whereSql}
+             ORDER BY c.Created_At DESC, c.Commission_ID DESC
+             LIMIT ? OFFSET ?`, [...params, limit, (page - 1) * limit]);
 
-            // Return normalized commission object
-            return {
-                id: commission.Commission_ID,
-                Commission_ID: commission.Commission_ID,
-                Title: commission.Title,
-                Description: commission.Description,
-                Category: commission.Category,
-                Style: commission.Style,
-                Size: commission.Size,
-                Format: commission.Format,
-                Price: commission.Price,
-                Type: commission.Type,
-                Status: commission.Status,
-                Customer_ID: commission.Customer_ID,
-                Creator_ID: commission.Creator_ID,
-                Created_At: commission.Created_At,
-                customer_name: commission.customer_name,
-                imageUrl: imageUrl // This is the key field for frontend
-            };
-        });
+        const commissions = results.map((c) => ({
+            id: c.Commission_ID,
+            Commission_ID: c.Commission_ID,
+            Title: c.Title,
+            Description: c.Description,
+            Category: c.Category,
+            Style: c.Style,
+            Size: c.Size,
+            Format: c.Format,
+            Price: c.Price,
+            Type: c.Type,
+            Status: normalizeStatus(c.Status),
+            Customer_ID: c.Customer_ID,
+            Creator_ID: c.Creator_ID,
+            Created_At: c.Created_At,
+            customer_name: c.customer_name,
+            imageUrl: c.hasRef ? commissionImageUrl(c.Commission_ID, 'ref', LIST_WIDTH) : null,
+        }));
 
-        res.json({success: true, commissions: commissionsWithImages});
+        res.json({ success: true, commissions, total, page, limit, totalPages: Math.max(Math.ceil(total / limit), 1) });
     } catch (err) {
         console.error('Error fetching public commissions:', err);
-        res.status(500).json({success: false, message: 'Error fetching commissions'});
+        res.status(500).json({ success: false, message: 'Error fetching commissions' });
     }
 });
 
 router.get('/my', async (req, res) => {
-    // 1. Перевірка авторизації
     if (!req.session.user) {
         return res.status(401).json({ success: false, message: 'Unauthorized' });
     }
-
     const userId = req.session.user.id;
 
-    // 2. SQL: вибираємо комісії, де юзер є замовником АБО виконавцем
-    const sql = `
-        SELECT c.*,
-               cust.Name as CustomerName,
-               creat.Name as CreatorName
-        FROM commissions c
-        LEFT JOIN creators cust ON c.Customer_ID = cust.Creator_ID
-        LEFT JOIN creators creat ON c.Creator_ID = creat.Creator_ID
-        WHERE c.Customer_ID = ? OR c.Creator_ID = ?
-        ORDER BY c.Created_At DESC
-    `;
-
     try {
-        const [results] = await db.query(sql, [userId, userId]);
+        const [results] = await db.query(`
+            SELECT ${COMMISSION_COLUMNS}, cust.Name AS CustomerName, creat.Name AS CreatorName
+              FROM commissions c
+              LEFT JOIN creators cust ON c.Customer_ID = cust.Creator_ID
+              LEFT JOIN creators creat ON c.Creator_ID = creat.Creator_ID
+             WHERE c.Customer_ID = ? OR c.Creator_ID = ?
+             ORDER BY c.Created_At DESC`, [userId, userId]);
 
-        // 3. Нормалізація зображень (використовуємо ту ж логіку, що і в public route)
-        const myCommissions = results.map((commission) => {
-            const imageUrl = imageToDataUri(commission.ReferenceImage);
-            // Бінарні поля не віддаємо: ResultImage тут обійшов би перевірку оплати
-            const { Image2, Image3, Image4, Image5, ResultImage, ...rest } = commission;
-
-            // Нормалізуємо статус під новий enum (Title Case)
-            // Берем з поля в любом регистре (MySQL может вернуть как Status/status)
-            const sourceStatus = commission.Status ?? commission.status ?? '';
-            const rawStatus = String(sourceStatus || '').toLowerCase();
-            const normalizedStatus =
-                rawStatus === 'sketch' ? 'Sketch' :
-                rawStatus === 'edits' ? 'Edits' :
-                rawStatus === 'completed' ? 'Completed' :
-                rawStatus === 'cancelled' ? 'Cancelled' :
-                'Open';
-
+        const myCommissions = results.map(({ hasRef, has2, has3, has4, has5, hasResult, ...c }) => {
+            const status = normalizeStatus(c.Status);
             return {
-                ...rest,
-                Status: normalizedStatus,
-                status: normalizedStatus,
-                hasResult: Boolean(ResultImage),
-                ReferenceImage: imageUrl // Оновлюємо поле для фронтенду
+                ...c,
+                Status: status,
+                status,
+                hasResult: Boolean(hasResult),
+                ReferenceImage: hasRef ? commissionImageUrl(c.Commission_ID, 'ref', LIST_WIDTH) : null,
             };
         });
 
         res.json({ success: true, commissions: myCommissions });
-
     } catch (err) {
         console.error('Error fetching user commissions:', err);
         res.status(500).json({ success: false, message: 'Database error' });
     }
 });
 
-// Get full details (including all images) - normalized same as public GET
+// Details. Images are returned as URLs of /api/images/commission/:id/:slot (access-checked there too)
 router.get('/:id', async (req, res) => {
-    const {id} = req.params;
-
-    const sql = `
-        SELECT Commission_ID,
-               Title,
-               Description,
-               Category,
-               Style,
-               Size,
-               Format,
-               Price,
-               ReferenceImage,
-               Image2,
-               Image3,
-               Image4,
-               Image5,
-               Customer_ID,
-               Creator_ID,
-               Status,
-               Type,
-               Created_At,
-               Updated_At,
-               is_paid,
-               ResultImage
-        FROM commissions
-        WHERE Commission_ID = ?
-        LIMIT 1
-    `;
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id) || id <= 0) return res.status(400).json({ success: false, message: 'Invalid id' });
 
     try {
-        const [rows] = await db.query(sql, [id]);
+        const [rows] = await db.query(`SELECT ${COMMISSION_COLUMNS} FROM commissions c WHERE c.Commission_ID = ? LIMIT 1`, [id]);
         if (rows.length === 0) {
-            return res.status(404).json({success: false, message: 'Commission not found'});
+            return res.status(404).json({ success: false, message: 'Commission not found' });
         }
-
         const commission = rows[0];
 
         // Доступ: учасники бачать усе; інші — лише відкриті публічні комішени (без результату).
-        const userId = getSessionUserId(req);
-        const role = getRole(commission, userId);
+        const role = getRole(commission, getSessionUserId(req));
         const isOpenPublic = String(commission.Type || '').toLowerCase() === 'public'
             && String(commission.Status || '').toLowerCase() === 'open';
         if (!role && !isOpenPublic) {
@@ -253,26 +224,13 @@ router.get('/:id', async (req, res) => {
         // Готовий результат — виконавцю завжди, замовнику лише після оплати.
         const canSeeResult = role === 'creator' || (role === 'customer' && Boolean(commission.is_paid));
 
-        const toDataUri = imageToDataUri;
-
-        const image1 = toDataUri(commission.ReferenceImage);
-        const image2 = toDataUri(commission.Image2);
-        const image3 = toDataUri(commission.Image3);
-        const image4 = toDataUri(commission.Image4);
-        const image5 = toDataUri(commission.Image5);
-        const resultImageUri = canSeeResult ? toDataUri(commission.ResultImage) : null;
-
-        const images = [image1, image2, image3, image4, image5].filter(Boolean);
-
-        // normalize status too (source may be Status or status)
-        const sourceStatus = commission.Status ?? commission.status ?? '';
-        const rawStatus = String(sourceStatus || '').toLowerCase();
-        const normalizedStatus =
-            rawStatus === 'sketch' ? 'Sketch' :
-            rawStatus === 'edits' ? 'Edits' :
-            rawStatus === 'completed' ? 'Completed' :
-            rawStatus === 'cancelled' ? 'Cancelled' :
-            'Open';
+        const url = (flag, slot) => (flag ? commissionImageUrl(id, slot) : null);
+        const image1 = url(commission.hasRef, 'ref');
+        const image2 = url(commission.has2, 2);
+        const image3 = url(commission.has3, 3);
+        const image4 = url(commission.has4, 4);
+        const image5 = url(commission.has5, 5);
+        const status = normalizeStatus(commission.Status);
 
         res.json({
             success: true,
@@ -286,13 +244,13 @@ router.get('/:id', async (req, res) => {
                 format: commission.Format,
                 price: commission.Price,
                 is_paid: commission.is_paid,
-                resultImage: resultImageUri,
+                resultImage: canSeeResult ? url(commission.hasResult, 'result') : null,
                 Customer_ID: commission.Customer_ID,
                 Creator_ID: commission.Creator_ID,
-                status: normalizedStatus,
-                Status: normalizedStatus,
-                images,   // array of normalized image sources (data: URIs or URLs)
-                image1,   // individual normalized fields (may be null)
+                status,
+                Status: status,
+                images: [image1, image2, image3, image4, image5].filter(Boolean),
+                image1,
                 image2,
                 image3,
                 image4,
@@ -301,10 +259,9 @@ router.get('/:id', async (req, res) => {
         });
     } catch (err) {
         console.error('Error fetching commission details:', err);
-        res.status(500).json({success: false, message: 'Error fetching commission details'});
+        res.status(500).json({ success: false, message: 'Error fetching commission details' });
     }
 });
-
 
 
 // PATCH endpoint to accept a commission

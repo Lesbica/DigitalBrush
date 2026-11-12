@@ -157,6 +157,7 @@ const [isLoggedIn, setIsLoggedIn] = useState(false);
                     });
 
                     setCommissions(mapped);
+                    setTotalPages(response.data.totalPages || 1);
                 } else {
                     setCommissions([]);
                     setTotalPages(0);

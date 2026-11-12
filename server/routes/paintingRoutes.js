@@ -2,51 +2,75 @@ const express = require('express');
 const db = require('../config/db');
 const auth = require('../middleware/authMiddleware');
 const { imageUpload, withImageUpload, MAX_FILES } = require('../config/multerConfig');
+const { paintingImageUrl, paintingExtraImageUrl, avatarUrl, DETAIL_WIDTH } = require('../utils/imageUrls');
 
 const router = express.Router();
 
 /* =====================================================
-   GET ALL PAINTINGS (main only)
+   GET PAINTINGS (main image only, as URL)
+   Optional filters: category, style, q (title), creatorId, minPrice, maxPrice,
+   sort = newest | price_asc | price_desc | popular.
+   Pagination: page (1-based) + limit (max 100). Without page/limit returns everything (up to 500)
+   so the current frontend keeps working.
 ===================================================== */
+const SORTS = {
+  newest: 'p.Painting_ID DESC',
+  price_asc: 'p.Price ASC, p.Painting_ID DESC',
+  price_desc: 'p.Price DESC, p.Painting_ID DESC',
+  popular: 'p.likes DESC, p.Painting_ID DESC',
+};
+
 router.get('', async (req, res) => {
   try {
-      const [rows] = await db.query(`
-          SELECT p.Painting_ID,
-                 p.Title,
-                 p.Image,
-                 p.Description,
-                 p.Price,
-                 p.Style,
-                 p.Likes,
-                 p.Creator_ID,
-                 c.Name AS author_name
+    const q = req.query;
+    const where = [];
+    const params = [];
+    const like = (s) => `%${String(s).replace(/[\\%_]/g, (c) => '\\' + c)}%`;
+
+    if (q.category) { where.push('p.Category = ?'); params.push(String(q.category)); }
+    if (q.style) { where.push('p.Style = ?'); params.push(String(q.style)); }
+    if (q.q) { where.push('p.Title LIKE ?'); params.push(like(String(q.q).slice(0, 100))); }
+    if (q.creatorId && Number.isInteger(Number(q.creatorId))) { where.push('p.Creator_ID = ?'); params.push(Number(q.creatorId)); }
+    if (q.minPrice !== undefined && Number.isFinite(Number(q.minPrice))) { where.push('p.Price >= ?'); params.push(Number(q.minPrice)); }
+    if (q.maxPrice !== undefined && Number.isFinite(Number(q.maxPrice))) { where.push('p.Price <= ?'); params.push(Number(q.maxPrice)); }
+    const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
+    const orderSql = SORTS[q.sort] || SORTS.newest;
+
+    const paginated = q.page !== undefined || q.limit !== undefined;
+    const limit = paginated ? Math.min(Math.max(Number.parseInt(q.limit, 10) || 24, 1), 100) : 500;
+    const page = paginated ? Math.max(Number.parseInt(q.page, 10) || 1, 1) : 1;
+
+    const [[{ total }]] = await db.query(`SELECT COUNT(*) AS total FROM paintings p ${whereSql}`, params);
+    const [rows] = await db.query(`
+        SELECT p.Painting_ID, p.Title, p.Description, p.Price, p.Style, p.Category, p.likes,
+               p.Creator_ID, c.Name AS author_name
           FROM paintings p
           JOIN creators c ON p.Creator_ID = c.Creator_ID
-      `);
+          ${whereSql}
+         ORDER BY ${orderSql}
+         LIMIT ? OFFSET ?`, [...params, limit, (page - 1) * limit]);
 
-    const paintings = rows.map(row => {
-      const blob = row.Image;
-      const image = blob ? `data:image/jpeg;base64,${Buffer.from(blob).toString('base64')}` : null;
-        return {
-            Painting_ID: row.Painting_ID,
-            id: row.Painting_ID,
-            Title: row.Title,
-            title: row.Title,
-            Description: row.Description,
-            description: row.Description,
-            Price: row.Price,
-            price: row.Price,
-            Style: row.Style,
-            style: row.Style,
-            Likes: row.Likes ?? null,
-            likes: row.Likes ?? 0,
-            author_name: row.author_name,
-            Creator_ID: row.Creator_ID,
-            image, // data URI or null
-        };
-    });
+    const paintings = rows.map((row) => ({
+      Painting_ID: row.Painting_ID,
+      id: row.Painting_ID,
+      Title: row.Title,
+      title: row.Title,
+      Description: row.Description,
+      description: row.Description,
+      Price: row.Price,
+      price: row.Price,
+      Style: row.Style,
+      style: row.Style,
+      Category: row.Category,
+      category: row.Category,
+      Likes: row.likes,
+      likes: row.likes,
+      author_name: row.author_name,
+      Creator_ID: row.Creator_ID,
+      image: paintingImageUrl(row.Painting_ID),
+    }));
 
-    res.json({ success: true, paintings });
+    res.json({ success: true, paintings, total, page, limit, totalPages: Math.max(Math.ceil(total / limit), 1) });
   } catch (err) {
     console.error('Error fetching paintings:', err);
     res.status(500).json({ success: false, message: 'Error fetching paintings' });
@@ -154,105 +178,71 @@ router.post("/upload", auth, withImageUpload(imageUpload.any()), async (req, res
    GET PAINTING + ALL IMAGES IN SAME BATCH
 ===================================================== */
 router.get('/:id', async (req, res) => {
-  const paintingId = req.params.id;
+  const paintingId = Number(req.params.id);
+  if (!Number.isInteger(paintingId) || paintingId <= 0) {
+    return res.status(400).json({ success: false, message: 'Invalid painting id' });
+  }
 
   try {
-    // 1️⃣ Get the main painting with author info
+    // Painting with author info; image bytes are served by /api/images
     const [paintingRows] = await db.query(
-      `SELECT p.*, c.Name AS author_name, c.Image AS author_image
-       FROM paintings p
-       JOIN creators c ON p.Creator_ID = c.Creator_ID
-       WHERE p.Painting_ID = ?`,
+      `SELECT p.Painting_ID, p.Title, p.Description, p.Creator_ID, p.Price, p.Style, p.likes,
+              p.Category, p.Format, p.width, p.height, p.Creation_Date, p.Batch_ID,
+              p.Image IS NOT NULL AS hasImage,
+              c.Name AS author_name, LEFT(MD5(c.Image), 8) AS author_image_version
+         FROM paintings p
+         JOIN creators c ON p.Creator_ID = c.Creator_ID
+        WHERE p.Painting_ID = ?`,
       [paintingId]
     );
 
     if (paintingRows.length === 0) {
       return res.status(404).json({ success: false, message: 'Painting not found' });
     }
-
     const painting = paintingRows[0];
 
-    // Convert main image to base64 URL
-    const mainImage = painting.Image
-      ? `data:image/jpeg;base64,${Buffer.from(painting.Image).toString('base64')}`
-      : null;
+    const [extraImagesRows] = painting.Batch_ID
+      ? await db.query('SELECT Image_ID FROM painting_images WHERE Batch_ID = ? ORDER BY Image_ID', [painting.Batch_ID])
+      : [[]];
 
-    // 2️⃣ Get all additional images from the batch
-    const [extraImagesRows] = await db.query(
-      `SELECT Image FROM painting_images WHERE Batch_ID = ?`,
-      [painting.Batch_ID]
-    );
+    let likedByCurrentUser = false;
+    const userId = req.session?.user?.Creator_ID || req.session?.user?.id || null;
+    if (userId) {
+      const [likeRows] = await db.query(
+        'SELECT 1 FROM painting_likes WHERE Painting_ID = ? AND User_ID = ? LIMIT 1',
+        [paintingId, userId]
+      );
+      likedByCurrentUser = likeRows.length > 0;
+    }
 
-    const gallery = extraImagesRows.map(img => 
-      img.Image ? `data:image/jpeg;base64,${Buffer.from(img.Image).toString('base64')}` : null
-    );
+    const width = painting.width || null;
+    const height = painting.height || null;
 
-      // Normalize author avatar (if available)
-      let authorAvatar = null;
-      try {
-          if (painting.author_image) {
-              if (Buffer.isBuffer(painting.author_image)) {
-                  authorAvatar = `data:image/jpeg;base64,${Buffer.from(painting.author_image).toString('base64')}`;
-              } else if (typeof painting.author_image === 'string') {
-                  authorAvatar = painting.author_image.startsWith('data:')
-                      ? painting.author_image
-                      : painting.author_image; // could be a path/URL handled by frontend if needed
-              }
-          }
-      } catch (e) {
-          authorAvatar = null;
+    res.json({
+      success: true,
+      painting: {
+        id: painting.Painting_ID,
+        title: painting.Title,
+        description: painting.Description,
+        author_name: painting.author_name,
+        author_avatar: avatarUrl(painting.Creator_ID, painting.author_image_version || 'default'),
+        artistId: painting.Creator_ID,
+        creator_id: painting.Creator_ID, // backward compatibility
+        price: painting.Price,
+        style: painting.Style,
+        likes: painting.likes || 0,
+        likedByCurrentUser,
+        category: painting.Category || null,
+        format: painting.Format || null,
+        size: width && height ? `${width}x${height}` : null,
+        width,
+        height,
+        creationDate: painting.Creation_Date || null,
+        mainImage: painting.hasImage ? paintingImageUrl(painting.Painting_ID, DETAIL_WIDTH) : null,
+        gallery: extraImagesRows.map((img) => paintingExtraImageUrl(painting.Painting_ID, img.Image_ID)),
+        batchId: painting.Batch_ID
       }
-
-      // Map additional descriptive fields if present in DB
-      const category = painting.Category || painting.category || null;
-      const format = painting.Format || painting.format || null;
-      const width = painting.Width || painting.width || null;
-      const height = painting.Height || painting.height || null;
-      const size = painting.Size || painting.size || (width && height ? `${width}x${height}` : null);
-      const creationDate = painting.Creation_Date || painting.creation_date || painting.created_at || null;
-
-      // liked by current user?
-      let likedByCurrentUser = false;
-      try {
-          const userId = req.session?.user?.Creator_ID || req.session?.user?.id || null;
-          if (userId) {
-              const [likeRows] = await db.query(
-                  'SELECT 1 FROM painting_likes WHERE Painting_ID = ? AND User_ID = ? LIMIT 1',
-                  [paintingId, userId]
-              );
-              likedByCurrentUser = likeRows.length > 0;
-          }
-      } catch (e) {
-          // non-fatal
-          likedByCurrentUser = false;
-      }
-
-      res.json({
-          success: true,
-          painting: {
-              id: painting.Painting_ID,
-              title: painting.Title,
-              description: painting.Description,
-              author_name: painting.author_name,
-              author_avatar: authorAvatar,
-              artistId: painting.Creator_ID,
-              creator_id: painting.Creator_ID, // backward compatibility
-              price: painting.Price,
-              style: painting.Style,
-              likes: painting.Likes || painting.likes || 0,
-              likedByCurrentUser,
-              category,
-              format,
-              size,
-              width,
-              height,
-              creationDate,
-              mainImage,
-              gallery,
-              batchId: painting.Batch_ID
-          }
-      });
-
+    });
   } catch (err) {
     console.error('Error fetching painting:', err);
     res.status(500).json({ success: false, message: 'Error fetching painting' });

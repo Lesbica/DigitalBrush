@@ -1,32 +1,20 @@
 // Utility helpers for chat routes
+const { messageImageUrl } = require('./imageUrls');
 
-function detectImageMime(buffer) {
-  if (!buffer || buffer.length < 4) return 'image/png';
-  if (buffer[0] === 0xFF && buffer[1] === 0xD8 && buffer[2] === 0xFF) return 'image/jpeg';
-  if (buffer[0] === 0x89 && buffer[1] === 0x50 && buffer[2] === 0x4E && buffer[3] === 0x47) return 'image/png';
-  if (buffer[0] === 0x47 && buffer[1] === 0x49 && buffer[2] === 0x46) return 'image/gif';
-  return 'image/png';
-}
+// Message columns without the image bytes (images are served by /api/images/message/:id)
+const MESSAGE_COLUMNS = 'id, senderId, receiverId, commissionId, type, content, image IS NOT NULL AS hasImage, status, timestamp';
 
 function rowToMessage(row) {
-  let image = null;
-  if (row.image) {
-    try {
-      const mime = detectImageMime(row.image);
-      image = `data:${mime};base64,${Buffer.from(row.image).toString('base64')}`;
-    } catch (e) {
-      image = null;
-    }
-  }
+  const hasImage = Boolean(row.hasImage ?? row.image);
+  const image = hasImage ? messageImageUrl(row.id) : null;
 
-  // Normalize empty content for image messages
+  // Image messages have no text: the frontend reads the picture from `image` or `content`
   let outContent = row.content;
   let outType = row.type;
   const contentStr = outContent === null || outContent === undefined ? '' : String(outContent).trim();
-  const isLiteralNull = contentStr.toLowerCase() === 'null';
-  if ((contentStr === '' || isLiteralNull) && image) {
+  if ((contentStr === '' || contentStr.toLowerCase() === 'null') && image) {
     outContent = image;
-    outType = 'image';
+    outType = 'image'; // як і раніше: повідомлення з картинкою показуються в чаті як image
   }
 
   return {
@@ -42,4 +30,4 @@ function rowToMessage(row) {
   };
 }
 
-module.exports = { detectImageMime, rowToMessage };
+module.exports = { MESSAGE_COLUMNS, rowToMessage };

@@ -99,11 +99,14 @@ describe('commissions', () => {
         const r = await call('POST', '/commissions/create', { cookie: as.customer, form: formWith({ title: 't', description: 'd', creatorId: 999999999 }) });
         assert.equal(r.status, 404);
     });
-    test('binary and legacy data-URI images are both returned as data URIs', async () => {
+    test('binary and legacy data-URI images are both served via image URLs', async () => {
         const r = await call('GET', '/commissions/public');
         for (const id of [f.commissions.openPublic, f.commissions.legacy]) {
             const c = r.data.commissions.find((x) => x.id === id);
-            assert.ok(c.imageUrl.startsWith('data:image/png;base64,'), `commission ${id}`);
+            assert.ok(c.imageUrl.startsWith(`https://api.test/api/images/commission/${id}/ref`), `commission ${id}`);
+            const img = await call('GET', c.imageUrl.replace('https://api.test/api', ''));
+            assert.equal(img.status, 200, `image of commission ${id}`);
+            assert.equal(img.headers.get('content-type'), 'image/webp');
         }
         const d = await call('GET', `/commissions/${f.commissions.inProgress}`, { cookie: as.customer });
         assert.equal(d.data.commission.images.length, 2);

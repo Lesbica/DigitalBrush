@@ -1,27 +1,31 @@
 const express = require('express');
 const db = require('../config/db');
-const { detectImageMime, rowToMessage } = require('../utils/chatHelpers');
+const { MESSAGE_COLUMNS, rowToMessage } = require('../utils/chatHelpers');
 const { requireCommissionParticipant, getSessionUserId } = require('../utils/commissionAccess');
 const { detectImageMime: detectRealImage } = require('../config/multerConfig');
 
 const router = express.Router();
 
 // Get messages for a commission
-// GET /api/commissions/chat/:commissionId/messages?limit=100
+// GET /api/commissions/chat/:commissionId/messages?limit=100&before=<messageId>
+// Newest `limit` messages (default 200, max 500) older than `before`, returned oldest-first.
 router.get('/:commissionId/messages', requireCommissionParticipant(), async (req, res) => {
   const { commissionId } = req.params;
-  const limit = Math.min(parseInt(req.query.limit, 10) || 1000, 1000);
+  const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 200, 1), 500);
+  const before = parseInt(req.query.before, 10);
 
   try {
+    const params = [commissionId];
+    let beforeSql = '';
+    if (Number.isInteger(before) && before > 0) { beforeSql = 'AND id < ?'; params.push(before); }
     const [rows] = await db.query(
-      'SELECT id, senderId, receiverId, commissionId, type, content, image, status, timestamp FROM messages WHERE commissionId = ? ORDER BY timestamp ASC LIMIT ?'
-      , [commissionId, limit]
+      `SELECT ${MESSAGE_COLUMNS} FROM messages WHERE commissionId = ? ${beforeSql} ORDER BY id DESC LIMIT ?`,
+      [...params, limit + 1]
     );
+    const hasMore = rows.length > limit;
+    const mapped = rows.slice(0, limit).reverse().map(rowToMessage);
 
-    // convert DB rows to normalized messages
-    const mapped = rows.map(rowToMessage);
-
-    res.json({ success: true, messages: mapped });
+    res.json({ success: true, messages: mapped, hasMore });
   } catch (err) {
     console.error('[chat] GET messages error:', err);
     res.status(500).json({ success: false, message: 'Error fetching messages' });
@@ -86,7 +90,7 @@ router.post('/:commissionId/submit-stage', async (req, res) => {
       [senderId, customerId, commissionId, 'stage', null, buffer, 'unread']
     );
 
-    const [newRows] = await db.query('SELECT id, senderId, receiverId, commissionId, type, content, image, status, timestamp FROM messages WHERE id = ?', [result.insertId]);
+    const [newRows] = await db.query(`SELECT ${MESSAGE_COLUMNS} FROM messages WHERE id = ?`, [result.insertId]);
     const out = rowToMessage(newRows[0]);
 
     try {
@@ -255,7 +259,7 @@ router.post('/:commissionId/messages', async (req, res) => {
         );
         console.log('[chat] insert result:', result && { insertId: result.insertId, affectedRows: result.affectedRows });
 
-        const [newMsgRows] = await db.query('SELECT id, senderId, receiverId, commissionId, type, content, image, status, timestamp FROM messages WHERE id = ?', [result.insertId]);
+        const [newMsgRows] = await db.query(`SELECT ${MESSAGE_COLUMNS} FROM messages WHERE id = ?`, [result.insertId]);
         const out = rowToMessage(newMsgRows[0]);
           // emit realtime event to room
           try {
@@ -279,9 +283,9 @@ router.post('/:commissionId/messages', async (req, res) => {
       );
       console.log('[chat] insert result:', result && { insertId: result.insertId, affectedRows: result.affectedRows });
 
-      const [newMsgRows] = await db.query('SELECT id, senderId, receiverId, commissionId, type, content, image, status, timestamp FROM messages WHERE id = ?', [result.insertId]);
+      const [newMsgRows] = await db.query(`SELECT ${MESSAGE_COLUMNS} FROM messages WHERE id = ?`, [result.insertId]);
       const row = newMsgRows[0];
-      const out = { id: row.id, senderId: row.senderId, receiverId: row.receiverId, commissionId: row.commissionId, type: row.type, content: row.content, image: null, status: row.status, timestamp: row.timestamp };
+      const out = rowToMessage(row);
       try {
         const { getIO } = require('../socket');
         const io = getIO();
