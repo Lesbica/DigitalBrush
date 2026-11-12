@@ -18,11 +18,14 @@
 }
 
 .artCardImage {
+    display: block;
+    width: calc(100% - 32px);
     height: 65%;
-    background-size: cover;
-    background-position: center;
+    object-fit: cover;
+    object-position: center;
     margin: 16px 16px 0 16px;
     border-radius: 8px;
+    background: rgba(255, 255, 255, 0.05);
 }
 
 .artCardInfo {

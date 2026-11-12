@@ -44,9 +44,13 @@ function ArtCard(props) {
 
   return (
       <div className={styles.artCard} onClick={handleClick}>
-      <div
+      <img
         className={styles.artCardImage}
-        style={{ backgroundImage: imageUrl ? `url(${imageUrl})` : 'none' }}
+        src={imageUrl || '/images/placeholder.svg'}
+        alt={title}
+        loading="lazy"
+        decoding="async"
+        onError={(e) => { if (!e.currentTarget.src.endsWith('/images/placeholder.svg')) e.currentTarget.src = '/images/placeholder.svg'; }}
       />
       <div className={styles.artCardInfo}>
         <div className={styles.cardRow}>

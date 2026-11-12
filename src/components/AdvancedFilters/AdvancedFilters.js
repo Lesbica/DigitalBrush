@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import styles from './AdvancedFilters.module.css';
 
-// selected: { [columnTitle]: optionName }; onSelect(columnTitle, optionName) — optional (without it the panel is display-only)
+// selected: { [columnTitle]: value }; onSelect(columnTitle, value) is called for plain options and for
+// sub-options (e.g. a style); without onSelect the panel is display-only.
 function AdvancedFilters({ filterConfig, selected = {}, onSelect }) {
     const [isOpen, setIsOpen] = useState(false);
     const [openSubMenu, setOpenSubMenu] = useState(null);
@@ -33,16 +34,19 @@ function AdvancedFilters({ filterConfig, selected = {}, onSelect }) {
                         <div key={column.title} className={styles.filterColumn}>
                             <h4 className={styles.columnTitle}>{column.title}</h4>
                             <ul className={styles.filterList}>
-                                {column.options.map(opt => (
+                                {column.options.map(opt => {
+                                    const picked = selected[column.title];
+                                    const pickedSub = opt.subOptions?.includes(picked) ? picked : null;
+                                    return (
                                     <li
                                         key={opt.name}
-                                        className={`${styles.filterItem} ${opt.subOptions ? styles.hasSubMenu : ''} ${selected[column.title] === opt.name ? styles.selected : ''}`}
+                                        className={`${styles.filterItem} ${opt.subOptions ? styles.hasSubMenu : ''} ${picked === opt.name || pickedSub ? styles.selected : ''}`}
                                         onClick={() => {
                                             if (opt.subOptions) setOpenSubMenu(openSubMenu === opt.name ? null : opt.name);
                                             else if (onSelect) onSelect(column.title, opt.name);
                                         }}
                                     >
-                                        {opt.name}
+                                        {pickedSub || opt.name}
                                         {opt.subOptions && <span>{openSubMenu === opt.name ? '‹' : '›'}</span>}
 
                                         {opt.subOptions && (
@@ -52,12 +56,23 @@ function AdvancedFilters({ filterConfig, selected = {}, onSelect }) {
                                                 ${index === filterConfig.length - 1 ? styles.opensLeft : ''} 
                                             `}>
                                                 {opt.subOptions.map(subOpt => (
-                                                    <li key={subOpt} className={styles.subItem}>{subOpt}</li>
+                                                    <li
+                                                        key={subOpt}
+                                                        className={`${styles.subItem} ${picked === subOpt ? styles.selected : ''}`}
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            if (onSelect) onSelect(column.title, subOpt);
+                                                            setOpenSubMenu(null);
+                                                        }}
+                                                    >
+                                                        {subOpt}
+                                                    </li>
                                                 ))}
                                             </div>
                                         )}
                                     </li>
-                                ))}
+                                    );
+                                })}
                             </ul>
                         </div>
                     ))}

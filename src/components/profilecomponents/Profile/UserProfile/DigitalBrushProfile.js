@@ -20,17 +20,10 @@ import MyCommission from "./MyCommission/MyCommission";
 import AddArtModal from "../../../Shop/AddArtModal/AddArtModal";
 import AddCommissionModal from "../../../Commission/CommissionModals/AddCommissionModal";
 import { CATEGORIES } from '../../../../constants/categories';
+import { SHOP_FILTERS } from '../../../../constants/filters';
 
 
-const filterConfig = [
-    { title: "SORT BY", options: [{ name: "NONE" }, { name: "RATING" }, { name: "LATEST" }, { name: "EXPENSIVE" }, { name: "CHEAP" }]},
-    { title: "STYLE", options: [{ name: "NONE STYLE", subOptions: [
-                "Retro Futurism", "Mid-Century", "Modern, Art Deco", "Bauhaus, Y2K", "Aesthetic", "Memphis Style",
-                "Grunge", "Psychedelic Art", "Surrealism, Neo-Psychedelia, Op Art", "Dreamcore", "Weirdcore",
-                "Hyperrealism", "Social Realism", "Digital Realism", "Cinematic Realism", "Cyberpunk",
-                "Synthwave", "Vaporwave", "Minimalism", "Brutalism", "Postmodern", "Collage."
-            ] }]}
-];
+const filterConfig = SHOP_FILTERS;
 
 const categories = CATEGORIES;
 

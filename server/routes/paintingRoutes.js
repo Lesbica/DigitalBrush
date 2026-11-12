@@ -10,7 +10,7 @@ const router = express.Router();
 
 /* =====================================================
    GET PAINTINGS (main image only, as URL)
-   Optional filters: category, style, q (title), creatorId, minPrice, maxPrice,
+   Optional filters: category, style, q (title, author or style), creatorId, minPrice, maxPrice,
    sort = newest | price_asc | price_desc | popular.
    Pagination: page (1-based) + limit (max 100). Without page/limit returns everything (up to 500)
    so the current frontend keeps working.
@@ -31,7 +31,11 @@ router.get('', async (req, res) => {
 
     if (q.category) { where.push('p.Category = ?'); params.push(String(q.category)); }
     if (q.style) { where.push('p.Style = ?'); params.push(String(q.style)); }
-    if (q.q) { where.push('p.Title LIKE ?'); params.push(like(String(q.q).slice(0, 100))); }
+    if (q.q) {
+      const term = like(String(q.q).slice(0, 100));
+      where.push('(p.Title LIKE ? OR c.Name LIKE ? OR p.Style LIKE ?)');
+      params.push(term, term, term);
+    }
     if (q.creatorId && Number.isInteger(Number(q.creatorId))) { where.push('p.Creator_ID = ?'); params.push(Number(q.creatorId)); }
     if (q.minPrice !== undefined && Number.isFinite(Number(q.minPrice))) { where.push('p.Price >= ?'); params.push(Number(q.minPrice)); }
     if (q.maxPrice !== undefined && Number.isFinite(Number(q.maxPrice))) { where.push('p.Price <= ?'); params.push(Number(q.maxPrice)); }
@@ -42,7 +46,8 @@ router.get('', async (req, res) => {
     const limit = paginated ? Math.min(Math.max(Number.parseInt(q.limit, 10) || 24, 1), 100) : 500;
     const page = paginated ? Math.max(Number.parseInt(q.page, 10) || 1, 1) : 1;
 
-    const [[{ total }]] = await db.query(`SELECT COUNT(*) AS total FROM paintings p ${whereSql}`, params);
+    const [[{ total }]] = await db.query(
+      `SELECT COUNT(*) AS total FROM paintings p JOIN creators c ON p.Creator_ID = c.Creator_ID ${whereSql}`, params);
     const [rows] = await db.query(`
         SELECT p.Painting_ID, p.Title, p.Description, p.Price, p.Style, p.Category, p.likes,
                p.Creator_ID, c.Name AS author_name

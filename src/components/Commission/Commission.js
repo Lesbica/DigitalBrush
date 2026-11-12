@@ -1,150 +1,74 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import styles from './Commission.module.css';
 import CategoryFilters from "../CategoryFilters/CategoryFilters";
 import AdvancedFilters from '../AdvancedFilters/AdvancedFilters';
 import Pagination from '../hooks/Pagination/Pagination';
+import useServerList, { useDebouncedValue } from '../hooks/useServerList';
 import CommissionModalDetails from './CommissionModals/CommissionModalDetails';
 import AddCommissionModal from './CommissionModals/AddCommissionModal';
-import axios from 'axios';
 import logo from '../../assets/logo.svg';
 import { CATEGORIES } from '../../constants/categories';
+import { COMMISSION_FILTERS, filtersToParams, toggleFilter } from '../../constants/filters';
 import { useAuth } from '../../context/AuthContext';
 
-const commissionFilterConfig = [
-{ title: "SORT BY", options: [{ name: "NONE" }, { name: "RATING" }, { name: "LATEST" }, { name: "EXPENSIVE" }, { name: "CHEAP" }]},
-{ title: "STYLE", options: [{ name: "NONE STYLE", subOptions: ["Retro Futurism", "Mid-Century", "Cyberpunk", "Synthwave"]}]},
-{ title: "FORMAT", options: [{ name: "NONE", subOptions: ["PNG", "JPG", "JPEG", "SVG"]}]}
-];
+const PAGE_SIZE = 48;
 
-const categories = CATEGORIES;
+// API commission -> card
+const toCard = (c) => ({
+    id: c.Commission_ID ?? c.id,
+    title: c.Title || '',
+    description: c.Description || '',
+    price: c.Price ?? 0,
+    category: c.Category || '',
+    style: c.Style || '',
+    fileFormat: c.Format || '',
+    size: c.Size || '',
+    imageUrl: c.imageUrl || null,
+    imageSrc: c.imageUrl || '/images/placeholder.svg',
+    about: c.Description || '',
+});
 
 function Commission() {
-const [activeCategory, setActiveCategory] = useState(null);
-const [searchQuery, setSearchQuery] = useState('');
-const [showAdvanced, setShowAdvanced] = useState(false);
-const itemsPerPage = 52;
-const [selectedCommission, setSelectedCommission] = useState(null);
-const [isModalOpen, setIsModalOpen] = useState(false);
-const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+    const { isLoggedIn } = useAuth();
+    const [activeCategory, setActiveCategory] = useState(null);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [advanced, setAdvanced] = useState({});
+    const [selectedCommission, setSelectedCommission] = useState(null);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+    const search = useDebouncedValue(searchQuery.trim(), 300);
 
-const [commissions, setCommissions] = useState([]);
-const [loading, setLoading] = useState(true);
-const [currentPage, setCurrentPage] = useState(0);
-const [totalPages, setTotalPages] = useState(0);
-
-const { isLoggedIn } = useAuth();
-
-    useEffect(() => {
-        const fetchCommissions = async () => {
-            setLoading(true);
-            try {
-                const response = await axios.get(`/commissions/public`, {
-                    params: {
-                        page: currentPage + 1,
-                        limit: itemsPerPage
-                    }
-                });
-
-                if (response.data.success && Array.isArray(response.data.commissions)) {
-                    const mapped = response.data.commissions.map(c => {
-                        let imageSrc = c.imageUrl || c.Image || c.ReferenceImage || null;
-
-                        if (imageSrc && typeof imageSrc === 'string') {
-                            const s = imageSrc.trim();
-                            if (s.startsWith('data:')) {
-                                imageSrc = s;
-                            } else {
-                                const cleaned = s.replace(/(\r\n|\n|\r|\s)+/gm, "");
-                                if (cleaned.length > 50 && /^[A-Za-z0-9+/=]+$/.test(cleaned)) {
-                                    imageSrc = `data:image/png;base64,${cleaned}`;
-                                } else {
-                                    imageSrc = s;
-                                }
-                            }
-                        } else {
-                            imageSrc = null;
-                        }
-
-                        return {
-                            id: c.Commission_ID || c.id,
-                            title: c.Title || '',
-                            description: c.Description || '',
-                            price: c.Price || 0,
-                            category: c.Category || '',
-                            style: c.Style || '',
-                            fileFormat: c.Format || '',
-                            size: c.Size || '',
-                            imageUrl: c.imageUrl || null,
-                            imageSrc: imageSrc || "/images/placeholder.svg",
-                            about: c.Description || '',
-                            authorIcon: "/images/profileImg.jpg",
-                        };
-                    });
-
-                    setCommissions(mapped);
-                    setTotalPages(response.data.totalPages || 1);
-                } else {
-                    setCommissions([]);
-                    setTotalPages(0);
-                }
-            } catch (error) {
-                console.error("Error fetching commissions:", error);
-                setCommissions([]);
-                setTotalPages(0);
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchCommissions();
-    }, [currentPage, itemsPerPage]);
-
-    const displayedCommissions = useMemo(() => {
-        let items = commissions;
-        if (activeCategory) {
-            items = items.filter(c => (c.category || '').toUpperCase() === activeCategory.toUpperCase());
-        }
-        if (searchQuery) {
-            items = items.filter(c => (c.title || '').toLowerCase().includes(searchQuery.toLowerCase()));
-        }
-        return items;
-    }, [activeCategory, searchQuery, commissions]);
+    const { items: commissions, totalPages, loading, error, page, setPage, reload } = useServerList('/commissions/public', {
+        params: { category: activeCategory, q: search, ...filtersToParams(advanced) },
+        limit: PAGE_SIZE,
+        listKey: 'commissions',
+        mapItem: toCard,
+    });
 
     useEffect(() => {
-        if (isModalOpen || isAddModalOpen) {
-            document.body.style.overflow = 'hidden';
-        } else {
-            document.body.style.overflow = 'auto';
-        }
-        return () => {
-            document.body.style.overflow = 'auto';
-        };
+        if (!isModalOpen && !isAddModalOpen) return undefined;
+        document.body.style.overflow = 'hidden';
+        return () => { document.body.style.overflow = 'auto'; };
     }, [isModalOpen, isAddModalOpen]);
 
-    const handleCategoryClick = (category) => {
-        if (activeCategory === category) {
-            setActiveCategory(null);
-        } else {
-            setActiveCategory(category);
-        }
-        setCurrentPage(0);
+    const handleCategoryClick = (category) => setActiveCategory(activeCategory === category ? null : category);
+    const handlePageChange = (next) => {
+        setPage(next);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     };
-
     const handleOpenModal = (commission) => {
         setSelectedCommission(commission);
         setIsModalOpen(true);
     };
-
     const handleCloseModal = () => {
         setIsModalOpen(false);
         setSelectedCommission(null);
+        reload();
     };
-
-    const handleOpenAddModal = () => {
-        setIsAddModalOpen(true);
-    };
-
+    const handleOpenAddModal = () => setIsAddModalOpen(true);
     const handleCloseAddModal = () => {
         setIsAddModalOpen(false);
+        reload();
     };
 
     return (
@@ -180,13 +104,17 @@ const { isLoggedIn } = useAuth();
 
                 <div className={styles.filtersWrapper}>
                     <CategoryFilters
-                        categories={categories}
+                        categories={CATEGORIES}
                         activeCategory={activeCategory}
                         onCategoryClick={handleCategoryClick}
                     />
 
                     <div className={styles.filtersContainer}>
-                        <AdvancedFilters filterConfig={commissionFilterConfig} />
+                        <AdvancedFilters
+                            filterConfig={COMMISSION_FILTERS}
+                            selected={advanced}
+                            onSelect={(column, value) => setAdvanced(prev => toggleFilter(prev, column, value))}
+                        />
                     </div>
                 </div>
 
@@ -195,10 +123,10 @@ const { isLoggedIn } = useAuth();
                         <img src={logo} alt="Loading" className={styles.loadingLogo} />
                     </div>
                 ) : (
-                    displayedCommissions.length > 0 ? (
+                    commissions.length > 0 ? (
                         <>
                             <div className={styles.commissionGrid}>
-                                {displayedCommissions.map(commission => (
+                                {commissions.map(commission => (
                                     <div key={commission.id} className={styles.commissionCard}>
                                         <div className={styles.imagePriceWrapper}>
                                             <div className={styles.imageWrapper}>
@@ -206,7 +134,9 @@ const { isLoggedIn } = useAuth();
                                                     src={commission.imageSrc || "/images/placeholder.svg"}
                                                     alt={commission.title || "Commission"}
                                                     className={styles.cardImage}
-                                                    onError={(e) => { e.target.src = "/images/placeholder.svg"; }}
+                                                    loading="lazy"
+                                                    decoding="async"
+                                                    onError={(e) => { if (!e.currentTarget.src.endsWith('/images/placeholder.svg')) e.currentTarget.src = '/images/placeholder.svg'; }}
                                                 />
                                             </div>
                                             <div className={styles.priceOverlay}>
@@ -230,13 +160,15 @@ const { isLoggedIn } = useAuth();
                             </div>
 
                             <Pagination
-                                currentPage={currentPage}
+                                currentPage={page}
                                 totalPages={totalPages}
-                                onPageChange={setCurrentPage}
+                                onPageChange={handlePageChange}
                             />
                         </>
                     ) : (
-                        <div className={styles.noResults}>There are no commissions available at the moment</div>
+                        <div className={styles.noResults}>
+                            {error ? 'Could not load the commissions. Please try again later.' : 'No commissions match your search'}
+                        </div>
                     )
                 )}
             </div>

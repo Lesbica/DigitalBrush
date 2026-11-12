@@ -5,17 +5,16 @@ import addImageIcon from '../../../assets/image-placeholder-icon.svg';
 import axios from "axios";
 import { CATEGORIES } from '../../../constants/categories';
 import { useToast } from '../../../context/ToastContext';
+import { STYLES, COMMISSION_FORMATS } from '../../../constants/filters';
 
 const categories = CATEGORIES;
-const mockStyles = ["Retro", "Cyberpunk", "Fantasy", "Minimalism", "3D Render"];
-const mockFormats = ["PNG", "JPG", "Figma", "PSD", "AI"];
 
 const AddCommissionModal = ({ onClose, targetCreatorId = null }) => {
     const toast = useToast();
     const [name, setName] = useState('');
     const [category, setCategory] = useState(categories[0]);
-    const [style, setStyle] = useState(mockStyles[0]);
-    const [fileFormat, setFileFormat] = useState(mockFormats[0]);
+    const [style, setStyle] = useState(STYLES[0]);
+    const [fileFormat, setFileFormat] = useState(COMMISSION_FORMATS[0]);
     const [sizeW, setSizeW] = useState('');
     const [sizeH, setSizeH] = useState('');
     const [about, setAbout] = useState('');
@@ -240,13 +239,13 @@ const AddCommissionModal = ({ onClose, targetCreatorId = null }) => {
                         <div className={styles.formGroup}>
                             <p>Style</p>
                             <select id="style" className={styles.formSelect} value={style} onChange={(e) => setStyle(e.target.value)}>
-                                {mockStyles.map(s => <option key={s} value={s}>{s}</option>)}
+                                {STYLES.map(s => <option key={s} value={s}>{s}</option>)}
                             </select>
                         </div>
                         <div className={styles.formGroup}>
                             <p>File format</p>
                             <select id="fileFormat" className={styles.formSelect} value={fileFormat} onChange={(e) => setFileFormat(e.target.value)}>
-                                {mockFormats.map(f => <option key={f} value={f}>{f}</option>)}
+                                {COMMISSION_FORMATS.map(f => <option key={f} value={f}>{f}</option>)}
                             </select>
                         </div>
                         <div className={styles.formGroup}>

@@ -1,126 +1,52 @@
-import React, { useMemo, useState, useEffect } from "react";
+import { useState } from "react";
 import styles from "./Shop.module.css";
 import ArtCard from '../ArtCard/ArtCard';
 import CategoryFilters from "../CategoryFilters/CategoryFilters";
 import AdvancedFilters from '../AdvancedFilters/AdvancedFilters';
-import { usePagination } from '../hooks/Pagination/usePagination';
 import Pagination from '../hooks/Pagination/Pagination';
-import axios from 'axios';
+import useServerList, { useDebouncedValue } from '../hooks/useServerList';
 import AddArtModal from "./AddArtModal/AddArtModal";
 import logo from "../../assets/logo.svg";
 import { CATEGORIES } from '../../constants/categories';
+import { SHOP_FILTERS, filtersToParams, toggleFilter } from '../../constants/filters';
 import { useAuth } from '../../context/AuthContext';
 
+const PAGE_SIZE = 48;
 
-const shopFilterConfig = [
-    { title: "SORT BY", options: [{ name: "NONE" }, { name: "RATING" }, { name: "LATEST" }, { name: "EXPENSIVE" }, { name: "CHEAP" }]},
-    { title: "STYLE", options: [{ name: "NONE STYLE", subOptions: [
-        "Retro Futurism", "Mid-Century", "Modern, Art Deco", "Bauhaus, Y2K", "Aesthetic", "Memphis Style",
-        "Grunge", "Psychedelic Art", "Surrealism, Neo-Psychedelia, Op Art", "Dreamcore", "Weirdcore",
-        "Hyperrealism", "Social Realism", "Digital Realism", "Cinematic Realism", "Cyberpunk",
-        "Synthwave", "Vaporwave", "Minimalism", "Brutalism", "Postmodern", "Collage."
-    ] }]}
-];
-
-const categories = CATEGORIES;
+// API painting -> card
+const toCard = (p) => ({
+    id: p.id ?? p.Painting_ID,
+    title: p.title ?? p.Title ?? '',
+    artistName: p.author_name || 'Artist',
+    artistId: p.Creator_ID ?? null,
+    description: p.description ?? p.Description ?? '',
+    imageUrl: p.image || '/images/placeholder.svg',
+    likes: p.likes ?? p.Likes ?? 0,
+    price: p.price ?? p.Price ?? '',
+    category: p.category ?? p.Category ?? '',
+    style: p.style ?? p.Style ?? '',
+});
 
 const Shop = () => {
-    const [cards, setCards] = useState([]);
+    const { isArtist } = useAuth();
     const [activeCategory, setActiveCategory] = useState(null);
     const [searchQuery, setSearchQuery] = useState('');
-    const { isArtist } = useAuth();
+    const [advanced, setAdvanced] = useState({});
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-    const [loading, setLoading] = useState(true);
+    const search = useDebouncedValue(searchQuery.trim(), 300);
 
-    const normalizeImage = (img) => {
-        if (!img) return null;
-        if (typeof img === 'string') {
-            if (img.startsWith('data:') || img.startsWith('http')) return img;
-            const cleaned = img.replace(/[\r\n\s]+/g, '');
-            if (/^[A-Za-z0-9+/=]+$/.test(cleaned) && cleaned.length > 50) return `data:image/png;base64,${cleaned}`;
-            return img;
-        }
-        if (typeof img === 'object' && Array.isArray(img.data)) {
-            try {
-                const bytes = Uint8Array.from(img.data);
-                let binary = '';
-                for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
-                return `data:image/png;base64,${btoa(binary)}`;
-            } catch (e) { return null; }
-        }
-        return null;
-    };
-
-    // fetch all paintings
-    useEffect(() => {
-    let mounted = true;
-        setLoading(true);
-    axios.get(`/paintings`)
-        .then(res => {
-            const payload = res.data;
-            const list = Array.isArray(payload) ? payload : (payload.paintings || []);
-            const mapped = list.map(p => {
-                const imageSrc = p.imageUrl || p.Image || p.image || p.image_url || normalizeImage(p.Image);
-                const images = [];
-                if (p.images && Array.isArray(p.images)) {
-                    p.images.forEach(it => {
-                        const src = normalizeImage(it) || it;
-                        if (src) images.push(src);
-                    });
-                } else if (imageSrc) {
-                    images.push(imageSrc);
-                }
-                return {
-                    id: p.Painting_ID || p.id || Math.random().toString(36).slice(2,9),
-                    title: p.Title || p.title || '',
-                    artistName: p.author_name || p.creatorName || 'Artist',
-                    artistId: p.Creator_ID || p.creator_id || p.artistId || null,
-                    description: p.Description || p.description || '',
-                    imageUrl: imageSrc || '/images/placeholder.svg',
-                    images,
-                    // Лайки ТІЛЬКИ з БД, без рандому
-                    likes: p.likes ?? p.Likes ?? 0,
-                    // Ціна ТІЛЬКИ з БД, без рандому
-                    price: p.Price ?? p.price ?? '',
-                    // Додаткові поля не вигадуємо — віддамо як є або порожнє
-                    category: p.Category ?? p.category ?? '',
-                    style: p.Style ?? p.style ?? '',
-                    fileFormat: p.Format ?? p.format ?? '',
-                    size: p.Size ?? p.size ?? ''
-                };
-            });
-            if (mounted) setCards(mapped);
-        })
-        .catch(err => {
-            console.error('Failed to fetch paintings:', err);
-            if (mounted) setCards([]);
-        })
-        .finally(() => {
-            if (mounted) setLoading(false);
-        });
-    return () => { mounted = false; };
-}, []);
-
-
-
-    const filteredCards = useMemo(() => {
-        let filtered = cards;
-        if (activeCategory) filtered = filtered.filter(c => (c.category || '').toUpperCase() === activeCategory.toUpperCase());
-        if (searchQuery) {
-            const q = searchQuery.toLowerCase();
-            filtered = filtered.filter(c =>
-                (c.title || '').toLowerCase().includes(q) ||
-                (c.artistName || '').toLowerCase().includes(q) ||
-                (c.style || '').toLowerCase().includes(q)
-            );
-        }
-        return filtered;
-    }, [cards, activeCategory, searchQuery]);
-
-    const itemsPerPage = 96;
-    const { currentPage, setCurrentPage, totalPages, displayedData: displayedCards } = usePagination(filteredCards, itemsPerPage);
+    const { items: cards, totalPages, loading, error, page, setPage, reload } = useServerList('/paintings', {
+        params: { category: activeCategory, q: search, ...filtersToParams(advanced) },
+        limit: PAGE_SIZE,
+        listKey: 'paintings',
+        mapItem: toCard,
+    });
 
     const handleCategoryClick = (category) => setActiveCategory(activeCategory === category ? null : category);
+    const handlePageChange = (next) => {
+        setPage(next);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
 
     return (
         <div className={styles.shopPage}>
@@ -155,13 +81,17 @@ const Shop = () => {
 
                 <div className={styles.filtersWrapper}>
                     <CategoryFilters
-                        categories={categories}
+                        categories={CATEGORIES}
                         activeCategory={activeCategory}
                         onCategoryClick={handleCategoryClick}
                     />
 
                     <div className={styles.filtersContainer}>
-                        <AdvancedFilters filterConfig={shopFilterConfig} />
+                        <AdvancedFilters
+                            filterConfig={SHOP_FILTERS}
+                            selected={advanced}
+                            onSelect={(column, value) => setAdvanced(prev => toggleFilter(prev, column, value))}
+                        />
                     </div>
                 </div>
 
@@ -169,23 +99,27 @@ const Shop = () => {
                     <div className={styles.loadingSpinnerContainer}>
                         <img src={logo} alt="Loading" className={styles.loadingLogo} />
                     </div>
-                ) : (
-                    displayedCards.length ? (
+                ) : cards.length ? (
                     <>
                         <div className={styles.artGridFull}>
-                            {displayedCards.map(card =>
-                                <ArtCard key={card.id} art={card} />
-                            )}
+                            {cards.map(card => <ArtCard key={card.id} art={card} />)}
                         </div>
-                        <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
+                        <Pagination currentPage={page} totalPages={totalPages} onPageChange={handlePageChange} />
                     </>
                 ) : (
-                    <div className={styles.noResults}>There are no paintings available at the moment</div>
-                )
+                    <div className={styles.noResults}>
+                        {error ? 'Could not load the paintings. Please try again later.' : 'No paintings match your search'}
+                    </div>
                 )}
             </div>
 
-            {isAddModalOpen && <AddArtModal onClose={() => setIsAddModalOpen(false)} categories={categories} filterConfig={shopFilterConfig} />}
+            {isAddModalOpen && (
+                <AddArtModal
+                    onClose={() => { setIsAddModalOpen(false); reload(); }}
+                    categories={CATEGORIES}
+                    filterConfig={SHOP_FILTERS}
+                />
+            )}
         </div>
     );
 };

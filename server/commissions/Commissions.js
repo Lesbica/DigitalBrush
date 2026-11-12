@@ -153,12 +153,20 @@ function lifecycleFields(c, status) {
     };
 }
 
-// Public open commissions. Optional: category, q (title), page (1-based) + limit (max 100).
+// Public open commissions. Optional: category, style, format, q (title),
+// sort = newest | price_asc | price_desc, page (1-based) + limit (max 100).
 // Without page/limit returns everything (up to 500).
+const PUBLIC_SORTS = {
+    newest: 'c.Created_At DESC, c.Commission_ID DESC',
+    price_asc: 'c.Price ASC, c.Commission_ID DESC',
+    price_desc: 'c.Price DESC, c.Commission_ID DESC',
+};
 router.get('/public', async (req, res) => {
     const where = [`c.Type = 'public'`, `c.status = 'Open'`];
     const params = [];
     if (req.query.category) { where.push('c.Category = ?'); params.push(String(req.query.category)); }
+    if (req.query.style) { where.push('c.Style = ?'); params.push(String(req.query.style)); }
+    if (req.query.format) { where.push('c.Format = ?'); params.push(String(req.query.format)); }
     if (req.query.q) {
         where.push('c.Title LIKE ?');
         params.push(`%${String(req.query.q).slice(0, 100).replace(/[\\%_]/g, (ch) => '\\' + ch)}%`);
@@ -175,7 +183,7 @@ router.get('/public', async (req, res) => {
               FROM commissions c
               LEFT JOIN creators cr ON c.Customer_ID = cr.Creator_ID
              WHERE ${whereSql}
-             ORDER BY c.Created_At DESC, c.Commission_ID DESC
+             ORDER BY ${PUBLIC_SORTS[req.query.sort] || PUBLIC_SORTS.newest}
              LIMIT ? OFFSET ?`, [...params, limit, (page - 1) * limit]);
 
         const commissions = results.map((c) => ({

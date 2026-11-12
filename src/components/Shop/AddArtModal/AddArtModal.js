@@ -4,6 +4,7 @@ import axios from "axios";
 import closeIcon from '../../../assets/closeCross.svg';
 import addImageIcon from '../../../assets/image-placeholder-icon.svg';
 import { useToast } from '../../../context/ToastContext';
+import { PAINTING_FORMATS } from '../../../constants/filters';
 
 const getOptions = (config, title) => {
   const section = config.find(f => f.title === title);
@@ -21,7 +22,7 @@ const AddArtModal = ({
 }) => {
   const toast = useToast();
   const styleOptions = getOptions(filterConfig, "STYLE");
-  const formatOptions = ["PNG", "JPG", "JPEG", "WEBP", "SVG"];
+  const formatOptions = PAINTING_FORMATS;
 
   const [name, setName] = useState('');
   const [category, setCategory] = useState(categories[0] || '');

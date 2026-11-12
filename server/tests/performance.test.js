@@ -128,6 +128,10 @@ describe('pagination and filters', () => {
         assert.equal(p2.data.paintings.length, 2);
         const q = await call('GET', `/paintings?q=${encodeURIComponent(`${f.tag} B`)}`);
         assert.deepEqual(q.data.paintings.map((p) => p.id), [f.paintings.b]);
+        // search also matches the author's name
+        const byAuthor = await call('GET', `/paintings?q=${encodeURIComponent(`${f.tag}-customer`)}`);
+        assert.deepEqual(byAuthor.data.paintings.map((p) => p.id), [f.paintings.customerOwn]);
+        assert.equal(byAuthor.data.total, 1);
     });
     test('limit is capped at 100', async () => {
         assert.equal((await call('GET', '/paintings?limit=10000')).data.limit, 100);
@@ -138,6 +142,14 @@ describe('pagination and filters', () => {
         assert.ok(r.data.totalPages >= 2);
         const q = await call('GET', `/commissions/public?q=${encodeURIComponent(f.tag)}`);
         assert.ok(q.data.commissions.every((c) => c.Title.startsWith(f.tag)));
+        assert.ok(q.data.commissions.length >= 1);
+        const sorted = await call('GET', '/commissions/public?sort=price_desc&limit=100');
+        const prices = sorted.data.commissions.map((c) => Number(c.Price));
+        assert.deepEqual(prices, [...prices].sort((a, b) => b - a));
+        const none = await call('GET', `/commissions/public?q=${encodeURIComponent(f.tag)}&style=${encodeURIComponent(`${f.tag}-no-style`)}`);
+        assert.equal(none.data.total, 0);
+        const byFormat = await call('GET', `/commissions/public?q=${encodeURIComponent(f.tag)}&format=${encodeURIComponent(`${f.tag}-no-format`)}`);
+        assert.equal(byFormat.data.total, 0);
     });
     test('chat history pages backwards with before/hasMore', async () => {
         const url = `/commissions/chat/${f.commissions.inProgress}/messages`;
