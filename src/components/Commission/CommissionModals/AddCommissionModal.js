@@ -18,6 +18,7 @@ const AddCommissionModal = ({ onClose, targetCreatorId = null }) => {
     const [sizeH, setSizeH] = useState('');
     const [about, setAbout] = useState('');
     const [price, setPrice] = useState('');
+    const [deadline, setDeadline] = useState(''); // optional, YYYY-MM-DD
     const [images, setImages] = useState([]);
     const MAX_IMAGES = 5;
     const [errors, setErrors] = useState({});
@@ -115,6 +116,7 @@ const AddCommissionModal = ({ onClose, targetCreatorId = null }) => {
             formData.append("size", `${sizeW}x${sizeH}`);
             formData.append("format", fileFormat);
             formData.append("price", price);
+            if (deadline) formData.append("deadline", deadline);
 
             // Використовуємо ЄДИНИЙ ендпоінт
             const apiUrl = `/commissions/create`;
@@ -264,6 +266,16 @@ const AddCommissionModal = ({ onClose, targetCreatorId = null }) => {
                                     placeholder="H"
                                 />
                             </div>
+                        </div>
+                        <div className={styles.formGroup}>
+                            <p>Deadline (optional)</p>
+                            <input
+                                type="date"
+                                className={styles.formInput}
+                                value={deadline}
+                                min={new Date(Date.now() + 24 * 3600 * 1000).toISOString().slice(0, 10)}
+                                onChange={(e) => setDeadline(e.target.value)}
+                            />
                         </div>
                     </div>
                 </div>

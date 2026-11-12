@@ -13,6 +13,8 @@ const {
     emitToCommission,
 } = require('../utils/commissionAccess');
 const express = require('express');
+const { normalizeStatus, TERMINAL, autoApproveDays } = require('../services/commissionStages');
+const events = require('../services/commissionEvents');
 const router = express.Router();
 
 function validateCommissionFields(body) {
@@ -29,10 +31,23 @@ function validateCommissionFields(body) {
         price = Math.round(price * 100) / 100;
     }
 
+    // Optional deadline: YYYY-MM-DD, from tomorrow up to one year ahead
+    let deadline = null;
+    if (body.deadline) {
+        const d = String(body.deadline);
+        const date = new Date(`${d}T00:00:00Z`);
+        const today = new Date(new Date().toISOString().slice(0, 10) + 'T00:00:00Z');
+        const maxDate = new Date(today.getTime() + 366 * 24 * 3600 * 1000);
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(d) || Number.isNaN(date.getTime()) || date <= today || date > maxDate) {
+            return { error: 'Deadline must be a date between tomorrow and one year ahead' };
+        }
+        deadline = d;
+    }
+
     const short = (v) => (v ? String(v).trim().slice(0, 100) || null : null);
     return {
         values: {
-            title, description, price,
+            title, description, price, deadline,
             category: short(body.category), style: short(body.style),
             size: short(body.size), format: short(body.format),
         },
@@ -79,13 +94,13 @@ router.post(
 
             const [result] = await db.query(`
                 INSERT INTO commissions
-                (Title, Description, Category, Style, Size, Format, Price,
+                (Title, Description, Category, Style, Size, Format, Price, Deadline,
                  ReferenceImage, Image2, Image3, Image4, Image5,
                  Type, Customer_ID, Creator_ID, Status, Created_At)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Open', NOW())
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Open', NOW())
             `, [
                 values.title, values.description, values.category, values.style,
-                values.size, values.format, values.price,
+                values.size, values.format, values.price, values.deadline,
                 file('referenceImage'), file('image2'), file('image3'), file('image4'), file('image5'),
                 commissionType, user.id, targetCreator
             ]);
@@ -107,16 +122,23 @@ router.post(
 const COMMISSION_COLUMNS = `
     c.Commission_ID, c.Title, c.Description, c.Category, c.Style, c.Size, c.Format, c.Price,
     c.status AS Status, c.Type, c.Customer_ID, c.Creator_ID, c.Created_At, c.Updated_At, c.is_paid,
+    DATE_FORMAT(c.Deadline, '%Y-%m-%d') AS Deadline, c.Review_State, c.Stage_Submitted_At,
     c.ReferenceImage IS NOT NULL AS hasRef, c.Image2 IS NOT NULL AS has2, c.Image3 IS NOT NULL AS has3,
     c.Image4 IS NOT NULL AS has4, c.Image5 IS NOT NULL AS has5, c.ResultImage IS NOT NULL AS hasResult`;
 
-function normalizeStatus(value) {
-    const raw = String(value || '').toLowerCase();
-    return raw === 'sketch' ? 'Sketch'
-        : raw === 'edits' ? 'Edits'
-            : raw === 'completed' ? 'Completed'
-                : raw === 'cancelled' ? 'Cancelled'
-                    : 'Open';
+// Fields describing deadline and stage review progress (details and lists)
+function lifecycleFields(c, status) {
+    const submittedAt = c.Stage_Submitted_At ? new Date(c.Stage_Submitted_At) : null;
+    const today = new Date().toISOString().slice(0, 10);
+    return {
+        deadline: c.Deadline || null,
+        overdue: Boolean(c.Deadline && c.Deadline < today && !TERMINAL.includes(status)),
+        reviewState: c.Review_State || 'none',
+        stageSubmittedAt: submittedAt,
+        autoApproveAt: submittedAt && c.Review_State === 'pending'
+            ? new Date(submittedAt.getTime() + autoApproveDays() * 24 * 3600 * 1000)
+            : null,
+    };
 }
 
 // Public open commissions. Optional: category, q (title), page (1-based) + limit (max 100).
@@ -189,6 +211,7 @@ router.get('/my', async (req, res) => {
             const status = normalizeStatus(c.Status);
             return {
                 ...c,
+                ...lifecycleFields(c, status),
                 Status: status,
                 status,
                 hasResult: Boolean(hasResult),
@@ -255,6 +278,7 @@ router.get('/:id', async (req, res) => {
                 Creator_ID: commission.Creator_ID,
                 status,
                 Status: status,
+                ...lifecycleFields(commission, status),
                 review: review ? { ...review, text: review.text || '' } : null,
                 canReview: role === 'customer' && status === 'Completed' && !review,
                 images: [image1, image2, image3, image4, image5].filter(Boolean),
@@ -323,6 +347,30 @@ router.patch('/:id/accept', async (req, res) => {
     }
 });
 
+// Artist declines a direct commission addressed to them (status Open -> Declined)
+router.patch('/:id/decline', requireCommissionParticipant('id'), async (req, res) => {
+    const commission = req.commission;
+    const isDirect = String(commission.Type || '').toLowerCase() === 'direct';
+    if (req.commissionRole !== 'creator' || !isDirect) {
+        return res.status(403).json({ success: false, message: 'Only the artist of a direct commission can decline it' });
+    }
+    if (normalizeStatus(commission.Status) !== 'Open') {
+        return res.status(409).json({ success: false, message: 'Only an open commission can be declined' });
+    }
+    try {
+        const [r] = await db.query(
+            `UPDATE commissions SET status = 'Declined', Updated_At = NOW() WHERE Commission_ID = ? AND status = 'Open'`,
+            [commission.Commission_ID]
+        );
+        if (r.affectedRows === 0) return res.status(409).json({ success: false, message: 'Commission is no longer open' });
+        events.statusChanged(commission, 'Declined');
+        res.json({ success: true, status: 'Declined' });
+    } catch (err) {
+        logger.error('Decline commission error:', err);
+        res.status(500).json({ success: false, message: 'Database error' });
+    }
+});
+
 // Ручна зміна статусу. Переходи Sketch → Edits → Completed робить лише флоу рев'ю етапів
 // (POST /chat/:id/review), тому тут дозволене тільки скасування учасником неоплаченого комішену.
 router.patch('/:id/status', requireCommissionParticipant('id'), async (req, res) => {
@@ -334,9 +382,9 @@ router.patch('/:id/status', requireCommissionParticipant('id'), async (req, res)
         return res.status(400).json({ success: false, message: 'Only cancellation is allowed via this endpoint' });
     }
 
-    const current = String(commission.Status || '').toLowerCase();
-    if (current === 'completed' || current === 'cancelled') {
-        return res.status(409).json({ success: false, message: `Commission is already ${commission.Status}` });
+    const current = normalizeStatus(commission.Status);
+    if (TERMINAL.includes(current)) {
+        return res.status(409).json({ success: false, message: `Commission is already ${current}` });
     }
     if (commission.is_paid) {
         return res.status(409).json({ success: false, message: 'Paid commission cannot be cancelled' });
@@ -345,11 +393,7 @@ router.patch('/:id/status', requireCommissionParticipant('id'), async (req, res)
     try {
         await db.query(`UPDATE commissions SET Status = 'Cancelled', Updated_At = NOW() WHERE Commission_ID = ?`, [id]);
 
-        try {
-            emitToCommission(getIO(), commission, 'statusUpdated', { commissionId: Number(id), status: 'Cancelled' });
-        } catch (e) {
-            // socket not initialized — пропускаем
-        }
+        events.statusChanged(commission, 'Cancelled');
 
         res.json({ success: true, status: 'Cancelled' });
     } catch (err) {

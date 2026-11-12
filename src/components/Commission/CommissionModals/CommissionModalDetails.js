@@ -6,7 +6,9 @@ import ImageViewer from "../../ArtCard/ImageViewer/ImageViewer";
 import logo from '../../../assets/logo.svg'
 import URL from "../../../URL";
 
-const CommissionModalDetails = ({ commission, onClose, disableTake = false }) => {
+// respondAsArtist: artist of a direct open commission can accept or decline it
+// canCancel: customer can cancel an unpaid commission; onStatusChange(newStatus) refreshes the caller
+const CommissionModalDetails = ({ commission, onClose, disableTake = false, respondAsArtist = false, canCancel = false, onStatusChange }) => {
 
     const [isLoading, setIsLoading] = useState(true);
     const [details, setDetails] = useState(() => ({
@@ -73,6 +75,8 @@ const CommissionModalDetails = ({ commission, onClose, disableTake = false }) =>
                             status: c.status || prev.status,
                             Creator_ID: c.Creator_ID ?? prev.Creator_ID,
                             Customer_ID: c.Customer_ID ?? prev.Customer_ID,
+                            deadline: c.deadline || null,
+                            overdue: Boolean(c.overdue),
                         }));
                     }
                 })
@@ -143,6 +147,7 @@ const CommissionModalDetails = ({ commission, onClose, disableTake = false }) =>
 
             if (response.data.success) {
                 alert("Commission accepted successfully!");
+                if (onStatusChange) onStatusChange('Sketch');
                 onClose();
             }
         } catch (err) {
@@ -160,6 +165,23 @@ const CommissionModalDetails = ({ commission, onClose, disableTake = false }) =>
 
     // Перевіряємо, чи є взагалі зображення для прев'ю
     const hasMultipleImages = previewImages.length > 0;
+
+    // Decline (artist) or cancel (customer)
+    const changeStatus = async (action) => {
+        const question = action === 'decline' ? 'Decline this commission?' : 'Cancel this order?';
+        if (!window.confirm(question)) return;
+        try {
+            const res = action === 'decline'
+                ? await axios.patch(`/commissions/${commission.id}/decline`)
+                : await axios.patch(`/commissions/${commission.id}/status`, { status: 'Cancelled' });
+            const newStatus = res.data.status;
+            setDetails(prev => ({ ...prev, status: newStatus }));
+            if (onStatusChange) onStatusChange(newStatus);
+            onClose();
+        } catch (err) {
+            alert(err.response?.data?.message || 'Could not update the commission');
+        }
+    };
 
     return (
         <div className={styles.overlay}>
@@ -225,6 +247,11 @@ const CommissionModalDetails = ({ commission, onClose, disableTake = false }) =>
                         <p className={styles.field}>
                             <span>Status</span> {details.status}
                         </p>
+                        {details.deadline && (
+                            <p className={styles.field} style={details.overdue ? { color: '#ff8a8a' } : undefined}>
+                                <span>Deadline</span> {new Date(`${details.deadline}T00:00:00`).toLocaleDateString()}{details.overdue ? ' (overdue)' : ''}
+                            </p>
+                        )}
                     </div>
                 </div>
 
@@ -236,8 +263,14 @@ const CommissionModalDetails = ({ commission, onClose, disableTake = false }) =>
 
                 <div className={styles.actions}>
                     <button className={styles.priceBtn}>{details.price}$</button>
-                    {!(disableTake || details.Creator_ID) && (
+                    {(respondAsArtist || !(disableTake || details.Creator_ID)) && (
                         <button className={styles.takeBtn} onClick={handleAccept}>Accept</button>
+                    )}
+                    {respondAsArtist && (
+                        <button className={styles.takeBtn} style={{ background: '#a33' }} onClick={() => changeStatus('decline')}>Decline</button>
+                    )}
+                    {canCancel && (
+                        <button className={styles.takeBtn} style={{ background: '#a33' }} onClick={() => changeStatus('cancel')}>Cancel order</button>
                     )}
                 </div>
 

@@ -198,6 +198,7 @@ const CommissionChat = ({ commissionId, user, onBack }) => {
         setPendingStageImage(m.image || m.content || null);
         setPendingStageMessageId(m.id);
         setStageDecision(null);
+        setCommission(prev => prev ? { ...prev, reviewState: 'pending', stageSubmittedAt: new Date().toISOString() } : prev);
     };
     socket.on('stageSubmitted', onStageSubmitted);
 
@@ -206,6 +207,7 @@ const CommissionChat = ({ commissionId, user, onBack }) => {
         if (!payload || String(payload.commissionId) !== String(commissionId)) return;
         setStageDecision(payload.decision);
         if (payload.nextStatus) setStatus(payload.nextStatus);
+        setCommission(prev => prev ? { ...prev, reviewState: payload.decision === 'reject' ? 'changes_requested' : 'none', autoApproveAt: null } : prev);
     };
     socket.on('stageReview', onStageReview);
 
@@ -430,6 +432,7 @@ const CommissionChat = ({ commissionId, user, onBack }) => {
             if (res.data && res.data.success) {
                 setStageDecision('approve');
                 if (res.data.nextStatus) setStatus(res.data.nextStatus);
+                setCommission(prev => prev ? { ...prev, reviewState: 'none', autoApproveAt: null } : prev);
             }
         } catch (e) {
             console.error('approve error', e);
@@ -445,6 +448,7 @@ const CommissionChat = ({ commissionId, user, onBack }) => {
             const res = await axios.post(`/commissions/chat/${commissionId}/review`, { decision: 'reject', messageId: pendingStageMessageId });
             if (res.data && res.data.success) {
                 setStageDecision('reject');
+                setCommission(prev => prev ? { ...prev, reviewState: 'changes_requested', autoApproveAt: null } : prev);
             }
         } catch (e) {
             console.error('reject error', e);
@@ -474,10 +478,19 @@ const CommissionChat = ({ commissionId, user, onBack }) => {
     // Відкриття модального вікна з деталями комісії по кліку на назві
 
     const statusLower = String(status || '').toLowerCase();
-    const statusProgress =
-        statusLower === 'completed' ? 3 :
-        statusLower === 'edits' ? 2 :
-        statusLower === 'sketch' ? 1 : 0; // open/other → 0
+    // Stages: Sketch → Lineart → Color → Final → Completed (open/cancelled/declined → 0)
+    const STAGE_ORDER = ['sketch', 'lineart', 'color', 'final', 'completed'];
+    const statusProgress = STAGE_ORDER.indexOf(statusLower) + 1;
+    const isWorkStage = ['sketch', 'lineart', 'color', 'final'].includes(statusLower);
+    const statusNote = (() => {
+        if (statusLower === 'declined') return 'The artist declined this commission.';
+        if (statusLower === 'cancelled') return 'This commission was cancelled.';
+        if (commission?.reviewState === 'changes_requested') return 'Changes requested — waiting for a new version.';
+        if (commission?.reviewState === 'pending' && commission?.autoApproveAt) {
+            return `Waiting for review · auto-approval on ${new Date(commission.autoApproveAt).toLocaleDateString()}`;
+        }
+        return null;
+    })();
 
     const handlePayClick = async () => {
         try {
@@ -552,10 +565,21 @@ const CommissionChat = ({ commissionId, user, onBack }) => {
 
                         {/* Пусті/заповнені круги праворуч */}
                         <div className={styles.dotsRow}>
-                            <div className={`${styles.hollowDot} ${statusProgress > 1 ? styles.hollowDotFilled : ''}`}></div>
-                            <div className={`${styles.hollowDot} ${statusProgress > 2 ? styles.hollowDotFilled : ''}`}></div>
+                            {[2, 3, 4, 5].map(step => (
+                                <div key={step} className={`${styles.hollowDot} ${statusProgress >= step ? styles.hollowDotFilled : ''}`}></div>
+                            ))}
                         </div>
                     </div>
+                    {(statusNote || commission?.deadline) && (
+                        <div style={{ fontSize: 13, opacity: 0.85, margin: '4px 0 8px', display: 'flex', flexDirection: 'column', gap: 2 }}>
+                            {statusNote && <span>{statusNote}</span>}
+                            {commission?.deadline && (
+                                <span style={{ color: commission.overdue ? '#ff8a8a' : undefined }}>
+                                    Deadline: {new Date(`${commission.deadline}T00:00:00`).toLocaleDateString()}{commission.overdue ? ' (overdue)' : ''}
+                                </span>
+                            )}
+                        </div>
+                    )}
 
                     {/* 3. Основне поле (Рамка) */}
                     <div className={styles.stageBox}>
@@ -656,11 +680,11 @@ const CommissionChat = ({ commissionId, user, onBack }) => {
                         </div>
 
                         {/* КНОПКА ЗАГРУЗКИ СКЕТЧЕЙ (Только для автора и если не завершено) */}
-                        {isCreator && statusLower !== 'completed' && (
+                        {isCreator && isWorkStage && (
                             <>
                                 <input type="file" ref={fileInputRef} style={{display: 'none'}} accept="image/*" onChange={handleFileChange} />
                                 <div className={styles.addSketchBar} onClick={() => { if (!submittingStage) handleAddSketchClick(); }}>
-                                    {submittingStage ? 'Uploading...' : 'Add Sketch'}
+                                    {submittingStage ? 'Uploading...' : `Submit ${status}`}
                                 </div>
                             </>
                         )}

@@ -3,6 +3,8 @@ const logger = require('../utils/logger');
 const db = require('../config/db');
 const { MESSAGE_COLUMNS, rowToMessage } = require('../utils/chatHelpers');
 const { requireCommissionParticipant, getSessionUserId } = require('../utils/commissionAccess');
+const { isStage, normalizeStatus, reviewStage } = require('../services/commissionStages');
+const events = require('../services/commissionEvents');
 const { detectImageMime: detectRealImage } = require('../config/multerConfig');
 
 const router = express.Router();
@@ -64,9 +66,9 @@ router.post('/:commissionId/submit-stage', async (req, res) => {
       return res.status(403).json({ success: false, code: 'FORBIDDEN', message: 'Only creator can submit stage for review' });
     }
 
-    // Do not allow submissions after completion
-    if (commissionStatus.toLowerCase() === 'completed') {
-      return res.status(400).json({ success: false, code: 'COMPLETED', message: 'Commission is completed. Submissions are blocked.' });
+    // Stages can only be submitted while the work is in progress (Sketch / Lineart / Color / Final)
+    if (!isStage(commissionStatus)) {
+      return res.status(409).json({ success: false, code: 'NOT_IN_PROGRESS', message: `Stages cannot be submitted in status ${normalizeStatus(commissionStatus)}` });
     }
 
     if (typeof image !== 'string' || !image.startsWith('data:')) {
@@ -90,6 +92,11 @@ router.post('/:commissionId/submit-stage', async (req, res) => {
       'INSERT INTO messages (senderId, receiverId, commissionId, type, content, image, status) VALUES (?, ?, ?, ?, ?, ?, ?)',
       [senderId, customerId, commissionId, 'stage', null, buffer, 'unread']
     );
+    // The customer now has AUTO_APPROVE_DAYS to approve or request changes
+    await db.query(
+      `UPDATE commissions SET Review_State = 'pending', Stage_Submitted_At = NOW() WHERE Commission_ID = ?`,
+      [commissionId]
+    );
 
     const [newRows] = await db.query(`SELECT ${MESSAGE_COLUMNS} FROM messages WHERE id = ?`, [result.insertId]);
     const out = rowToMessage(newRows[0]);
@@ -112,86 +119,25 @@ router.post('/:commissionId/submit-stage', async (req, res) => {
 // Review a stage (customer → creator)
 // POST /api/commissions/chat/:commissionId/review
 // body: { decision: 'approve'|'reject', messageId?: number }
-router.post('/:commissionId/review', async (req, res) => {
-  const { commissionId } = req.params;
+// approve moves Sketch -> Lineart -> Color -> Final -> Completed; reject marks "changes requested".
+router.post('/:commissionId/review', requireCommissionParticipant(), async (req, res) => {
+  const commissionId = Number(req.params.commissionId);
   const { decision, messageId } = req.body || {};
-
-  if (!req.session?.user?.id) {
-    return res.status(401).json({ success: false, message: 'Not authenticated' });
-  }
-
-  const senderId = Number(req.session.user.id);
 
   if (decision !== 'approve' && decision !== 'reject') {
     return res.status(400).json({ success: false, code: 'BAD_DECISION', message: 'Invalid decision' });
   }
+  if (req.commissionRole !== 'customer') {
+    return res.status(403).json({ success: false, code: 'FORBIDDEN', message: 'Only customer can review stage' });
+  }
 
   try {
-    const [commRows] = await db.query('SELECT Creator_ID, Customer_ID, Status FROM commissions WHERE Commission_ID = ?', [commissionId]);
-    if (!commRows || commRows.length === 0) {
-      return res.status(404).json({ success: false, code: 'NOT_FOUND', message: 'Commission not found' });
+    const result = await reviewStage(commissionId, { decision, messageId });
+    if (result.error) {
+      return res.status(result.status).json({ success: false, message: result.error });
     }
-    const creatorId = Number(commRows[0].Creator_ID);
-    const customerId = Number(commRows[0].Customer_ID);
-    const currentStatus = String(commRows[0].Status || '').trim();
-
-    if (senderId !== customerId) {
-      return res.status(403).json({ success: false, code: 'FORBIDDEN', message: 'Only customer can review stage' });
-    }
-
-    // if messageId is not provided, infer last submitted stage from creator
-    let targetMessageId = messageId;
-    if (!targetMessageId) {
-      const [rows] = await db.query('SELECT id FROM messages WHERE commissionId = ? AND senderId = ? AND type = ? ORDER BY timestamp DESC LIMIT 1', [commissionId, creatorId, 'stage']);
-      if (!rows || rows.length === 0) {
-        return res.status(400).json({ success: false, code: 'NO_STAGE', message: 'No stage submission to review' });
-      }
-      targetMessageId = rows[0].id;
-    }
-
-    // Insert a system review message that references the stage messageId in content
-    const reviewType = decision === 'approve' ? 'stage-approve' : 'stage-reject';
-    await db.query(
-      'INSERT INTO messages (senderId, receiverId, commissionId, type, content, status) VALUES (?, ?, ?, ?, ?, ?)',
-      [customerId, creatorId, commissionId, reviewType, String(targetMessageId), 'unread']
-    );
-
-    let nextStatus = null;
-    if (decision === 'approve') {
-      const st = currentStatus.toLowerCase();
-      if (st === 'sketch') nextStatus = 'Edits';
-      else if (st === 'edits') nextStatus = 'Completed';
-
-      if (nextStatus) {
-        // Обновляем статус
-        await db.query('UPDATE commissions SET Status = ? WHERE Commission_ID = ?', [nextStatus, commissionId]);
-
-        // === НОВАЯ ЛОГИКА: Если статус стал Completed, сохраняем картинку ===
-        if (nextStatus === 'Completed') {
-          // 1. Находим сообщение, которое мы только что одобрили (там лежит картинка)
-          const [msgRows] = await db.query('SELECT image FROM messages WHERE id = ?', [targetMessageId]);
-
-          if (msgRows.length > 0 && msgRows[0].image) {
-            // 2. Копируем BLOB картинки в таблицу commissions
-            await db.query(
-                'UPDATE commissions SET ResultImage = ? WHERE Commission_ID = ?',
-                [msgRows[0].image, commissionId]
-            );
-            logger.info(`[Review] Result image saved for commission ${commissionId}`);
-          }
-        }
-      }
-    }
-
-    try {
-      const { getIO } = require('../socket');
-      const io = getIO();
-      io.to(`commission_${commissionId}`).emit('stageReview', { commissionId: Number(commissionId), messageId: Number(targetMessageId), decision, nextStatus });
-    } catch (e) {
-      logger.warn('[chat] socket emit failed (stageReview):', e.message);
-    }
-
-    res.status(201).json({ success: true, decision, messageId: Number(targetMessageId), nextStatus });
+    events.stageReviewed(req.commission, { messageId: result.messageId, decision, nextStatus: result.nextStatus });
+    res.status(201).json({ success: true, decision, messageId: Number(result.messageId), nextStatus: result.nextStatus });
   } catch (err) {
     logger.error('[chat] review error:', err);
     res.status(500).json({ success: false, code: 'DB_ERROR', message: 'Database error' });

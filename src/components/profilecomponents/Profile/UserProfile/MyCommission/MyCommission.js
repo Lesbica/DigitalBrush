@@ -29,7 +29,14 @@ function MyCommission({ user, onOpenChat}) {
         const isTaken = (creatorId && status !== 'open' && status !== 'search') ||
             (status === 'in_progress' || status === 'edits' || status === 'completed');
 
-        if (isTaken) {
+        if (status === 'open') {
+            // Open: the addressed artist can accept/decline, the customer can cancel
+            setSelectedCommission({
+                ...prepareModalData(item),
+                respond: Number(creatorId) === Number(currentUserId),
+                cancel: Number(item.Customer_ID) === Number(currentUserId) && !item.is_paid,
+            });
+        } else if (isTaken) {
             console.log("Action: Opening Chat");
             if (onOpenChat) {
                 onOpenChat(item.Commission_ID || item.id);
@@ -77,8 +84,9 @@ function MyCommission({ user, onOpenChat}) {
     const getFilledDotsCount = (status) => {
         const s = String(status || '').toLowerCase();
         // Новый enum: open -> 0, sketch -> 1, edits -> 2, completed -> 3, cancelled -> 0 (без прогресса)
+        // lineart/color/final share the middle dot
         if (s === 'sketch') return 1;
-        if (s === 'edits') return 2;
+        if (s === 'lineart' || s === 'color' || s === 'final') return 2;
         if (s === 'completed') return 3;
         return 0; // open/cancelled/unknown
     };
@@ -210,6 +218,10 @@ function MyCommission({ user, onOpenChat}) {
                 <CommissionModalDetails
                     commission={selectedCommission}
                     disableTake
+                    respondAsArtist={Boolean(selectedCommission.respond)}
+                    canCancel={Boolean(selectedCommission.cancel)}
+                    onStatusChange={(newStatus) => setCommissions(prev => prev.map(c =>
+                        (c.Commission_ID === selectedCommission.id ? { ...c, Status: newStatus, status: newStatus } : c)))}
                     onClose={() => setSelectedCommission(null)}
                 />
             )}

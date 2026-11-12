@@ -20,5 +20,8 @@ db.getConnection()
         });
 
         server.listen(PORT, () => logger.info(`🚀 Server running on port ${PORT}`));
+
+        // Background jobs (auto-approval of stages the customer did not review in time)
+        require('./services/scheduler').start();
     })
     .catch(err => logger.error('❌ DB connection failed:', err));
