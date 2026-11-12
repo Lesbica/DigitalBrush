@@ -4,9 +4,11 @@ import { useCart } from '../Cart/CartContext';
 import { useNavigate } from 'react-router-dom';
 import trash from '../../assets/trashBin.svg'
 import axios from "axios";
+import { useModal } from '../../context/ModalContext';
 
-const CheckoutPage = ({ onViewArtDetails }) => {
+const CheckoutPage = () => {
     const { cartItems, removeFromCart } = useCart();
+    const { openModal } = useModal();
     const navigate = useNavigate();
 
     const subtotalNumber = cartItems.reduce((acc, item) => {
@@ -56,7 +58,7 @@ const CheckoutPage = ({ onViewArtDetails }) => {
                                 <div
                                     className={styles.item}
                                     key={item.id}
-                                    onClick={() => onViewArtDetails(item)}
+                                    onClick={() => openModal(item)}
                                 >
                                     <img src={item.imageUrl || "/images/placeholder.svg"} alt={item.title} className={styles.itemImage} />
                                     <div className={styles.itemInfo}>

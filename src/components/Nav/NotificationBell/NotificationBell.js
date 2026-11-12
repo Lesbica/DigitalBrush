@@ -1,9 +1,8 @@
 import React, {useCallback, useEffect, useRef, useState} from "react";
 import {useNavigate} from "react-router-dom";
 import axios from "axios";
-import {io} from "socket.io-client";
 import styles from "./NotificationBell.module.css";
-import {SOCKET_BASE} from "../../../config";
+import {useSocket} from "../../../context/SocketContext";
 
 // Bell with unread counter. New notifications arrive live over socket.io (the server puts every
 // logged-in socket into its user room); the counter is also refreshed every minute as a fallback.
@@ -13,6 +12,7 @@ export default function NotificationBell() {
     const [items, setItems] = useState([]);
     const [unread, setUnread] = useState(0);
     const wrapperRef = useRef(null);
+    const socket = useSocket();
 
     const load = useCallback(async () => {
         try {
@@ -27,16 +27,18 @@ export default function NotificationBell() {
     useEffect(() => {
         load();
         const timer = setInterval(load, 60000);
-        const socket = io(SOCKET_BASE, {withCredentials: true, transports: ['websocket', 'polling']});
-        socket.on('notification', (n) => {
+        return () => clearInterval(timer);
+    }, [load]);
+
+    useEffect(() => {
+        if (!socket) return undefined;
+        const onNotification = (n) => {
             setItems(prev => [n, ...prev.filter(x => x.id !== n.id)].slice(0, 20));
             setUnread(u => u + 1);
-        });
-        return () => {
-            clearInterval(timer);
-            socket.close();
         };
-    }, [load]);
+        socket.on('notification', onNotification);
+        return () => socket.off('notification', onNotification);
+    }, [socket]);
 
     useEffect(() => {
         if (!open) return undefined;

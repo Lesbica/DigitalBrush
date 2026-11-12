@@ -12,26 +12,26 @@ import PaymentSuccess from "./components/CheckoutPage/PaymentSuccess";
 import PaymentFail from "./components/CheckoutPage/PaymentFail";
 import VerifyEmail from "./components/profilecomponents/Login/AccountLinks/VerifyEmail";
 import ResetPassword from "./components/profilecomponents/Login/AccountLinks/ResetPassword";
+import NotFound from "./components/NotFound/NotFound";
+import RequireAuth from "./components/RequireAuth/RequireAuth";
 
-export default function AppRouter({ onViewArtDetails, setIsLoggedIn }) {
+export default function AppRouter() {
     return (
         <Routes>
             <Route path='/' element={<HomePage />} />
             <Route path='homepage' element={<HomePage />} />
-            <Route path='profile' element={<Profile setIsLoggedIn={setIsLoggedIn} />} />
+            <Route path='profile' element={<Profile />} />
             <Route path='register' element={<Register />} />
             <Route path='shop' element={<Shop />} />
             <Route path='artists' element={<ArtistsPage />} />
             <Route path='commission' element={<Commission />} />
-            <Route
-                path='checkout'
-                element={<CheckoutPage onViewArtDetails={onViewArtDetails} />}
-            />
+            <Route path='checkout' element={<RequireAuth><CheckoutPage /></RequireAuth>} />
             <Route path='success' element={<PaymentSuccess />} />
             <Route path='fail' element={<PaymentFail />} />
             <Route path='author/:id' element={<AuthorPage />} />
             <Route path='verify-email' element={<VerifyEmail />} />
             <Route path='reset-password' element={<ResetPassword />} />
+            <Route path='*' element={<NotFound />} />
         </Routes>
     )
 }

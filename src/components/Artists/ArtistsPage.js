@@ -51,11 +51,6 @@ export default function ArtistsPage() {
     const [artistsData, setArtistsData] = useState([]);
     const [advancedFilters, setAdvancedFilters] = useState(DEFAULT_FILTERS);
 
-    useEffect(() => {
-        axios.get(`/auth/check-session`)
-            .catch(err => console.log(err));
-    }, []);
-
     const galleryRefs = useRef({});
 
     const checkGalleryOverflow = (artistId) => {

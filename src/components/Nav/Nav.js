@@ -5,9 +5,13 @@ import logo from "../../assets/mainIconNavbar.svg";
 import {useCart} from "../Cart/CartContext";
 import BasketModal from "./BasketModal/BasketModal";
 import NotificationBell from "./NotificationBell/NotificationBell";
+import {useAuth} from "../../context/AuthContext";
+import {useModal} from "../../context/ModalContext";
 
-export function Navbar({ isLoggedIn, onViewArtDetails }) {
+export function Navbar() {
     const navigate = useNavigate();
+    const {isLoggedIn} = useAuth();
+    const {openModal} = useModal();
     const location = useLocation();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -126,7 +130,7 @@ export function Navbar({ isLoggedIn, onViewArtDetails }) {
                                     {isBasketOpen && (
                                         <BasketModal
                                             onClose={() => setIsBasketOpen(false)}
-                                            onViewItemDetails={onViewArtDetails}
+                                            onViewItemDetails={openModal}
                                             position={basketPosition}
                                         />
                                     )}

@@ -5,6 +5,7 @@ import deleteCrossIcon from "../../../../../assets/icons/deleteCrossIcon.svg";
 import plusIcon from "../../../../../assets/icons/plusIcon.svg";
 import arrowIcon from "../../../../../assets/icons/arrowIcon.svg";
 import uploadIconPlaceholder from "../../../../../assets/image-placeholder-icon.svg";
+import {useAuth} from "../../../../../context/AuthContext";
 
 const AVAILABLE_STYLES = [
     "Retro", "Psychedelia", "Minimalism", "Cyberpunk", "Realism", "Abstract", "Pop Art"
@@ -15,6 +16,7 @@ const AVAILABLE_LANGUAGES = [
 ];
 
 function ProfileSettings({user}) {
+    const {refresh} = useAuth();
     const fileInputRef = useRef(null);
 
     // Availability for commissions: open | busy | vacation (saved with the profile)
@@ -147,8 +149,8 @@ function ProfileSettings({user}) {
             );
 
             if (response.data.success) {
+                await refresh();
                 alert("Profile updated successfully!");
-                window.location.reload();
             }
         } catch (error) {
             console.error("Error updating profile:", error);

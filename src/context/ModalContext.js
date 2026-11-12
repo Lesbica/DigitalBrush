@@ -1,12 +1,14 @@
 import React, { createContext, useContext, useState } from 'react';
 import axios from 'axios';
 import ArtDetailsModal from '../components/ArtCard/Modals/ArtDetailsModal';
+import { useAuth } from './AuthContext';
 
 const ModalContext = createContext();
 
 export const useModal = () => useContext(ModalContext);
 
-export const ModalProvider = ({ children, isLoggedIn }) => {
+export const ModalProvider = ({ children }) => {
+    const { isLoggedIn } = useAuth();
     const [selectedArt, setSelectedArt] = useState(null);
     const [loading, setLoading] = useState(false);
 

@@ -4,13 +4,13 @@ import styles from './MyCommission.module.css';
 import CategoryFilters from "../../../../CategoryFilters/CategoryFilters";
 import CommissionModalDetails from "../../../../Commission/CommissionModals/CommissionModalDetails";
 import logo from '../../../../../assets/logo.svg'
-import { io } from 'socket.io-client';
-import { SOCKET_BASE } from '../../../../../config';
+import { useSocket } from '../../../../../context/SocketContext';
 
 const commissionFilters = ['MY ORDERS', 'MY TASKS'];
 
 function MyCommission({ user, onOpenChat}) {
-    const currentUserId = user?.id ? Number(user.id) : 1;
+    const currentUserId = Number(user?.id) || null;
+    const socket = useSocket();
 
     const [activeFilter, setActiveFilter] = useState('MY ORDERS');
     const [commissions, setCommissions] = useState([]);
@@ -131,8 +131,7 @@ function MyCommission({ user, onOpenChat}) {
 
     // Live-обновление статусов через сокет
     useEffect(() => {
-        const socket = io(SOCKET_BASE, { withCredentials: true, autoConnect: true, reconnection: true });
-
+        if (!socket) return undefined;
         const onStatusUpdated = (payload) => {
             if (!payload || !payload.commissionId) return;
             setCommissions(prev => prev.map(c =>
@@ -143,11 +142,8 @@ function MyCommission({ user, onOpenChat}) {
         };
 
         socket.on('statusUpdated', onStatusUpdated);
-        return () => {
-            socket.off('statusUpdated', onStatusUpdated);
-            socket.close();
-        };
-    }, []);
+        return () => socket.off('statusUpdated', onStatusUpdated);
+    }, [socket]);
 
     if (isLoading) {
         return (
