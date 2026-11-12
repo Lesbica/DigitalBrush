@@ -135,3 +135,24 @@
     margin-top: auto;
     /*margin-bottom: 15px;*/
 }
+.googleBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    margin-top: 12px;
+    padding: 11px 16px;
+    border: 2px solid #000000;
+    border-radius: 999px;
+    background: #ffffff;
+    color: #000000;
+    font-family: 'Montserrat Alternates', sans-serif;
+    font-weight: 600;
+    text-decoration: none;
+    box-sizing: border-box;
+}
+
+.googleBtn:hover {
+    background: #f1f1f1;
+}

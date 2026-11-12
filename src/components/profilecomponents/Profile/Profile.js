@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import Login from '../Login/Login';
@@ -21,6 +21,12 @@ function Profile() {
     const [searchParams] = useSearchParams();
     const [view, setView] = useState('login');
     const [credentials, setCredentials] = useState({ email: '', password: '' });
+
+    // Back from Google with an error (refused, unconfirmed email, ...)
+    const authError = searchParams.get('authError');
+    useEffect(() => {
+        if (authError === 'google') toast.error(t('auth.googleFailed'));
+    }, [authError, toast, t]);
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;

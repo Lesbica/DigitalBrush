@@ -11,6 +11,7 @@ const MySQLStore = require('express-mysql-session')(session);
 
 const db = require('./config/db');
 const authRoutes = require('./routes/authRoutes');
+const googleAuthRoutes = require('./routes/googleAuthRoutes');
 const paintingRoutes = require('./routes/paintingRoutes');
 const profileRoutes = require('./routes/profileRoutes');
 const searchRoutes = require('./routes/searchRoutes');
@@ -59,6 +60,7 @@ const limiter = (windowMinutes, limit) => rateLimit({
 });
 app.use('/api', limiter(1, 300));
 app.use('/api/auth/login', limiter(15, 20));
+app.use('/api/auth/google', limiter(15, 30));
 app.use('/api/auth/register', limiter(60, 10));
 app.use('/api/auth/check-email', limiter(15, 30));
 app.use('/api/auth/resend-verification', limiter(15, 5));
@@ -99,6 +101,7 @@ app.use((req, res, next) => {
 });
 
 // ===== ROUTES =====
+app.use('/api/auth', googleAuthRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/paintings', paintingRoutes);
 app.use('/api/profile', profileRoutes);

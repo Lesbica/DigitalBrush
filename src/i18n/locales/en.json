@@ -194,7 +194,9 @@
     "newPassword": "New password",
     "repeatPassword": "Repeat password",
     "savePassword": "Save password",
-    "loginFailed": "Login failed"
+    "loginFailed": "Login failed",
+    "google": "Continue with Google",
+    "googleFailed": "Could not sign in with Google. Try again or use your email and password."
   },
   "register": {
     "done": "Registration successful! You can log in now.",

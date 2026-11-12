@@ -16,6 +16,8 @@ Object.assign(process.env, {
     WAYFORPAY_SECRET_KEY: 'flk3409refn54t54t*FNJRET',
     WAYFORPAY_DOMAIN: 'test.local',
     API_URL: 'https://api.test/api',
+    GOOGLE_CLIENT_ID: 'test-client.apps.googleusercontent.com',
+    GOOGLE_CLIENT_SECRET: 'test-google-secret',
     APP_URL: 'http://app.test',
 });
 
@@ -42,12 +44,23 @@ const wfp = {
         return d;
     },
 };
+// Google token endpoint double: codes[code] = ID token claims
+const google = { codes: {}, lastTokenRequest: null };
 globalThis.fetch = async (url, opts = {}) => {
     const u = String(url);
     if (u.startsWith('https://secure.wayforpay.com/pay')) {
         const params = new URLSearchParams(opts.body);
         wfp.lastPurchase = { ...Object.fromEntries(params), productPrice: params.getAll('productPrice[]') };
         return { status: 200, text: async () => JSON.stringify({ url: 'https://secure.wayforpay.com/page?vkh=test' }) };
+    }
+    if (u === 'https://oauth2.googleapis.com/token') {
+        const params = new URLSearchParams(opts.body);
+        google.lastTokenRequest = Object.fromEntries(params);
+        const claims = google.codes[params.get('code')];
+        if (!claims) return { ok: false, status: 400, json: async () => ({ error: 'invalid_grant' }) };
+        const part = (o) => Buffer.from(JSON.stringify(o)).toString('base64url');
+        const idToken = `${part({ alg: 'RS256' })}.${part(claims)}.sig`;
+        return { ok: true, status: 200, json: async () => ({ access_token: 'at', id_token: idToken }) };
     }
     if (u === 'https://api.wayforpay.com/api') {
         const req = JSON.parse(opts.body);
@@ -219,7 +232,7 @@ async function cleanupFixtures(f) {
 }
 
 module.exports = {
-    db, PNG, PASSWORD, wfp, realFetch,
+    db, PNG, PASSWORD, wfp, google, realFetch,
     startApp, stopApp, client, formWith,
     createFixtures, sessionFor, sessionIdFromSetCookie, cleanupFixtures,
 };

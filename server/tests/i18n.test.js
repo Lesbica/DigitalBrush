@@ -35,14 +35,19 @@ function serverMessages() {
         }
     };
     walk(root);
-    const re = /\b(?:message|error)\s*:\s*(?:'([^'\n]*)'|"([^"\n]*)"|`([^`\n]*)`)/g;
+    // every string literal on a line with `message:` / `error:` (also `message: ok ? 'A' : 'B'`)
+    const field = /\b(?:message|error)\s*:/;
+    const literal = /'([^'\n]*)'|"([^"\n]*)"|`([^`\n]*)`/g;
     const found = new Map();
     for (const file of files) {
-        const src = fs.readFileSync(file, 'utf8');
-        for (const m of src.matchAll(re)) {
-            const text = m[1] ?? m[2] ?? m[3];
-            if (!text.includes(' ')) continue; // machine codes like not_found
-            found.set(text.replace(/\$\{[^}]*\}/g, '{{}}'), path.relative(root, file));
+        for (const line of fs.readFileSync(file, 'utf8').split('\n')) {
+            const at = line.search(field);
+            if (at < 0 || /^\s*(\/\/|\*)/.test(line) || /logger\.|console\./.test(line)) continue;
+            for (const m of line.slice(at).matchAll(literal)) {
+                const text = m[1] ?? m[2] ?? m[3];
+                if (!text.includes(' ') || !/[A-Za-z]/.test(text)) continue; // machine codes like not_found
+                found.set(text.replace(/\$\{[^}]*\}/g, '{{}}'), path.relative(root, file));
+            }
         }
     }
     return found;
