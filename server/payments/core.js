@@ -5,7 +5,7 @@ const logger = require('../utils/logger');
 const db = require('../config/db');
 const { getIO } = require('../socket');
 const wallet = require('../services/wallet');
-const { notify, commissionLink } = require('../services/notifications');
+const { walletEvents } = require('../services/notifications');
 
 const CURRENCY = 'UAH';
 const MAX_CART_ITEMS = 50;
@@ -222,16 +222,8 @@ async function applyPaymentResult(provider, result) {
     logger.info(`[payments] order ${orderId} approved (${order.Type}, ${provider})`);
 
     for (const e of earnings) {
-        const amount = `${(e.net / 100).toFixed(2)} UAH`;
-        await notify(e.artistId, e.kind === 'sale'
-            ? { type: 'painting_sold', title: 'Your painting was sold', body: `"${e.title}" was bought. ${amount} added to your wallet.`, link: '/profile?tab=wallet', email: true }
-            : {
-                type: 'commission_paid', title: 'Commission paid',
-                body: e.pending
-                    ? `The customer paid for "${e.title}". ${amount} will be available after the commission is completed.`
-                    : `The customer paid for "${e.title}". ${amount} added to your wallet.`,
-                link: commissionLink(e.commissionId), commissionId: e.commissionId, email: true,
-            });
+        if (e.kind === 'sale') await walletEvents.paintingSold(e.artistId, { title: e.title, net: e.net });
+        else await walletEvents.commissionPaid(e.artistId, { title: e.title, net: e.net, pending: e.pending, commissionId: e.commissionId });
     }
 
     if (commissionToNotify) {

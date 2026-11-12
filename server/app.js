@@ -1,6 +1,7 @@
 // server/.env незалежно від того, з якої папки запущено node (у Docker змінні приходять через --env-file)
 require('dotenv').config({ path: require('path').join(__dirname, '.env'), quiet: true });
 const logger = require('./utils/logger');
+const { localizeResponses } = require('./i18n');
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
@@ -38,9 +39,12 @@ const corsOptions = {
   origin: CORS_ORIGIN,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Content-Type', 'Authorization', 'Accept-Language'],
+  exposedHeaders: ['Content-Language']
 };
 app.use(cors(corsOptions));
+// req.lang from Accept-Language; `message`/`error` of JSON answers translated (server/i18n)
+app.use(localizeResponses);
 
 // Security headers. Images are loaded by the frontend origin, so resources are shared same-site.
 app.use(helmet({ crossOriginResourcePolicy: { policy: 'same-site' } }));

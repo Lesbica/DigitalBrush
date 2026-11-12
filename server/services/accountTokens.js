@@ -3,6 +3,7 @@
 const crypto = require('crypto');
 const db = require('../config/db');
 const { sendMail, appUrl } = require('../utils/mailer');
+const i18n = require('../i18n');
 
 const TTL_HOURS = { verify_email: 48, reset_password: 1 };
 const hash = (token) => crypto.createHash('sha256').update(String(token)).digest('hex');
@@ -31,23 +32,24 @@ async function consumeToken(token, purpose) {
     return row ? row.User_ID : null;
 }
 
-async function sendVerificationEmail(user) {
+// `lang` is the language of the page the request came from (uk | en)
+async function sendVerificationEmail(user, lang) {
     const token = await createToken(user.id, 'verify_email');
     const link = `${appUrl()}/verify-email?token=${token}`;
     return sendMail({
         to: user.email,
-        subject: 'Confirm your DigitalBrush email',
-        text: `Hi ${user.name},\n\nconfirm your email to activate your DigitalBrush account:\n${link}\n\nThe link is valid for ${TTL_HOURS.verify_email} hours.`,
+        subject: i18n.t(lang, 'email.verify.subject'),
+        text: `${i18n.t(lang, 'email.greeting', { name: user.name })}\n\n${i18n.t(lang, 'email.verify.text', { link, hours: TTL_HOURS.verify_email })}`,
     });
 }
 
-async function sendPasswordResetEmail(user) {
+async function sendPasswordResetEmail(user, lang) {
     const token = await createToken(user.id, 'reset_password');
     const link = `${appUrl()}/reset-password?token=${token}`;
     return sendMail({
         to: user.email,
-        subject: 'Reset your DigitalBrush password',
-        text: `Hi ${user.name},\n\nto set a new password open:\n${link}\n\nThe link is valid for ${TTL_HOURS.reset_password} hour. If you did not ask for it, ignore this email.`,
+        subject: i18n.t(lang, 'email.reset.subject'),
+        text: `${i18n.t(lang, 'email.greeting', { name: user.name })}\n\n${i18n.t(lang, 'email.reset.text', { link, hours: TTL_HOURS.reset_password })}`,
     });
 }
 

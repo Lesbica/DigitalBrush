@@ -8,7 +8,7 @@ import { useTranslation } from 'react-i18next';
 // Bell with unread counter. New notifications arrive live over socket.io (the server puts every
 // logged-in socket into its user room); the counter is also refreshed every minute as a fallback.
 export default function NotificationBell() {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
     const navigate = useNavigate();
     const [open, setOpen] = useState(false);
     const [items, setItems] = useState([]);
@@ -26,11 +26,13 @@ export default function NotificationBell() {
         }
     }, []);
 
+    // Reloaded when the language changes: the server renders the texts in the request language
+    const language = i18n.resolvedLanguage;
     useEffect(() => {
         load();
         const timer = setInterval(load, 60000);
         return () => clearInterval(timer);
-    }, [load]);
+    }, [load, language]);
 
     useEffect(() => {
         if (!socket) return undefined;

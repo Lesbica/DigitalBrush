@@ -7,8 +7,24 @@ const AdmZip = require('adm-zip');
 const { loadUserPayload, toSessionUser } = require('../utils/userProfile');
 const { sendVerificationEmail } = require('../services/accountTokens');
 const { paintingImageUrl } = require('../utils/imageUrls');
+const { normalizeLanguage } = require('../i18n');
 
 const router = express.Router();
+
+// PUT /api/profile/language { language: 'uk' | 'en' } — language of notifications and emails
+router.put('/language', auth, async (req, res) => {
+    const language = normalizeLanguage(req.body?.language);
+    if (!language || language !== String(req.body.language)) {
+        return res.status(400).json({ success: false, message: 'Language must be uk or en' });
+    }
+    try {
+        await db.query('UPDATE creators SET Language = ? WHERE Creator_ID = ?', [language, req.session.user.id]);
+        res.json({ success: true, language });
+    } catch (err) {
+        logger.error('Update language error:', err);
+        res.status(500).json({ success: false, message: 'Internal server error' });
+    }
+});
 
 router.post('/update-profile', auth, withImageUpload(imageUpload.single('profileImage')), async (req, res) => {
     // 1. Отримуємо ID користувача
@@ -116,7 +132,7 @@ router.post('/update-profile', auth, withImageUpload(imageUpload.single('profile
         if (finalEmail.toLowerCase() !== String(currentUser.Email || '').toLowerCase()
             && process.env.REQUIRE_EMAIL_VERIFICATION !== 'false') {
             await db.query('UPDATE creators SET Email_Verified = 0 WHERE Creator_ID = ?', [userId]);
-            await sendVerificationEmail({ id: userId, name: finalName, email: finalEmail });
+            await sendVerificationEmail({ id: userId, name: finalName, email: finalEmail }, req.lang);
         }
 
         // 6. Свіжі дані з БД; у сесії — лише id/name/email

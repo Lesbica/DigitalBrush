@@ -1,0 +1,86 @@
+{
+  "notifications": {
+    "new_order": {
+      "title": "New commission request",
+      "body": "You have a new commission request: \"{{title}}\"."
+    },
+    "commission_accepted": {
+      "title": "Your commission was accepted",
+      "body": "An artist started working on \"{{title}}\"."
+    },
+    "commission_declined": {
+      "title": "Commission declined",
+      "body": "The artist declined \"{{title}}\"."
+    },
+    "commission_cancelled": {
+      "title": "Commission cancelled",
+      "body": "\"{{title}}\" was cancelled."
+    },
+    "message": {
+      "title": "New message in \"{{title}}\"",
+      "image": "Sent an image"
+    },
+    "stage_submitted": {
+      "title": "{{stage}} is ready for review",
+      "body": "The artist submitted the {{stageLower}} for \"{{title}}\". Approve it or request changes."
+    },
+    "changes_requested": {
+      "title": "Changes requested",
+      "body": "The customer asked for changes in \"{{title}}\"."
+    },
+    "stage_approved": {
+      "title": "Stage approved",
+      "completed": "\"{{title}}\" is completed.",
+      "moved": "\"{{title}}\" moved to {{stage}}.",
+      "movedAuto": "\"{{title}}\" moved to {{stage}} (the customer did not respond in time)."
+    },
+    "stage_auto_approved": {
+      "title": "Stage approved automatically"
+    },
+    "commission_completed": {
+      "title": "Your commission is ready",
+      "body": "\"{{title}}\" is completed. Pay to download the final files."
+    },
+    "review": {
+      "title": "New review: {{stars}}",
+      "body": "The customer rated \"{{title}}\"."
+    },
+    "painting_sold": {
+      "title": "Your painting was sold",
+      "body": "\"{{title}}\" was bought. {{amount}} added to your wallet."
+    },
+    "commission_paid": {
+      "title": "Commission paid",
+      "body": "The customer paid for \"{{title}}\". {{amount}} added to your wallet.",
+      "bodyEscrow": "The customer paid for \"{{title}}\". {{amount}} will be available after the commission is completed."
+    },
+    "withdrawal_paid": {
+      "title": "Withdrawal sent",
+      "body": "{{amount}} was sent to your card."
+    },
+    "withdrawal_rejected": {
+      "title": "Withdrawal rejected",
+      "body": "Your withdrawal of {{amount}} was rejected. The amount is back in your balance.",
+      "bodyNote": "Your withdrawal of {{amount}} was rejected: {{note}}. The amount is back in your balance."
+    }
+  },
+  "stages": {
+    "Open": "Open",
+    "Sketch": "Sketch",
+    "Lineart": "Lineart",
+    "Color": "Color",
+    "Final": "Final",
+    "Completed": "Completed"
+  },
+  "email": {
+    "greeting": "Hi {{name}},",
+    "verify": {
+      "subject": "Confirm your DigitalBrush email",
+      "text": "confirm your email to activate your DigitalBrush account:\n{{link}}\n\nThe link is valid for {{hours}} hours."
+    },
+    "reset": {
+      "subject": "Reset your DigitalBrush password",
+      "text": "to set a new password open:\n{{link}}\n\nThe link is valid for {{hours}} hour. If you did not ask for it, ignore this email."
+    }
+  }
+}

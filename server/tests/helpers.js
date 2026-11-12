@@ -82,9 +82,10 @@ async function stopApp(running) {
 }
 
 function client(api) {
-    return async function call(method, url, { cookie, json, form, raw, contentType } = {}) {
+    return async function call(method, url, { cookie, json, form, raw, contentType, lang } = {}) {
         const headers = {};
         if (cookie) headers.cookie = cookie;
+        if (lang) headers['accept-language'] = lang;
         let body;
         if (json !== undefined) { headers['content-type'] = contentType || 'application/json'; body = JSON.stringify(json); }
         else if (form instanceof FormData) body = form;

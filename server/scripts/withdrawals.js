@@ -7,7 +7,7 @@ const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '..', '.env'), quiet: true });
 const db = require('../config/db');
 const wallet = require('../services/wallet');
-const { notify } = require('../services/notifications');
+const { walletEvents } = require('../services/notifications');
 
 async function main() {
     const [cmd, id, ...noteParts] = process.argv.slice(2);
@@ -29,9 +29,8 @@ async function main() {
             process.exitCode = 1;
             return;
         }
-        await notify(w.User_ID, cmd === 'pay'
-            ? { type: 'withdrawal_paid', title: 'Withdrawal sent', body: `${(w.Amount / 100).toFixed(2)} UAH was sent to your account.`, link: '/profile?tab=wallet', email: true }
-            : { type: 'withdrawal_rejected', title: 'Withdrawal rejected', body: `Your withdrawal of ${(w.Amount / 100).toFixed(2)} UAH was rejected${note ? `: ${note}` : ''}. The amount is back in your balance.`, link: '/profile?tab=wallet', email: true });
+        if (cmd === 'pay') await walletEvents.withdrawalPaid(w.User_ID, { amount: w.Amount });
+        else await walletEvents.withdrawalRejected(w.User_ID, { amount: w.Amount, note });
         console.log(`Withdrawal ${id} marked ${w.Status}`);
         return;
     }

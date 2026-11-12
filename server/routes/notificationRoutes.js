@@ -4,15 +4,25 @@ const db = require('../config/db');
 const logger = require('../utils/logger');
 const auth = require('../middleware/authMiddleware');
 const { getSessionUserId } = require('../utils/commissionAccess');
+const { renderContent } = require('../services/notifications');
 
 const router = express.Router();
 router.use(auth);
 
-const toItem = (r) => ({
+// Text in the reader's current language; rows without Content (older ones) keep the stored text
+function texts(r, lang) {
+    if (!r.Content) return { title: r.Title, body: r.Body };
+    try {
+        return renderContent(lang, r.Content);
+    } catch {
+        return { title: r.Title, body: r.Body };
+    }
+}
+
+const toItem = (r, lang) => ({
     id: r.Notification_ID,
     type: r.Type,
-    title: r.Title,
-    body: r.Body,
+    ...texts(r, lang),
     link: r.Link,
     commissionId: r.Commission_ID,
     createdAt: r.Created_At,
@@ -31,7 +41,7 @@ router.get('/', async (req, res) => {
             [userId, limit]
         );
         const [[{ unread }]] = await db.query('SELECT COUNT(*) AS unread FROM notifications WHERE User_ID = ? AND Read_At IS NULL', [userId]);
-        res.json({ success: true, unread, notifications: rows.map(toItem) });
+        res.json({ success: true, unread, notifications: rows.map((r) => toItem(r, req.lang)) });
     } catch (err) {
         logger.error('List notifications error:', err);
         res.status(500).json({ success: false, message: 'Error fetching notifications' });

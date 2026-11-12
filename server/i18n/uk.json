@@ -1,0 +1,218 @@
+{
+  "notifications": {
+    "new_order": {
+      "title": "Нове замовлення",
+      "body": "У вас нове замовлення: «{{title}}»."
+    },
+    "commission_accepted": {
+      "title": "Ваше замовлення прийнято",
+      "body": "Художник почав роботу над «{{title}}»."
+    },
+    "commission_declined": {
+      "title": "Замовлення відхилено",
+      "body": "Художник відхилив «{{title}}»."
+    },
+    "commission_cancelled": {
+      "title": "Замовлення скасовано",
+      "body": "«{{title}}» скасовано."
+    },
+    "message": {
+      "title": "Нове повідомлення в «{{title}}»",
+      "image": "Надіслано зображення"
+    },
+    "stage_submitted": {
+      "title": "Етап «{{stage}}» готовий до перевірки",
+      "body": "Художник надіслав етап «{{stage}}» для «{{title}}». Затвердіть його або попросіть правки."
+    },
+    "changes_requested": {
+      "title": "Запитано правки",
+      "body": "Замовник попросив правки в «{{title}}»."
+    },
+    "stage_approved": {
+      "title": "Етап затверджено",
+      "completed": "«{{title}}» завершено.",
+      "moved": "«{{title}}» перейшов на етап «{{stage}}».",
+      "movedAuto": "«{{title}}» перейшов на етап «{{stage}}» (замовник не відповів вчасно)."
+    },
+    "stage_auto_approved": {
+      "title": "Етап затверджено автоматично"
+    },
+    "commission_completed": {
+      "title": "Ваше замовлення готове",
+      "body": "«{{title}}» завершено. Оплатіть, щоб завантажити фінальні файли."
+    },
+    "review": {
+      "title": "Новий відгук: {{stars}}",
+      "body": "Замовник оцінив «{{title}}»."
+    },
+    "painting_sold": {
+      "title": "Вашу картину купили",
+      "body": "«{{title}}» купили. {{amount}} додано до гаманця."
+    },
+    "commission_paid": {
+      "title": "Комішен оплачено",
+      "body": "Замовник оплатив «{{title}}». {{amount}} додано до гаманця.",
+      "bodyEscrow": "Замовник оплатив «{{title}}». {{amount}} стане доступно після завершення комішену."
+    },
+    "withdrawal_paid": {
+      "title": "Кошти виведено",
+      "body": "{{amount}} надіслано на вашу картку."
+    },
+    "withdrawal_rejected": {
+      "title": "Виведення відхилено",
+      "body": "Виведення {{amount}} відхилено. Сума повернулася на баланс.",
+      "bodyNote": "Виведення {{amount}} відхилено: {{note}}. Сума повернулася на баланс."
+    }
+  },
+  "stages": {
+    "Open": "Відкритий",
+    "Sketch": "Скетч",
+    "Lineart": "Лайн",
+    "Color": "Колір",
+    "Final": "Фінал",
+    "Completed": "Завершено"
+  },
+  "email": {
+    "greeting": "Вітаємо, {{name}}!",
+    "verify": {
+      "subject": "Підтвердіть email у DigitalBrush",
+      "text": "підтвердіть email, щоб активувати акаунт DigitalBrush:\n{{link}}\n\nПосилання дійсне {{hours}} год."
+    },
+    "reset": {
+      "subject": "Зміна пароля DigitalBrush",
+      "text": "щоб встановити новий пароль, відкрийте:\n{{link}}\n\nПосилання дійсне {{hours}} год. Якщо ви цього не просили, просто проігноруйте лист."
+    }
+  },
+  "api": {
+    "Artist not found": "Художника не знайдено",
+    "Availability must be open, busy or vacation": "Статус має бути: вільний, зайнятий або у відпустці",
+    "Bad request": "Некоректний запит",
+    "Bio is too long (max 500 characters)": "Опис задовгий (максимум 500 символів)",
+    "Commission is already {{status}}": "Комішен уже має статус «{{status}}»",
+    "Commission is no longer open": "Комішен більше не відкритий",
+    "Commission not found": "Комішен не знайдено",
+    "Commission not found, already accepted, or you are trying to accept your own commission": "Комішен не знайдено, його вже прийнято або це ваш власний комішен",
+    "Commission {{id}} accepted by artist {{artist}}": "Комішен прийнято",
+    "Database error": "Помилка бази даних",
+    "Database error during registration": "Помилка бази даних під час реєстрації",
+    "Database error during search": "Помилка бази даних під час пошуку",
+    "Database error while accepting commission": "Помилка бази даних під час прийняття комішену",
+    "Database error while checking email": "Помилка бази даних під час перевірки email",
+    "Deadline must be a date between tomorrow and one year ahead": "Дедлайн має бути датою від завтра до року вперед",
+    "Description is too long (max 5000)": "Опис задовгий (максимум 5000 символів)",
+    "Email and password are required": "Вкажіть email і пароль",
+    "Email confirmed. You can log in now.": "Email підтверджено. Тепер можна увійти.",
+    "Endpoint not found": "Адресу API не знайдено",
+    "Enter a valid Ukrainian IBAN (UA + 27 digits)": "Вкажіть коректний український IBAN (UA + 27 цифр)",
+    "Enter the amount to withdraw": "Вкажіть суму для виведення",
+    "Error creating the withdrawal request": "Не вдалося створити заявку на виведення",
+    "Error deleting painting": "Не вдалося видалити картину",
+    "Error fetching bought paintings": "Не вдалося завантажити куплені картини",
+    "Error fetching commission details": "Не вдалося завантажити деталі комішену",
+    "Error fetching commissions": "Не вдалося завантажити комішени",
+    "Error fetching messages": "Не вдалося завантажити повідомлення",
+    "Error fetching notifications": "Не вдалося завантажити сповіщення",
+    "Error fetching painting": "Не вдалося завантажити картину",
+    "Error fetching paintings": "Не вдалося завантажити картини",
+    "Error fetching reviews": "Не вдалося завантажити відгуки",
+    "Error fetching user paintings": "Не вдалося завантажити картини користувача",
+    "Error getting unread count": "Не вдалося отримати кількість непрочитаних",
+    "Error loading the wallet": "Не вдалося завантажити гаманець",
+    "Error saving review": "Не вдалося зберегти відгук",
+    "Error toggling like": "Не вдалося змінити вподобання",
+    "Error updating message": "Не вдалося оновити повідомлення",
+    "Error updating notification": "Не вдалося оновити сповіщення",
+    "Error updating notifications": "Не вдалося оновити сповіщення",
+    "Error updating profile": "Не вдалося оновити профіль",
+    "Forbidden: You are not part of this commission": "Доступ заборонено: ви не учасник цього комішену",
+    "If an account with this email exists, we sent a password reset link.": "Якщо акаунт із цим email існує, ми надіслали посилання для зміни пароля.",
+    "If the account exists and is not confirmed yet, we sent a new link.": "Якщо акаунт існує й ще не підтверджений, ми надіслали нове посилання.",
+    "Image is too large": "Зображення завелике",
+    "Image not found": "Зображення не знайдено",
+    "Internal server error": "Внутрішня помилка сервера",
+    "Invalid artist id": "Некоректний ідентифікатор художника",
+    "Invalid birthday date": "Некоректна дата народження",
+    "Invalid commission id": "Некоректний ідентифікатор комішену",
+    "Invalid decision": "Некоректне рішення",
+    "Invalid email address": "Некоректна адреса email",
+    "Invalid email or password": "Неправильний email або пароль",
+    "Invalid id": "Некоректний ідентифікатор",
+    "Invalid image": "Некоректне зображення",
+    "Invalid image payload": "Некоректні дані зображення",
+    "Invalid painting id": "Некоректний ідентифікатор картини",
+    "Language must be uk or en": "Мова має бути uk або en",
+    "Login successful": "Вхід виконано",
+    "Logout successful": "Вихід виконано",
+    "Message must be non-empty text up to 5000 characters": "Повідомлення має бути непорожнім, до 5000 символів",
+    "Message not found": "Повідомлення не знайдено",
+    "No images uploaded": "Зображення не завантажено",
+    "No receiver for this commission": "У цього комішену немає отримувача",
+    "No stage submission waiting for review": "Немає етапу, що очікує перевірки",
+    "Not authenticated": "Потрібно увійти",
+    "Not authorized": "Немає доступу",
+    "Not found": "Не знайдено",
+    "Not logged in": "Ви не увійшли",
+    "Nothing to review in status {{status}}": "У статусі «{{status}}» немає чого перевіряти",
+    "Notification not found": "Сповіщення не знайдено",
+    "Only JPG, PNG, GIF or WEBP images are allowed": "Дозволені лише зображення JPG, PNG, GIF або WEBP",
+    "Only an open commission can be declined": "Відхилити можна лише відкритий комішен",
+    "Only artist accounts can do this. Switch your account to artist in profile settings.": "Це доступно лише художникам. Увімкніть акаунт художника в налаштуваннях профілю.",
+    "Only cancellation is allowed via this endpoint": "Тут можна лише скасувати комішен",
+    "Only completed commissions can be reviewed": "Відгук можна залишити лише після завершення комішену",
+    "Only creator can submit stage for review": "Надсилати етап на перевірку може лише художник",
+    "Only customer can review stage": "Перевіряти етап може лише замовник",
+    "Only the artist of a direct commission can decline it": "Відхилити прямий комішен може лише його художник",
+    "Only the customer can review this commission": "Відгук може залишити лише замовник",
+    "Paid commission cannot be cancelled": "Оплачений комішен не можна скасувати",
+    "Painting deleted successfully": "Картину видалено",
+    "Painting not found": "Картину не знайдено",
+    "Painting uploaded successfully": "Картину завантажено",
+    "Password changed. You can log in with the new password.": "Пароль змінено. Тепер можна увійти з новим паролем.",
+    "Password must be {{min}}–72 characters long": "Пароль має містити від {{min}} до 72 символів",
+    "Please confirm your email first. We can send the link again.": "Спершу підтвердьте email. Можемо надіслати посилання ще раз.",
+    "Price must be a number from 0 to 10 000 000": "Ціна має бути числом від 0 до 10 000 000",
+    "Profile updated successfully": "Профіль оновлено",
+    "Rating must be an integer from 1 to 5": "Оцінка має бути цілим числом від 1 до 5",
+    "Review text is too long (max 2000)": "Відгук задовгий (максимум 2000 символів)",
+    "Role must be artist or customer": "Роль має бути «художник» або «замовник»",
+    "Search query is required": "Вкажіть пошуковий запит",
+    "Stages cannot be submitted in status {{status}}": "У статусі «{{status}}» етапи надсилати не можна",
+    "The amount is larger than the available balance": "Сума більша за доступний баланс",
+    "The artist is on vacation and does not take commissions now": "Художник у відпустці й зараз не приймає замовлень",
+    "The link is invalid or has expired": "Посилання недійсне або застаріло",
+    "The minimum withdrawal is {{amount}} UAH": "Мінімальна сума виведення — {{amount}} грн",
+    "This commission has already been reviewed": "На цей комішен уже є відгук",
+    "This email is already registered.": "Цей email уже зареєстровано.",
+    "This painting has already been purchased and cannot be deleted": "Цю картину вже купили, її не можна видалити",
+    "This user does not take commissions": "Цей користувач не приймає замовлень",
+    "This username is already taken.": "Це імʼя вже зайняте.",
+    "Title and description are required": "Вкажіть назву й опис",
+    "Title is required": "Вкажіть назву",
+    "Title is too long (max 255)": "Назва задовга (максимум 255 символів)",
+    "Too many images uploaded (max {{max}})": "Забагато зображень (максимум {{max}})",
+    "Too many requests, please try again later.": "Забагато запитів, спробуйте пізніше.",
+    "User not authenticated": "Потрібно увійти",
+    "User not found": "Користувача не знайдено",
+    "Username is required (max 50 characters)": "Вкажіть імʼя (до 50 символів)",
+    "Username is too long (max 50)": "Імʼя задовге (максимум 50 символів)",
+    "You cannot request a commission from yourself.": "Не можна замовити комішен у самого себе.",
+    "{{field}} link is too long": "Посилання {{field}} задовге",
+    "{{field}} must be a positive integer": "{{field}}: має бути додатним цілим числом",
+    "{{file}} is not a valid image": "{{file}} не є коректним зображенням",
+    "{{type}} commission created successfully": "{{type}} комішен створено"
+  },
+  "words": {
+    "Open": "Відкритий",
+    "Sketch": "Скетч",
+    "Lineart": "Лайн",
+    "Color": "Колір",
+    "Final": "Фінал",
+    "Completed": "Завершено",
+    "Declined": "Відхилено",
+    "Cancelled": "Скасовано",
+    "Public": "Публічний",
+    "Direct": "Прямий",
+    "Width": "Ширина",
+    "Height": "Висота"
+  }
+}

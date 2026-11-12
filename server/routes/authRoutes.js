@@ -50,10 +50,10 @@ router.post('/register', async (req, res) => {
         const hash = await bcrypt.hash(password, 10);
         const verified = verificationRequired() ? 0 : 1;
         const [result] = await db.query(
-            'INSERT INTO creators (Name, Email, Password, Role, Email_Verified, Birthday, Image) VALUES (?, ?, ?, ?, ?, ?, ?)',
-            [username, email, hash, role, verified, birthday, DEFAULT_AVATAR_BUFFER]
+            'INSERT INTO creators (Name, Email, Password, Role, Email_Verified, Birthday, Image, Language) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+            [username, email, hash, role, verified, birthday, DEFAULT_AVATAR_BUFFER, req.lang]
         );
-        if (!verified) await sendVerificationEmail({ id: result.insertId, name: username, email });
+        if (!verified) await sendVerificationEmail({ id: result.insertId, name: username, email }, req.lang);
 
         res.status(201).json({
             success: true,
@@ -88,7 +88,7 @@ router.post('/resend-verification', async (req, res) => {
     try {
         const [[user]] = await db.query('SELECT Creator_ID, Name, Email, Email_Verified FROM creators WHERE Email = ?', [email]);
         if (user && !user.Email_Verified) {
-            await sendVerificationEmail({ id: user.Creator_ID, name: user.Name, email: user.Email });
+            await sendVerificationEmail({ id: user.Creator_ID, name: user.Name, email: user.Email }, req.lang);
         }
         res.json({ success: true, message: 'If the account exists and is not confirmed yet, we sent a new link.' });
     } catch (err) {
@@ -102,7 +102,7 @@ router.post('/forgot-password', async (req, res) => {
     const email = String(req.body?.email || '').trim().toLowerCase();
     try {
         const [[user]] = await db.query('SELECT Creator_ID, Name, Email FROM creators WHERE Email = ?', [email]);
-        if (user) await sendPasswordResetEmail({ id: user.Creator_ID, name: user.Name, email: user.Email });
+        if (user) await sendPasswordResetEmail({ id: user.Creator_ID, name: user.Name, email: user.Email }, req.lang);
         res.json({ success: true, message: 'If an account with this email exists, we sent a password reset link.' });
     } catch (err) {
         logger.error('forgot-password error:', err);
@@ -160,6 +160,12 @@ router.post('/login', async (req, res) => {
                 code: 'EMAIL_NOT_VERIFIED',
                 message: 'Please confirm your email first. We can send the link again.',
             });
+        }
+
+        // Notifications and emails for this user follow the language of the page they log in from
+        if (user.Language !== req.lang) {
+            await db.query('UPDATE creators SET Language = ? WHERE Creator_ID = ?', [req.lang, user.Creator_ID]);
+            user.Language = req.lang;
         }
 
         // Нова сесія після логіну (захист від session fixation)
