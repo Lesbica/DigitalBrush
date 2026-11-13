@@ -1,153 +1,93 @@
-import React, { useState, useEffect } from 'react';
-import axios from "axios";
-import Login from "../Login/Login";
-import Register from "../Register/Register";
-import ForgotPassword from "../Login/ForgotPassword/ForgotPassword";
+import React, { useEffect, useState } from 'react';
+import axios from 'axios';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import Login from '../Login/Login';
+import Register from '../Register/Register';
+import ForgotPassword from '../Login/ForgotPassword/ForgotPassword';
 import styles from './Profile.module.css';
-import DigitalBrushProfile from "./UserProfile/DigitalBrushProfile";
+import DigitalBrushProfile from './UserProfile/DigitalBrushProfile';
+import { useAuth } from '../../../context/AuthContext';
+import { useToast } from '../../../context/ToastContext';
+import { useTranslation } from 'react-i18next';
 
-function Profile({ setIsLoggedIn }) {
-    const [user, setUser] = useState(null);
+// Only same-site paths are allowed as a post-login destination
+const safeNext = (value) => (value && value.startsWith('/') && !value.startsWith('//') ? value : null);
+
+function Profile() {
+    const { t } = useTranslation();
+    const toast = useToast();
+    const { user, loading, login, logout } = useAuth();
+    const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
     const [view, setView] = useState('login');
-    const [isLogin, setIsLogin] = useState(true);
+    const [credentials, setCredentials] = useState({ email: '', password: '' });
 
-    // Стан для форми редагування
-    const [formData, setFormData] = useState({
-        name: '',
-        bio: '',
-        email: '',
-        password: ''
-    });
-    const [imagePreview, setImagePreview] = useState(null);
-    const [showModal, setShowModal] = useState(false);
-
-    // Перевірка сесії при завантаженні
+    // Back from Google with an error (refused, unconfirmed email, ...)
+    const authError = searchParams.get('authError');
     useEffect(() => {
-        axios.get(`/auth/check-session`)
-            .then(response => {
-                if (response.data.loggedIn) {
-                    const userData = response.data.user;
-                    setUser(userData);
-                    setFormData({
-                        name: userData.name || '',
-                        bio: userData.bio || '',
-                        email: userData.email || '',
-                        password: ''
-                    });
-                    if (userData.profileImage) {
-                        setImagePreview(userData.profileImage);
-                    }
-                } else {
-                    setUser(null);
-                }
-            })
-            .catch(error => console.error('Error checking session:', error));
-    }, []);
+        if (authError === 'google') toast.error(t('auth.googleFailed'));
+    }, [authError, toast, t]);
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
-        setFormData({ ...formData, [name]: value });
+        setCredentials(prev => ({ ...prev, [name]: value }));
     };
 
     const handleLogin = async (e) => {
         e.preventDefault();
         try {
-            const response = await axios.post(`/auth/login`, {
-                email: formData.email,
-                password: formData.password,
-            });
-
-            if (response.data.success) {
-                const userData = response.data.user;
-                setUser(userData);
-                setFormData({
-                    name: userData.name || '',
-                    bio: userData.bio || '',
-                    email: userData.email || '',
-                    password: ''
-                });
-                if (setIsLoggedIn) setIsLoggedIn(true);
-                if (userData.profileImage) {
-                    setImagePreview(userData.profileImage);
-                }
-                setView('profile');
-            }
+            await login(credentials.email, credentials.password);
+            setCredentials(prev => ({ ...prev, password: '' }));
+            const next = safeNext(searchParams.get('next'));
+            if (next) navigate(next, { replace: true });
         } catch (error) {
-            console.error('Login failed:', error);
-            alert(error.response?.data?.message || 'Помилка авторизації');
-        }
-    };
-
-    const handleRegister = async (e, registerData) => {
-        e.preventDefault();
-        try {
-            // Бекенд очікує: username, email, password, birthday
-            // registerData приходить з компонента Register
-            const response = await axios.post(
-                `/auth/register`,
-                {
-                    username: registerData.name, // Мапимо name на username
-                    email: registerData.email,
-                    password: registerData.password,
-                    birthday: null // Можна додати поле дати народження у форму Register
-                },
-                {}
-            );
-
-            if (response.data.success) {
-                alert("Реєстрація успішна! Будь ласка, увійдіть.");
-                setIsLogin(true);
-                setView('login');
+            const data = error.response?.data;
+            if (data?.code === 'EMAIL_NOT_VERIFIED') {
+                const email = credentials.email;
+                const resend = async () => {
+                    try {
+                        const res = await axios.post('/auth/resend-verification', { email });
+                        toast.success(res.data.message);
+                    } catch {
+                        toast.error(t('auth.linkFailed'));
+                    }
+                };
+                toast.error(data.message, { action: { label: t('register.sendAgain'), onClick: resend } });
+                return;
             }
-        } catch (error) {
-            console.error("Registration failed:", error);
-            alert("Помилка при реєстрації");
+            toast.error(data?.message || t('auth.loginFailed'));
         }
     };
 
     const handleLogout = async () => {
         try {
-            await axios.post(`/auth/logout`, {});
-            setUser(null);
-            setView('login');
-            if (setIsLoggedIn) setIsLoggedIn(false);
-            setFormData({ name: '', bio: '', email: '', password: '' });
+            await logout();
         } catch (error) {
             console.error('Logout failed:', error);
         }
+        setView('login');
+        setCredentials({ email: '', password: '' });
     };
 
-    const showLogin = () => setView('login');
-    const showRegister = () => setView('register');
-    const showForgotPassword = () => setView('forgotPassword');
+    if (loading) return <div className={styles.profilePage} />;
 
     return (
         <div className={styles.profilePage}>
             {user ? (
-                <DigitalBrushProfile
-                    user={user}
-                    onLogout={handleLogout}
-                />
+                <DigitalBrushProfile user={user} onLogout={handleLogout} />
             ) : (
                 <div className={styles.authFormsContainer}>
                     {view === 'login' && (
                         <Login
                             handleLogin={handleLogin}
                             handleInputChange={handleInputChange}
-                            toggleForm={showRegister}
-                            onForgotPassword={showForgotPassword}
+                            toggleForm={() => setView('register')}
+                            onForgotPassword={() => setView('forgotPassword')}
                         />
                     )}
-                    {view === 'register' && (
-                        <Register
-                            handleRegister={handleRegister}
-                            toggleForm={showLogin}
-                        />
-                    )}
+                    {view === 'register' && <Register toggleForm={() => setView('login')} />}
                     {view === 'forgotPassword' && (
-                        <ForgotPassword
-                            onBack={showLogin}
-                        />
+                        <ForgotPassword onBack={() => setView('login')} toggleForm={() => setView('register')} />
                     )}
                 </div>
             )}

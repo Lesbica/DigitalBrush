@@ -1,18 +1,18 @@
-FROM node:20-alpine
+# Backend image. Build context is the repository root (see .github/workflows/artproject.yml):
+#   docker build -f server/Dockerfile .
+FROM node:22-alpine
 
 WORKDIR /app
+ENV NODE_ENV=production
 
-# Copy package files
-COPY package*.json ./
+# Backend dependencies only (server/package.json)
+COPY server/package.json server/package-lock.json ./
+RUN npm ci --omit=dev && npm cache clean --force
 
-# Install dependencies
-RUN npm ci --only=production
+# Backend code (incl. assets/baseAvatar.png). Secrets come from `docker run --env-file`, never from the image.
+COPY server ./
 
-# Copy source code
-COPY . .
-
-# Expose backend port
+USER node
 EXPOSE 8080
 
-# Start backend
 CMD ["node", "server.js"]

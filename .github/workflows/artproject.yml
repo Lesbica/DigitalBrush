@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - master
+  pull_request:
+  # Deploy runs only when started by hand (Actions → CI-CD-PaintingsProject → Run workflow)
+  workflow_dispatch:
 
 env:
   REGISTRY: ghcr.io
@@ -12,11 +15,76 @@ env:
 
 jobs:
 # =====================
-# CI — BUILD & PUSH
+# CI — LINT, TESTS, BUILD CHECK
+# =====================
+  test:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: ci-root-password
+          MYSQL_DATABASE: paintingsdb
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -pci-root-password"
+          --health-interval=5s --health-timeout=5s --health-retries=20
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            server/package-lock.json
+
+      - name: Install dependencies
+        run: |
+          npm ci
+          npm --prefix server ci
+
+      - name: Lint backend and frontend
+        run: |
+          npm run lint:server
+          npm run lint
+
+      - name: Frontend tests (Vitest)
+        run: npm test
+
+      - name: Configure backend for the CI database
+        run: |
+          cat > server/.env <<'EOF'
+          DB_HOST=127.0.0.1
+          DB_PORT=3306
+          DB_USER=root
+          DB_PASSWORD=ci-root-password
+          DB_NAME=paintingsdb
+          SESSION_SECRET=ci-session-secret
+          COOKIE_SECURE=false
+          EOF
+
+      - name: Apply migrations to an empty database
+        run: npm run migrate
+
+      - name: API tests
+        run: npm run test:api
+
+      - name: Frontend build (Vite)
+        run: npm run build
+
+# =====================
+# CI — BUILD & PUSH IMAGES (master only)
 # =====================
   build:
-  
-    runs-on: self-hosted
+    needs: test
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
@@ -42,8 +110,9 @@ jobs:
           context: .
           file: Dockerfile
           push: true
-          tags: ${{ env.REGISTRY }}/${{ env.FRONTEND_IMAGE }}:latest
-
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.FRONTEND_IMAGE }}:latest
+            ${{ env.REGISTRY }}/${{ env.FRONTEND_IMAGE }}:${{ github.sha }}
 
       # ---------- BACKEND ----------
       - name: Build & push backend image
@@ -52,13 +121,16 @@ jobs:
           context: .
           file: server/Dockerfile
           push: true
-          tags: ${{ env.REGISTRY }}/${{ env.BACKEND_IMAGE }}:latest
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.BACKEND_IMAGE }}:latest
+            ${{ env.REGISTRY }}/${{ env.BACKEND_IMAGE }}:${{ github.sha }}
 
 # =====================
-# CD — DEPLOY
+# CD — DEPLOY (manual only, while the server is unavailable)
 # =====================
   deploy:
     needs: build
+    if: github.event_name == 'workflow_dispatch'
     runs-on: self-hosted
     environment: test-srv
 
@@ -77,25 +149,33 @@ jobs:
             echo "🌐 Create docker network"
             docker network create paintings-net || true
 
-            echo "⬇ Pull latest images"
-            docker pull ghcr.io/diplomeproject/paintingsproject-frontend:latest
-            docker pull ghcr.io/diplomeproject/paintingsproject-backend:latest
+            echo "⬇ Pull images of this commit"
+            docker pull ghcr.io/diplomeproject/paintingsproject-frontend:${{ github.sha }}
+            docker pull ghcr.io/diplomeproject/paintingsproject-backend:${{ github.sha }}
 
             echo "🛑 Stop old containers"
             docker stop frontend backend || true
             docker rm frontend backend || true
 
+            echo "🔑 Check backend env file"
+            BACKEND_ENV_FILE="$HOME/paintings/backend.env"
+            if [ ! -f "$BACKEND_ENV_FILE" ]; then
+              echo "❌ $BACKEND_ENV_FILE not found. Create it from server/.env.example"
+              exit 1
+            fi
+
             echo "🚀 Start backend container"
             docker run -d \
               --name backend \
               --network paintings-net \
-              ghcr.io/diplomeproject/paintingsproject-backend:latest
+              --env-file "$BACKEND_ENV_FILE" \
+              ghcr.io/diplomeproject/paintingsproject-backend:${{ github.sha }}
 
             echo "🚀 Start frontend container (PUBLIC)"
             docker run -d \
               --name frontend \
               --network paintings-net \
               -p 8080:80 \
-              ghcr.io/diplomeproject/paintingsproject-frontend:latest
+              ghcr.io/diplomeproject/paintingsproject-frontend:${{ github.sha }}
 
             echo "✅ Application available at http://172.17.3.24:8080"

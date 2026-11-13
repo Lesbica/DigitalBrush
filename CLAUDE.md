@@ -1,0 +1,77 @@
+# DigitalBrush
+
+Маркетплейс цифрового арту: продаж картин і комішени (замовлення художнику) з чатом і оплатою.
+Фронтенд — React 19 + Vite у `src/` (JSX у `.js`-файлах, адреси API — `src/config.js`); бекенд — Express 5 + mysql2 + socket.io у `server/`.
+Спілкування з командою — українською.
+
+## Запуск (поки лише локально)
+Віддалений сервер деплою зараз недоступний — усе перевіряємо локально.
+
+- MySQL 8 локально, БД `paintingsdb`; налаштування в `server/.env` (див. `server/.env.example`, файл у git не комітиться).
+- `npm run setup` — залежності: корінь = фронтенд, `server/package.json` = бекенд (окремі `node_modules`).
+- `npm run migrate` — застосувати нові міграції; `npm run server` — бекенд на :8080; `npm start` — фронтенд на :3000.
+- `.claude/launch.json` містить конфігурації `backend` і `frontend` для превʼю в застосунку.
+- `npm run test:api` — інтеграційні тести API на локальній БД (створюють власні тестові дані й прибирають їх).
+- `npm test` — тести фронтенду (Vitest), `npm run lint` — ESLint фронтенду.
+- `npm run lint:server` — ESLint бекенду (`server/.eslintrc.json`). CI запускає лінт, міграції на порожній MySQL і тести.
+- Бекенд не перезавантажується сам: після змін у `server/` перезапусти його.
+
+## Правила
+- **Схема БД змінюється лише новою міграцією** `server/migrations/NNN_опис.sql` (наступний номер по порядку).
+  Не редагуй уже застосовані міграції. Після створення — `npm run migrate`.
+  `000_baseline_schema.sql` створює схему з нуля (на наявній БД нічого не робить).
+  Перед міграцією, що видаляє чи змінює дані, — бекап `mysqldump` поза репозиторієм
+  і пробний прогін на копії БД (`DB_NAME=<копія> npm run migrate`).
+- Зовнішні ключі (міграція 004): художника з картинами і користувача з замовленнями видалити не можна
+  (RESTRICT); повідомлення чату видаляються разом із комішеном.
+- **Секрети** тільки в `server/.env` / env-змінних. Не коміть `.env` і не хардкодь паролі, ключі, адреси БД.
+- **Оплата** (`server/payments/`): суму рахує сервер з цін у БД; результат оплати приймається лише перевіреним
+  провайдером (підпис або запит статусу). Логіка, що не залежить від провайдера, — у `payments/core.js`.
+- **Доступ до комішенів**, чату й сокет-кімнат — лише учасникам: `server/utils/commissionAccess.js`
+  (`requireCommissionParticipant`, `getRole`). Готовий результат замовнику — тільки після `is_paid`.
+- **Сесія** містить лише `{ id, name, email }`; профіль і аватар читаються з БД (`server/utils/userProfile.js`).
+- **Завантаження зображень** — через `withImageUpload(imageUpload…)` з `server/config/multerConfig.js`
+  (JPG/PNG/GIF/WEBP до 10 МБ, тип перевіряється за вмістом). Зображення зберігаються в БД як бінарні BLOB.
+- **Зображення у відповідях API — лише URL** (`server/utils/imageUrls.js`), ніколи base64 і ніколи BLOB-колонки
+  в `SELECT` для списків. Файли віддає `server/routes/imageRoutes.js` (WebP-прев'ю до 1600px, ETag, кеш);
+  доступ до зображень комішенів і чату — за тими ж правилами, що й до самих даних.
+  Оригінали картин — лише покупцям через `/api/profile/download/:id`.
+- Списки підтримують `page`/`limit` (макс. 100) і повертають `total`/`totalPages`.
+- Публічні ендпоінти ніколи не віддають `Password`, `Email`, `Birthday` користувачів.
+- **Ролі**: `creators.Role` = artist | customer. Дії художника (завантаження картин, прийняття
+  комішенів) — через `middleware/requireArtist.js`. Вхід — лише з підтвердженим email
+  (`REQUIRE_EMAIL_VERIFICATION`); одноразові токени — `services/accountTokens.js`, листи — `utils/mailer.js`.
+  Вхід через Google — `routes/googleAuthRoutes.js` (вмикається `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET`).
+- **Комішени**: статуси й переходи — лише через `services/commissionStages.js`
+  (Sketch → Lineart → Color → Final → Completed, Declined, Cancelled); фонове автозатвердження — `services/scheduler.js`.
+- **Сповіщення** — `services/notifications.js` (`notify`, `commissionEvents`, `walletEvents`), не надсилати
+  сокет-події/листи вручну. Тексти сповіщень і листів — ключі з `server/i18n/{uk,en}.json` (`{ key, params }`),
+  вони рендеряться мовою отримувача (`creators.Language`) і мовою читача в списку.
+- **Тексти API** пишемо англійською в коді (`message`/`error`); переклад — у `server/i18n/uk.json` → `api`
+  (англійський текст як ключ, змінні частини `{{name}}`). Тест `tests/i18n.test.js` падає, якщо перекладу немає.
+  Машинні коди (`not_found`) не перекладаються.
+- **Гаманець** — `services/wallet.js` (копійки, ідемпотентні записи через унікальний `Ref`, ескроу для
+  комішенів до завершення). Виведення на IBAN — вручну (`npm run withdrawals`); на картку — автоматично через
+  `services/payouts.js` (WayForPay Card Verify + Account2Card, `PAYOUTS=wayforpay`; токен картки лише зашифрований).
+- Після змін у бекенді — `npm run lint:server` і `npm run test:api`; нова поведінка → новий тест у `server/tests/`.
+- Логи — через `server/utils/logger.js` (рівень `LOG_LEVEL`), не `console.*`.
+- Нові залежності бекенду — у `server/package.json`, фронтенду — в кореневий `package.json`.
+- У комітах і PR не вказувати Claude автором (без `Co-Authored-By`).
+
+## Фронтенд
+- **Тексти інтерфейсу** — лише через react-i18next: `t('ключ')`, переклади в `src/i18n/locales/uk.json` і `en.json`
+  (однаковий набір ключів, це перевіряє тест). Значення категорій/фільтрів у БД англійські, підписи — `labels.*`.
+- **Ціни** — `formatPrice`/`formatMoney` з `src/i18n/format.js` (гривні, як рахує сервер), дати — `formatDate`.
+- Поточний користувач — `useAuth()` (`context/AuthContext.js`), не окремі запити `check-session`;
+  сторінки лише для залогінених — через `RequireAuth`.
+- Сокет — один на застосунок: `useSocket()`, кімната чату — `useCommissionRoom` (`context/SocketContext.js`).
+- Повідомлення — `useToast()` (`context/ToastContext.js`), не `alert()`.
+- Списки з сервера — `useServerList` (`components/hooks/useServerList.js`); категорії, стилі, формати й
+  фільтри — `src/constants/`.
+
+## План покращень
+Фази 0–6 завершені (безпека, баги, БД, продуктивність, архітектура/CI, функції з use cases:
+відгуки, життєвий цикл комішену, акаунти, сповіщення, гаманець; фронтенд: Vite, AuthContext, серверна
+пагінація, тости, i18n uk/en), а також серверні тексти uk/en, вхід через Google і автоматичні виплати
+на картку. Для запуску в бою потрібні лише ключі: Google OAuth (`GOOGLE_CLIENT_*`) і ввімкнені виплати
+на картки в мерчанта WayForPay (`PAYOUTS=wayforpay`).

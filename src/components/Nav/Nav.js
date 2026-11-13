@@ -4,9 +4,17 @@ import styles from "./Nav.module.css";
 import logo from "../../assets/mainIconNavbar.svg";
 import {useCart} from "../Cart/CartContext";
 import BasketModal from "./BasketModal/BasketModal";
+import NotificationBell from "./NotificationBell/NotificationBell";
+import {useAuth} from "../../context/AuthContext";
+import {useModal} from "../../context/ModalContext";
+import { useTranslation } from 'react-i18next';
+import LanguageSwitcher from "./LanguageSwitcher/LanguageSwitcher";
 
-export function Navbar({ isLoggedIn, onViewArtDetails }) {
+export function Navbar() {
+    const { t } = useTranslation();
     const navigate = useNavigate();
+    const {isLoggedIn} = useAuth();
+    const {openModal} = useModal();
     const location = useLocation();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -24,6 +32,16 @@ export function Navbar({ isLoggedIn, onViewArtDetails }) {
         return () => {
             document.body.classList.remove('no-scroll');
         };
+    }, [isMenuOpen]);
+
+    // Focus goes into the opened menu and back to the burger button when it closes
+    const burgerRef = useRef(null);
+    const closeMenuRef = useRef(null);
+    const wasMenuOpen = useRef(false);
+    useEffect(() => {
+        if (isMenuOpen) closeMenuRef.current?.focus({ preventScroll: true });
+        else if (wasMenuOpen.current) burgerRef.current?.focus({ preventScroll: true });
+        wasMenuOpen.current = isMenuOpen;
     }, [isMenuOpen]);
 
     const toggleMenu = () => {
@@ -65,49 +83,59 @@ export function Navbar({ isLoggedIn, onViewArtDetails }) {
             <div className={styles.navbarMain}>
                 <div className={styles.navbarContainer}>
                     <div className={styles.navbarLogo}>
-                        <img src={logo} className={styles.logo} alt="logo"/>
+                        <img src={logo} className={styles.logo} alt="DigitalBrush"/>
                     </div>
                     <div className={styles.navbarLeft}>
                         <div className={styles.navbarLinks}>
                             <button
                                 className={getButtonClass('/homepage', 'MAIN')}
+                                aria-current={getButtonClass('/homepage', 'MAIN') === styles.navButtonActive ? 'page' : undefined}
                                 onClick={() => handleNavigation('/homepage')}
                             >
-                                MAIN
+                                {t('nav.main')}
                             </button>
                             <button
                                 className={getButtonClass('/shop', 'SHOP')}
+                                aria-current={getButtonClass('/shop', 'SHOP') === styles.navButtonActive ? 'page' : undefined}
                                 onClick={() => handleNavigation('/shop')}
                             >
-                                SHOP
+                                {t('nav.shop')}
                             </button>
                             <button
                                 className={getButtonClass('/artists', 'ARTISTS')}
+                                aria-current={getButtonClass('/artists', 'ARTISTS') === styles.navButtonActive ? 'page' : undefined}
                                 onClick={() => handleNavigation('/artists')}
                             >
-                                ARTISTS
+                                {t('nav.artists')}
                             </button>
                             <button
                                 className={getButtonClass('/commission', 'COMMISSION')}
+                                aria-current={getButtonClass('/commission', 'COMMISSION') === styles.navButtonActive ? 'page' : undefined}
                                 onClick={() => handleNavigation('/commission')}
                             >
-                                COMMISSION
+                                {t('nav.commission')}
                             </button>
                         </div>
                     </div>
 
                     <div className={styles.navbarRight}>
                         <div className={styles.iconsLeft}>
+                            {isLoggedIn && <NotificationBell />}
                             {isLoggedIn && (
-                                <div
-                                    className={styles.settingsAndBasket}
-                                    onClick={handleBasketToggle}
-                                    ref={basketIconRef}
-                                >
+                                <div className={styles.settingsAndBasket} ref={basketIconRef}>
+                                    <button
+                                        type="button"
+                                        className="unstyled-button"
+                                        onClick={handleBasketToggle}
+                                        aria-label={t('nav.basketCount', { count: cartItems.length })}
+                                        aria-expanded={isBasketOpen}
+                                        aria-haspopup="dialog"
+                                        style={{ display: 'flex', position: 'relative' }}
+                                    >
                                     {cartItems.length > 0 && (
-                                        <span className={styles.cartBadge}>{cartItems.length}</span>
+                                        <span className={styles.cartBadge} aria-hidden="true">{cartItems.length}</span>
                                     )}
-                                    <svg width="36" height="36" viewBox="0 0 36 36" fill="none"
+                                    <svg width="36" height="36" viewBox="0 0 36 36" fill="none" aria-hidden="true"
                                          xmlns="http://www.w3.org/2000/svg"
                                          xmlnsXlink="http://www.w3.org/1999/xlink">
                                         <rect width="36" height="36" fill="url(#pattern0_3189_486)"/>
@@ -121,10 +149,11 @@ export function Navbar({ isLoggedIn, onViewArtDetails }) {
                                                    xlinkHref="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAACXBIWXMAAA7DAAAOwwHHb6hkAAAAGXRFWHRTb2Z0d2FyZQB3d3cuaW5rc2NhcGUub3Jnm+48GgAABMFJREFUeJzlm0mIHVUUhr/7bE3EOMQhRBONGsmwMeAmDqi4CChZiIuIuowxcSGIoAazFIxKFjEguBCXbiK4MCAq4kAgiUhEXDhhvyQOQQMJHRPJ1N2fi1fV777q6jf1q+pO9b+pV6/Ouee/p+5wzq17AyVAvQl4ALgHWAksB64DFiQip4HjwDDwC7AP2BtCOFoGv0KgLlSfV/er4/aOcXVfUsY1RfEMgy5QXQxsAzYCV+SInAF+A/6h8eah0RIWA3cA83N0TgPvAdtDCMcGzXkgUIfUV9R/M2/yrPqR+oy6Wp3S6WpIZDare9RzmbJOqi+rQ2XWrSPUVeq3GbJH1BfVhdMod6H6kvp7puxv1BWDrEPfUNcnbybFSFLxeQO0MT9xRNbOI4Oy0S+xTepoROoz9eYC7d2ifh7ZG1U3FmWvE5ktNkf3cXW7WivBbk19PbI9pj5dtN0sifXRmx9TN5dKgIkXMJZwuKA+XJbhFbaO9JtKMZzPZUvE46S6vGiDl9o62r9WqMHuOL0R8dlnkVOkujUy9kUZfb4LTpeoX0e8XijK0OKo6Z9SlxZiqA+oy9TTCbcRdVERRnZGXt46cAPThLot4rdj0IVfm7x11aNqXrw+o1AvV/+OBsSuEqhu+/BTNFPXnSGEs32xLBAhhDPAruT2KuDJgRWuHkg8e169YWAFDxjqooSj6t5BFppGXXsGUmiBUD9OuI6p13eS76YLPERz3eCTabErB58m1xrwYCfhbhywNvr9VR+EysaX0e+7Owl344BVyfU88Gs/jErGTzS4AqzuJDykvgtc3Ubm3uQ6CryvTo9eORgFLgPuU3e3kTsR1IPAXeXwmnU4UAPqM81iBlEfotUBq0MIP88UmzKgrgG+T26Hsy3g9vIplY54zeDQXHRAXMd61gG3lUxmJhDXsV4DjtCYNmButYBzwF+1EMIo8EfmYZWR1vFwCGE8jQTrmYeVRLKEtyy5rUMzFE4dsKCQ5aTZg6VA+sVqGJoOOBQJ9dQKomWodiFnnt6GSHdDj7q7U8Ve9Git2yFoOmB4CqGqoWUKhMldAFoDhaqhKwdUORbI7wIhhBPASI5Q1ZDW7VgI4RS0LojMhakwrdtEi89zwBIHuLlhtkC9EkhXtNs6oAbcWg6tUhG37IlZL3ZA37HARYJJAyDkt4CscFUwaQqEVgdUPRjq6ICqp8UtaXD654QD5kBa3JIGp39mP4xUMhbIS4NTTOWAqqXFk9LgFFkHVHUqzJ0CYeoWkFW62JE7A8DccUDLSnD8oJ0DqpQWd9cFQgjHaabFVVoYSesykQanyNsfUMWpcFIanCJvW2mdxufyJeq8EMK5DoU/nlz/7JHU/kh3f4+6O4EPuhFUF5CTBrdTeDNarV3ZI7FZB3VNVJ9Xs8/zukDVYoEpB0BoPwZklS9WTBkDQL4D4lCxCjNBWwdMgo3jb/8lfea74niVA/XHpC4jdru9P9ptqbquYI6FQX00qseHvSiuixSPq48VyLMQqE/YPGY3rt6fJ9fuFOc7wLPRX4eBH2isqMxmzAfupJn/A7wVQujtJImNoyi77O/g82zBuLrDNn2/4+FpdS3wHI2NxzeSHz3OJlwAjtLYM/x2COFgO+H/Aab2un8K8ZF7AAAAAElFTkSuQmCC"/>
                                         </defs>
                                     </svg>
+                                    </button>
                                     {isBasketOpen && (
                                         <BasketModal
                                             onClose={() => setIsBasketOpen(false)}
-                                            onViewItemDetails={onViewArtDetails}
+                                            onViewItemDetails={openModal}
                                             position={basketPosition}
                                         />
                                     )}
@@ -143,17 +172,24 @@ export function Navbar({ isLoggedIn, onViewArtDetails }) {
                             {/*</div>*/}
                         </div>
 
+                        <LanguageSwitcher />
                         <button
                             className={getButtonClass('/profile', 'PROFILE')}
+                                aria-current={getButtonClass('/profile', 'PROFILE') === styles.navButtonActive ? 'page' : undefined}
                             onClick={() => handleNavigation('/profile')}
                         >
-                            {isLoggedIn ? 'PROFILE' : 'SIGN IN'}
+                            {isLoggedIn ? t('nav.profile') : t('nav.signIn')}
                         </button>
                     </div>
 
                     <button className={`${styles.burgerMenu} ${isMenuOpen ? styles.hidden : ''}`}
-                            onClick={toggleMenu}>
-                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"
+                            type="button"
+                            onClick={toggleMenu}
+                            aria-label={t('nav.openMenu')}
+                            aria-expanded={isMenuOpen}
+                            aria-controls="mobile-menu"
+                            ref={burgerRef}>
+                        <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"
                              fill="none"
                              stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <line x1="3" y1="12" x2="21" y2="12"></line>
@@ -164,20 +200,24 @@ export function Navbar({ isLoggedIn, onViewArtDetails }) {
                 </div>
                 <div className={styles.navbarBottomBorder}/>
             </div>
-            <div className={`${styles.mobileMenu} ${isMenuOpen ? styles.open : ''}`}>
-                <button className={styles.closeButton} onClick={toggleMenu}>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none"
+            <div id="mobile-menu" className={`${styles.mobileMenu} ${isMenuOpen ? styles.open : ''}`}
+                 role="dialog" aria-modal="true" aria-label={t('nav.menu')}
+                 onKeyDown={(e) => { if (e.key === 'Escape') setIsMenuOpen(false); }}>
+                <button className={styles.closeButton} type="button" onClick={toggleMenu} aria-label={t('nav.closeMenu')}
+                        ref={closeMenuRef}>
+                    <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none"
                          stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <line x1="18" y1="6" x2="6" y2="18"></line>
                         <line x1="6" y1="6" x2="18" y2="18"></line>
                     </svg>
                 </button>
                 <div className={styles.mobileNavLinks}>
-                    <button onClick={() => handleNavigation('/homepage')}>MAIN</button>
-                    <button onClick={() => handleNavigation('/shop')}>SHOP</button>
-                    <button onClick={() => handleNavigation('/artists')}>ARTISTS</button>
-                    <button onClick={() => handleNavigation('/commission')}>COMMISSION</button>
-                    <button onClick={() => handleNavigation('/profile')}>SIGN IN / PROFILE</button>
+                    <button onClick={() => handleNavigation('/homepage')}>{t('nav.main')}</button>
+                    <button onClick={() => handleNavigation('/shop')}>{t('nav.shop')}</button>
+                    <button onClick={() => handleNavigation('/artists')}>{t('nav.artists')}</button>
+                    <button onClick={() => handleNavigation('/commission')}>{t('nav.commission')}</button>
+                    <button onClick={() => handleNavigation('/profile')}>{isLoggedIn ? t('nav.profile') : t('nav.signIn')}</button>
+                    <LanguageSwitcher />
                 </div>
             </div>
         </nav>

@@ -1,74 +1,36 @@
 {
-  "name": "paintingsproj",
+  "name": "digitalbrush-server",
   "version": "0.1.0",
   "private": true,
+  "description": "DigitalBrush API: Express 5 + MySQL + socket.io",
+  "main": "server.js",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node server.js",
+    "migrate": "node scripts/migrate.js",
+    "test": "node --test --test-concurrency=1 --test-reporter=spec tests/*.test.js",
+    "withdrawals": "node scripts/withdrawals.js"
+  },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.927.0",
-    "@emailjs/browser": "^4.4.1",
-    "@testing-library/dom": "^10.4.1",
-    "@testing-library/jest-dom": "^6.8.0",
-    "@testing-library/react": "^16.3.0",
-    "@testing-library/user-event": "^13.5.0",
     "adm-zip": "^0.5.16",
-    "axios": "^1.12.2",
     "bcrypt": "^6.0.0",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
+    "express-mysql-session": "^3.0.3",
+    "express-rate-limit": "^8.7.4",
     "express-session": "^1.18.2",
-    "hasown": "^2.0.2",
-    "lucide-react": "^0.544.0",
-    "muller": "^1.1.0",
+    "helmet": "^8.3.0",
     "multer": "^2.0.2",
     "mysql2": "^3.15.1",
-    "node-fetch": "^3.3.2",
-    "react": "^19.1.1",
-    "react-dom": "^19.1.1",
-    "react-router-dom": "^7.9.3",
-    "react-scripts": "5.0.1",
-    "recharts": "^3.6.0",
+    "nodemailer": "^7.0.13",
     "sharp": "^0.34.5",
-    "socket.io": "^4.8.1",
-    "socket.io-client": "^4.8.1",
-    "sqlite3": "^5.1.7",
-    "web-vitals": "^2.1.4"
+    "socket.io": "^4.8.1"
   },
-  "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject"
-  },
-  "eslintConfig": {
-    "extends": [
-      "react-app",
-      "react-app/jest"
-    ],
-    "overrides": [
-      {
-        "files": [
-          "server/**/*.js"
-        ],
-        "env": {
-          "node": true,
-          "es2021": true
-        },
-        "globals": {
-          "globalThis": "readonly"
-        }
-      }
-    ]
-  },
-  "browserslist": {
-    "production": [
-      ">0.2%",
-      "not dead",
-      "not op_mini all"
-    ],
-    "development": [
-      "last 1 chrome version",
-      "last 1 firefox version",
-      "last 1 safari version"
-    ]
+  "devDependencies": {
+    "cookie-signature": "^1.0.7",
+    "socket.io-client": "^4.8.1"
   }
 }

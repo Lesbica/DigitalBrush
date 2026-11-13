@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import styles from "./DigitalBrushProfile.module.css";
 import MyImages from "./MyImages/MyImages";
 import ProfileSettings from "./SettingsProfile/SettingsProfile";
@@ -18,24 +19,19 @@ import plusIcon from "../../../../assets/icons/plusIcon.svg";
 import MyCommission from "./MyCommission/MyCommission";
 import AddArtModal from "../../../Shop/AddArtModal/AddArtModal";
 import AddCommissionModal from "../../../Commission/CommissionModals/AddCommissionModal";
+import { CATEGORIES } from '../../../../constants/categories';
+import { SHOP_FILTERS } from '../../../../constants/filters';
+import { useTranslation } from 'react-i18next';
+import { useToast } from '../../../../context/ToastContext';
 
 
-const filterConfig = [
-    { title: "SORT BY", options: [{ name: "NONE" }, { name: "RATING" }, { name: "LATEST" }, { name: "EXPENSIVE" }, { name: "CHEAP" }]},
-    { title: "STYLE", options: [{ name: "NONE STYLE", subOptions: [
-                "Retro Futurism", "Mid-Century", "Modern, Art Deco", "Bauhaus, Y2K", "Aesthetic", "Memphis Style",
-                "Grunge", "Psychedelic Art", "Surrealism, Neo-Psychedelia, Op Art", "Dreamcore", "Weirdcore",
-                "Hyperrealism", "Social Realism", "Digital Realism", "Cinematic Realism", "Cyberpunk",
-                "Synthwave", "Vaporwave", "Minimalism", "Brutalism", "Postmodern", "Collage."
-            ] }]}
-];
+const filterConfig = SHOP_FILTERS;
 
-const categories = [
-    "2D AVATARS", "3D MODELS", "BOOKS", "ANIME", "ICONS", "GAMES", "MOCKUPS", "UI/UX",
-    "ADVERTISING", "BRENDING", "POSTER", "ARCHITECTURE", "FASHION", "SKETCH", "PHOTOGRAPHY"
-];
+const categories = CATEGORIES;
 
 function DigitalBrushProfile({ user, onLogout }) {
+    const { t } = useTranslation();
+    const toast = useToast();
     // Стан для відстеження поточної вкладки
     // Можливі варіанти: 'settings', 'images', 'commission', 'payment', 'calendar'
     const [activeTab, setActiveTab] = useState('images');
@@ -45,13 +41,32 @@ function DigitalBrushProfile({ user, onLogout }) {
 
     const [totalLikes, setTotalLikes] = useState(0);
 
+    // Links from notifications: /profile?commission=<id> opens that chat, /profile?tab=wallet a tab
+    const [searchParams, setSearchParams] = useSearchParams();
+    useEffect(() => {
+        const commissionId = searchParams.get('commission');
+        const tab = searchParams.get('tab');
+        // back from linking a payout card on the WayForPay page
+        const card = searchParams.get('card');
+        if (card === 'ok') toast.success(t('wallet.card.ok'));
+        else if (card === 'pending') toast.info(t('wallet.card.pending'));
+        else if (card === 'fail') toast.error(t('wallet.card.fail'));
+        if (commissionId) {
+            setActiveChatCommissionId(Number(commissionId));
+            setActiveTab('chat');
+        } else if (tab && ['settings', 'images', 'purchases', 'commission', 'wallet'].includes(tab)) {
+            setActiveTab(tab);
+        }
+        if (commissionId || tab) setSearchParams({}, { replace: true });
+    }, [searchParams, setSearchParams, toast, t]);
+
     const handleOpenChat = (commissionId) => {
         setActiveChatCommissionId(commissionId);
         setActiveTab('chat');
     };
 
     const formatTags = (tags) => {
-        if (!tags || tags.length === 0) return "Not specified";
+        if (!tags || tags.length === 0) return t('profile.notSpecified');
         if (Array.isArray(tags)) return tags.slice(0, 2).join('/'); // Беремо перші 2
         return tags; // Якщо це просто рядок
     };
@@ -78,6 +93,8 @@ function DigitalBrushProfile({ user, onLogout }) {
                 return <ProfileSettings user={user} />;
             case 'images':
                 return <MyImages user={user} onTotalLikesChange={setTotalLikes} />;
+            case 'purchases':
+                return <MyImages user={user} initialView="bought" />;
             case 'commission':
                 return <MyCommission user={user} onOpenChat={handleOpenChat} />;
             case 'chat':
@@ -89,7 +106,7 @@ function DigitalBrushProfile({ user, onLogout }) {
                     />
                 );
             case 'wallet':
-                return <div className={styles.placeholder}>Wallet Component (Coming Soon)</div>;
+                return <Wallet />;
             case 'calendar':
                 return <div className={styles.placeholder}>Calendar Component (Coming Soon)</div>;
             default:
@@ -113,8 +130,10 @@ function DigitalBrushProfile({ user, onLogout }) {
 
                     <div>
                         <h1 className={styles.artistName}>
-                            {user.name || "Artist"}
-                            <span className={styles.status}>(available)</span>
+                            {user.name}
+                            {user.role === 'artist' && (
+                                <span className={styles.status}>({t(`availability.${['busy', 'vacation'].includes(user.availability) ? user.availability : 'open'}`)})</span>
+                            )}
                         </h1>
                     </div>
 
@@ -130,14 +149,14 @@ function DigitalBrushProfile({ user, onLogout }) {
                             <span>{formatTags(user.languages)}</span>
                         </div>
                         <div className={styles.metaRow}>
-                            <img src={heartIcon} alt="Likes" className={styles.socialicon} />
+                            <img src={heartIcon} alt={t('artists.likes')} className={styles.socialicon} />
                             {/* Показуємо сумарні лайки, обчислені на фронті */}
                             <span>{totalLikes}</span>
                         </div>
                     </div>
 
                     <p className={styles.bio}>
-                        {user.bio || "Welcome to my profile! No description provided yet."}
+                        {user.bio || t('profile.noBio')}
                     </p>
 
                     {/* КНОПКИ З ЛОГІКОЮ АКТИВНОГО СТАНУ */}
@@ -147,57 +166,65 @@ function DigitalBrushProfile({ user, onLogout }) {
                             className={`${styles.profileSettingsBtn} ${activeTab === 'settings' ? styles.active : ''}`}
                             onClick={() => setActiveTab('settings')}
                         >
-                            <img src={userIcon} alt="UserIcon" className={styles.btnicon} />
-                            Settings profile
+                            <img src={userIcon} alt="" className={styles.btnicon} />
+                            {t('profile.settings')}
                         </button>
 
-                        <button
-                            className={`${styles.imagesBtn} ${activeTab === 'images' ? styles.active : ''}`}
-                            onClick={() => setActiveTab('images')}
-                        >
-                            <img src={pictureIcon} alt="PictureIcon" className={styles.btnicon} />
-                            My images
-                            <img src={plusIcon} alt="PlusIcon" className={styles.plusIcon}
-                                 onClick={handleOpenAddArt}
-                            />
-                        </button>
+                        <div className={styles.tabWithAction}>
+                            <button
+                                className={`${styles.imagesBtn} ${activeTab === 'images' ? styles.active : ''}`}
+                                onClick={() => setActiveTab('images')}
+                                aria-current={activeTab === 'images' ? 'page' : undefined}
+                            >
+                                <img src={pictureIcon} alt="" className={styles.btnicon} />
+                                {t('profile.myImages')}
+                            </button>
+                            <button type="button" className={styles.plusButton} onClick={handleOpenAddArt} aria-label={t('shop.addImage')}>
+                                <img src={plusIcon} alt="" />
+                            </button>
+                        </div>
 
-                        <button
-                            className={`${styles.comissionBtn} ${activeTab === 'commission' ? styles.active : ''}`}
-                            onClick={() => setActiveTab('commission')}
-                        >
-                            <img src={comissionIcon} alt="ComissionIcon" className={styles.btnicon} />
-                            My Commission
-                            <img src={plusIcon} alt="PlusIcon" className={styles.plusIcon} onClick={handleOpenAddCommission}/>
-                        </button>
+                        <div className={styles.tabWithAction}>
+                            <button
+                                className={`${styles.comissionBtn} ${activeTab === 'commission' ? styles.active : ''}`}
+                                onClick={() => setActiveTab('commission')}
+                                aria-current={activeTab === 'commission' ? 'page' : undefined}
+                            >
+                                <img src={comissionIcon} alt="" className={styles.btnicon} />
+                                {t('profile.myCommissions')}
+                            </button>
+                            <button type="button" className={styles.plusButton} onClick={handleOpenAddCommission} aria-label={t('commissions.add')}>
+                                <img src={plusIcon} alt="" />
+                            </button>
+                        </div>
 
                         <button
                             className={`${styles.paymentBtn} ${activeTab === 'wallet' ? styles.active : ''}`}
                             onClick={() => setActiveTab('wallet')}
                         >
-                            <img src={walletIcon} alt="PaymentIcon" className={styles.btnicon} />
-                            Payment
+                            <img src={walletIcon} alt="" className={styles.btnicon} />
+                            {t('profile.wallet')}
                         </button>
 
                         <button
                             className={`${styles.calendarBtn} ${activeTab === 'calendar' ? styles.active : ''}`}
                             onClick={() => setActiveTab('calendar')}
                         >
-                            <img src={calendarIcon} alt="CalendarIcon" className={styles.btnicon} />
-                            Calendar
+                            <img src={calendarIcon} alt="" className={styles.btnicon} />
+                            {t('profile.calendar')}
                         </button>
 
                         <button className={styles.logoutBtn} onClick={onLogout}>
-                            <img src={closeIcon} alt="LogoutIcon" className={styles.btnicon} />
-                            Log out
+                            <img src={closeIcon} alt="" className={styles.btnicon} />
+                            {t('profile.logout')}
                         </button>
                     </div>
                 </aside>
 
                 {/* --- ПРАВА ЧАСТИНА (ЗМІННИЙ КОНТЕНТ) --- */}
-                <main className={styles.gallerySection}>
+                <section className={styles.gallerySection}>
                     {renderContent()}
-                </main>
+                </section>
             </div>
 
             {showAddArtModal && (

@@ -1,22 +1,31 @@
-import React, {useCallback, useEffect, useState} from "react";
+import React, {useCallback, useEffect, useRef, useState} from "react";
 import styles from "./CommissionModalDetails.module.css";
 import closeIcon from '../../../assets/closeCross.svg';
 import axios from 'axios';
 import ImageViewer from "../../ArtCard/ImageViewer/ImageViewer";
 import logo from '../../../assets/logo.svg'
-import URL from "../../../URL";
+import { useToast } from '../../../context/ToastContext';
+import { useTranslation } from 'react-i18next';
+import { formatPrice, formatDate } from '../../../i18n/format';
+import useDialog from '../../Dialog/useDialog';
 
-const CommissionModalDetails = ({ commission, onClose, disableTake = false }) => {
+// respondAsArtist: artist of a direct open commission can accept or decline it
+// canCancel: customer can cancel an unpaid commission; onStatusChange(newStatus) refreshes the caller
+const CommissionModalDetails = ({ commission, onClose, disableTake = false, respondAsArtist = false, canCancel = false, onStatusChange }) => {
+    const { t } = useTranslation();
+    const dialogRef = useRef(null);
+    useDialog(dialogRef, onClose);
+    const toast = useToast();
 
     const [isLoading, setIsLoading] = useState(true);
     const [details, setDetails] = useState(() => ({
         id: commission?.id,
         title: commission?.title || '',
         description: commission?.description || '',
-        category: commission?.category || 'Unknown',
-        style: commission?.style || 'Unknown',
-        fileFormat: commission?.fileFormat || commission?.format || 'Unknown',
-        size: commission?.size || 'Unknown',
+        category: commission?.category || '',
+        style: commission?.style || '',
+        fileFormat: commission?.fileFormat || commission?.format || '',
+        size: commission?.size || '',
         price: commission?.price || '',
         status: commission?.status || 'Open',
         Creator_ID: commission?.Creator_ID || null,
@@ -73,6 +82,8 @@ const CommissionModalDetails = ({ commission, onClose, disableTake = false }) =>
                             status: c.status || prev.status,
                             Creator_ID: c.Creator_ID ?? prev.Creator_ID,
                             Customer_ID: c.Customer_ID ?? prev.Customer_ID,
+                            deadline: c.deadline || null,
+                            overdue: Boolean(c.overdue),
                         }));
                     }
                 })
@@ -123,8 +134,8 @@ const CommissionModalDetails = ({ commission, onClose, disableTake = false }) =>
     }
 
     const onImageError = (e) => {
-        if (!e.target.src.endsWith("/images/placeholder.png")) {
-            e.target.src = "/images/placeholder.png";
+        if (!e.target.src.endsWith("/images/placeholder.svg")) {
+            e.target.src = "/images/placeholder.svg";
         }
     };
 
@@ -142,16 +153,17 @@ const CommissionModalDetails = ({ commission, onClose, disableTake = false }) =>
             );
 
             if (response.data.success) {
-                alert("Commission accepted successfully!");
+                toast.success(t('commission.accepted'));
+                if (onStatusChange) onStatusChange('Sketch');
                 onClose();
             }
         } catch (err) {
             console.error(err);
             // Якщо сесія прострочена, бекенд поверне 401, і ми це обробимо тут
             if (err.response && err.response.status === 401) {
-                alert("Please log in to accept commissions.");
+                toast.info(t('commission.signInToAccept'));
             } else {
-                alert("Failed to accept commission: " + (err.response?.data?.message || err.message));
+                toast.error(err.response?.data?.message || t('commission.acceptFailed'));
             }
         }
     };
@@ -161,11 +173,29 @@ const CommissionModalDetails = ({ commission, onClose, disableTake = false }) =>
     // Перевіряємо, чи є взагалі зображення для прев'ю
     const hasMultipleImages = previewImages.length > 0;
 
+    // Decline (artist) or cancel (customer)
+    const changeStatus = async (action) => {
+        const question = action === 'decline' ? t('commission.confirmDecline') : t('commission.confirmCancel');
+        if (!window.confirm(question)) return;
+        try {
+            const res = action === 'decline'
+                ? await axios.patch(`/commissions/${commission.id}/decline`)
+                : await axios.patch(`/commissions/${commission.id}/status`, { status: 'Cancelled' });
+            const newStatus = res.data.status;
+            setDetails(prev => ({ ...prev, status: newStatus }));
+            if (onStatusChange) onStatusChange(newStatus);
+            onClose();
+        } catch (err) {
+            toast.error(err.response?.data?.message || t('commission.updateFailed'));
+        }
+    };
+
     return (
         <div className={styles.overlay}>
-            <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
-                <button className={styles.closeBtn} onClick={onClose}>
-                    <img src={closeIcon} alt="Close" />
+            <div className={styles.modal} onClick={(e) => e.stopPropagation()}
+                 ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="commission-dialog-title">
+                <button type="button" className={styles.closeBtn} onClick={onClose}>
+                    <img src={closeIcon} alt={t('common.close')} />
                 </button>
 
                 <div className={styles.topSection}>
@@ -179,7 +209,7 @@ const CommissionModalDetails = ({ commission, onClose, disableTake = false }) =>
                         // або .singleImage, якщо є ТІЛЬКИ головне зображення
                         <div className={hasMultipleImages ? styles.imageColumn : styles.singleImageWrapper}>
                             <img
-                                src={mainImage || "/images/placeholder.png"}
+                                src={mainImage || "/images/placeholder.svg"}
                                 alt={commission.title}
                                 // Використовуємо різні класи для компонування
                                 className={hasMultipleImages ? styles.image : styles.singleImage}
@@ -193,7 +223,7 @@ const CommissionModalDetails = ({ commission, onClose, disableTake = false }) =>
                                     {previewImages.map((img, index) => (
                                         <img
                                             key={index}
-                                            src={img || "/images/placeholder.png"}
+                                            src={img || "/images/placeholder.svg"}
                                             alt={`preview ${index + 1}`}
                                             // .activePreview більше не потрібен
                                             className={styles.previewImg}
@@ -209,35 +239,46 @@ const CommissionModalDetails = ({ commission, onClose, disableTake = false }) =>
 
                     {/* --- ПРАВА КОЛОНКА (Без змін) --- */}
                     <div className={styles.info}>
-                        <p className={styles.title}>{details.title}</p>
+                        <h2 className={styles.title} id="commission-dialog-title">{details.title}</h2>
                         <p className={styles.field}>
-                            <span>Category</span> {details.category}
+                            <span>{t('art.category')}</span> {details.category ? t(`labels.${details.category}`, { defaultValue: details.category }) : '—'}
                         </p>
                         <p className={styles.field}>
-                            <span>Style</span> {details.style}
+                            <span>{t('art.style')}</span> {details.style || '—'}
                         </p>
                         <p className={styles.field}>
-                            <span>File format</span> {details.fileFormat}
+                            <span>{t('art.format')}</span> {details.fileFormat || '—'}
                         </p>
                         <p className={styles.field}>
-                            <span>Size</span> {details.size}
+                            <span>{t('art.size')}</span> {details.size || '—'}
                         </p>
                         <p className={styles.field}>
-                            <span>Status</span> {details.status}
+                            <span>{t('artists.status')}</span> {t(`status.${details.status}`, { defaultValue: details.status || '—' })}
                         </p>
+                        {details.deadline && (
+                            <p className={styles.field} style={details.overdue ? { color: '#ff8a8a' } : undefined}>
+                                <span>{t('commission.deadline')}</span> {formatDate(`${details.deadline}T00:00:00`)}{details.overdue ? ` (${t('commission.overdue')})` : ''}
+                            </p>
+                        )}
                     </div>
                 </div>
 
                 {/* --- НИЖНЯ ЧАСТИНА (Без змін) --- */}
                 <div className={styles.about}>
-                    <p>About</p>
+                    <p>{t('commission.about')}</p>
                     <span>{details.description}</span>
                 </div>
 
                 <div className={styles.actions}>
-                    <button className={styles.priceBtn}>{details.price}$</button>
-                    {!(disableTake || details.Creator_ID) && (
-                        <button className={styles.takeBtn} onClick={handleAccept}>Accept</button>
+                    <button className={styles.priceBtn}>{formatPrice(details.price)}</button>
+                    {(respondAsArtist || !(disableTake || details.Creator_ID)) && (
+                        <button className={styles.takeBtn} onClick={handleAccept}>{t('commission.accept')}</button>
+                    )}
+                    {respondAsArtist && (
+                        <button className={styles.takeBtn} style={{ background: '#a33' }} onClick={() => changeStatus('decline')}>{t('commission.decline')}</button>
+                    )}
+                    {canCancel && (
+                        <button className={styles.takeBtn} style={{ background: '#a33' }} onClick={() => changeStatus('cancel')}>{t('commission.cancelOrder')}</button>
                     )}
                 </div>
 

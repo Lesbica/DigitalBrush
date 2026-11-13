@@ -22,3 +22,65 @@ code {
 .no-scroll {
     overflow: hidden;
 }
+/* --- Accessibility helpers ------------------------------------------------ */
+
+/* Visible keyboard focus everywhere (mouse clicks do not show it) */
+:focus-visible {
+    outline: 2px solid #b991ff;
+    outline-offset: 2px;
+}
+
+/* Text for screen readers only */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* A <button> that looks like the element it replaced (icons, images, cards) */
+.unstyled-button {
+    appearance: none;
+    background: none;
+    border: none;
+    padding: 0;
+    margin: 0;
+    font: inherit;
+    color: inherit;
+    text-align: inherit;
+    cursor: pointer;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}
+
+.skip-link {
+    position: absolute;
+    left: 16px;
+    top: -60px;
+    z-index: 10001;
+    padding: 10px 16px;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #1e1b2e;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.skip-link:focus {
+    top: 16px;
+}
+
+#main-content:focus {
+    outline: none;
+}

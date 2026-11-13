@@ -441,3 +441,20 @@
 .inputIcon:hover {
     opacity: 1;
 }
+.inputWrapper:focus-within {
+    outline: 2px solid #b991ff;
+    outline-offset: 2px;
+}
+
+/* stage progress is an ordered list now */
+ol.dotsRow {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.stageCount {
+    margin-left: 12px;
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.75);
+}

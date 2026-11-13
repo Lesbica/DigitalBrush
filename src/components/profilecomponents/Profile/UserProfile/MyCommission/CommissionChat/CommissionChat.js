@@ -4,13 +4,30 @@ import styles from './CommissionChat.module.css';
 import placeholderImg from '../../../../../../assets/image-placeholder-icon.svg';
 import ImageViewer from "../../../../../ArtCard/ImageViewer/ImageViewer";
 import CommissionModalDetails from "../../../../../Commission/CommissionModals/CommissionModalDetails";
-import { io } from 'socket.io-client';
-import url from '../../../../../../URL';
+import ReviewBox from './ReviewBox';
+import { useSocket, useCommissionRoom } from '../../../../../../context/SocketContext';
+import { useToast } from '../../../../../../context/ToastContext';
+import { useTranslation } from 'react-i18next';
+import { formatPrice, formatDate } from '../../../../../../i18n/format';
 // Іконки
 const CheckIcon = () => (<svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" /></svg>);
 const CrossIcon = () => (<svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" /></svg>);
 
+// Server chat message -> view model (the partner avatar is picked at render time)
+const mapServerMsg = (m) => {
+    const isImage = m.type === 'image';
+    return {
+        id: m.id,
+        text: m.type === 'text' ? m.content : '',
+        image: isImage ? (m.image || m.content || null) : null,
+        senderId: m.senderId,
+        timestamp: m.timestamp,
+    };
+};
+
 const CommissionChat = ({ commissionId, user, onBack }) => {
+    const { t } = useTranslation();
+    const toast = useToast();
     const [commission, setCommission] = useState(null);
     const [loading, setLoading] = useState(true);
     const [status, setStatus] = useState('Sketch');
@@ -25,7 +42,6 @@ const CommissionChat = ({ commissionId, user, onBack }) => {
 
     const [mainImage, setMainImage] = useState(null);
     // Прев'ю нижче головного більше не відображаємо, залишаємо тільки головне зображення
-    const [previewImages, setPreviewImages] = useState([]);
 
     const [isViewerOpen, setIsViewerOpen] = useState(false);
     const [viewerInitialIndex, setViewerInitialIndex] = useState(0);
@@ -37,10 +53,9 @@ const CommissionChat = ({ commissionId, user, onBack }) => {
     const [partnerName, setPartnerName] = useState('');
     const [partnerAvatar, setPartnerAvatar] = useState(null);
 
-    // Заглушка повідомлень
-    const [messages, setMessages] = useState([
-        { id: 1, text: "To convey the spirit of retro...", senderId: 999, avatar: placeholderImg }
-    ]);
+    const [messages, setMessages] = useState([]);
+    const socket = useSocket();
+    useCommissionRoom(socket, commissionId);
     const [inputText, setInputText] = useState('');
     // автопрокрутка чата
     const messagesEndRef = useRef(null);
@@ -49,7 +64,7 @@ const CommissionChat = ({ commissionId, user, onBack }) => {
             if (messagesEndRef.current) {
                 messagesEndRef.current.scrollIntoView({ behavior: smooth ? 'smooth' : 'auto' });
             }
-        } catch (e) {}
+        } catch (e) { /* element already unmounted */ }
     }, []);
 
     useEffect(() => {
@@ -64,10 +79,8 @@ const CommissionChat = ({ commissionId, user, onBack }) => {
                     if (commData.images && commData.images.length > 0) {
                         setMainImage(commData.images[0]);
                         // Логіку нижніх прев'ю прибираємо
-                        setPreviewImages([]);
                     } else {
                         setMainImage(placeholderImg);
-                        setPreviewImages([]);
                     }
                 }
             })
@@ -75,164 +88,92 @@ const CommissionChat = ({ commissionId, user, onBack }) => {
             .finally(() => setLoading(false));
     }, [commissionId]);
 
-    // Load chat messages for this commission
+    // Load chat history and the last stage submission for this commission
     useEffect(() => {
-        if (!commissionId) return;
-
-        const mapServerMsg = (m) => {
-            const isText = m.type === 'text';
-            const isImage = m.type === 'image';
-            // иногда backend может прислать dataURL либо в m.image, либо в m.content при type=image
-            const imageData = isImage ? (m.image || m.content || null) : null;
-            return {
-                id: m.id,
-                text: isText ? m.content : '',
-                image: imageData,
-                senderId: m.senderId,
-                avatar: m.senderId === Number(user?.id)
-                    ? (user?.profileImage || placeholderImg)
-                    : (partnerAvatar || placeholderImg),
-                timestamp: m.timestamp
-            };
-        };
+        if (!commissionId) return undefined;
+        let cancelled = false;
 
         const loadMessages = async () => {
-        try {
-            const res = await axios.get(`/commissions/chat/${commissionId}/messages`);
-            if (res.data && res.data.messages) {
-                const all = res.data.messages || [];
-                const mapped = all.filter(m => m.type === 'text' || m.type === 'image').map(mapServerMsg);
-                setMessages(mapped);
+            try {
+                const res = await axios.get(`/commissions/chat/${commissionId}/messages`);
+                if (cancelled || !res.data?.messages) return;
+                const all = res.data.messages;
+                setMessages(all.filter(m => m.type === 'text' || m.type === 'image').map(mapServerMsg));
 
                 const lastStage = [...all]
                     .filter(m => m.type === 'stage')
-                    .sort((a,b)=> new Date(a.timestamp) - new Date(b.timestamp))
+                    .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))
                     .pop();
-                
+
                 if (lastStage) {
-                    const lastId = lastStage.id;
-                    const img = lastStage.image || lastStage.content || null;
-                    setPendingStageImage(img || null);
-                    setPendingStageMessageId(lastId);
-                    
+                    setPendingStageImage(lastStage.image || lastStage.content || null);
+                    setPendingStageMessageId(lastStage.id);
                     const lastReview = [...all]
-                        .filter(m => (m.type === 'stage-approve' || m.type === 'stage-reject') && String(m.content) === String(lastId))
-                        .sort((a,b)=> new Date(a.timestamp) - new Date(b.timestamp))
+                        .filter(m => (m.type === 'stage-approve' || m.type === 'stage-reject') && String(m.content) === String(lastStage.id))
+                        .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))
                         .pop();
-                    
                     setStageDecision(lastReview ? (lastReview.type === 'stage-approve' ? 'approve' : 'reject') : null);
                 } else {
                     setPendingStageImage(null);
                     setPendingStageMessageId(null);
                     setStageDecision(null);
                 }
+            } catch (err) {
+                console.error('Failed to load chat messages:', err);
             }
-        } catch (err) {
-            console.error('Failed to load chat messages:', err);
-        }
-    };
+        };
 
-    loadMessages();
-        // realtime socket
-       const serverBase = (process.env.REACT_APP_API_BASE || `/api`).replace(/\/api$/, '');
-            const room = `commission_${commissionId}`;
-            const socket = io(serverBase, { 
-                withCredentials: true, 
-                autoConnect: true, 
-                reconnection: true,
-                transports: ['websocket', 'polling'] // Add fallback
-            });;
+        loadMessages();
+        return () => { cancelled = true; };
+    }, [commissionId]);
 
-        // ensure we are always in the room after connects/reconnects
-        const joinRoom = () => {
-        console.log('[Socket] Joining room:', room);
-        socket.emit('join', room);
-            };
+    // Live updates over the shared socket (the room is joined by useCommissionRoom)
+    useEffect(() => {
+        if (!socket || !commissionId) return undefined;
+        const isThisCommission = (payload) => payload && String(payload.commissionId) === String(commissionId);
 
-            socket.on('connect', () => {
-                console.log('[Socket] Connected, ID:', socket.id);
-                joinRoom();
-            });
-
-            socket.on('disconnect', () => {
-                console.log('[Socket] Disconnected');
-            });
-        const handler = (msg) => {
-                console.log('[Socket] New message received:', msg);
-                
-                if (String(msg.commissionId) !== String(commissionId)) {
-                    console.log('[Socket] Message for different commission, ignoring');
-                    return;
-                }
-
-                const mapped = mapServerMsg(msg);
-                
-                setMessages(prev => {
-                    // Only check for ID duplicates, not sender
-                    if (prev.some(m => String(m.id) === String(mapped.id))) {
-                        console.log('[Socket] Duplicate message by ID, ignoring');
-                        return prev;
-                    }
-                    console.log('[Socket] Adding new message to state');
-                    return [...prev, mapped];
-                });
-                
-                scrollToBottom();
-            };
-
-            socket.on('newMessage', handler);
-
+        const onNewMessage = (msg) => {
+            if (!isThisCommission(msg)) return;
+            const mapped = mapServerMsg(msg);
+            setMessages(prev => (prev.some(m => String(m.id) === String(mapped.id)) ? prev : [...prev, mapped]));
+        };
         const onPaymentUpdate = (payload) => {
-        console.log('[Socket] Payment update received:', payload);
-        if (!payload || String(payload.commissionId) !== String(commissionId)) return;
-        setCommission(prev => prev ? { ...prev, is_paid: 1 } : prev);
-    };
-    socket.on('paymentUpdate', onPaymentUpdate);
-
-        // «подача на ревью» от художника
+            if (!isThisCommission(payload)) return;
+            setCommission(prev => (prev ? { ...prev, is_paid: 1 } : prev));
+        };
         const onStageSubmitted = (payload) => {
-        console.log('[Socket] Stage submitted:', payload);
-        if (!payload || String(payload.commissionId) !== String(commissionId)) return;
-        const m = payload.message || {};
-        setPendingStageImage(m.image || m.content || null);
-        setPendingStageMessageId(m.id);
-        setStageDecision(null);
-    };
-    socket.on('stageSubmitted', onStageSubmitted);
+            if (!isThisCommission(payload)) return;
+            const m = payload.message || {};
+            setPendingStageImage(m.image || m.content || null);
+            setPendingStageMessageId(m.id);
+            setStageDecision(null);
+            setCommission(prev => (prev ? { ...prev, reviewState: 'pending', stageSubmittedAt: new Date().toISOString() } : prev));
+        };
+        const onStageReview = (payload) => {
+            if (!isThisCommission(payload)) return;
+            setStageDecision(payload.decision);
+            if (payload.nextStatus) setStatus(payload.nextStatus);
+            setCommission(prev => (prev ? { ...prev, reviewState: payload.decision === 'reject' ? 'changes_requested' : 'none', autoApproveAt: null } : prev));
+        };
+        const onStatusUpdated = (payload) => {
+            if (!isThisCommission(payload) || !payload.status) return;
+            setStatus(payload.status);
+            setCommission(prev => (prev ? { ...prev, Status: payload.status, status: payload.status } : prev));
+        };
 
-    const onStageReview = (payload) => {
-        console.log('[Socket] Stage review received:', payload);
-        if (!payload || String(payload.commissionId) !== String(commissionId)) return;
-        setStageDecision(payload.decision);
-        if (payload.nextStatus) setStatus(payload.nextStatus);
-    };
-    socket.on('stageReview', onStageReview);
-
-    const onStatusUpdated = (payload) => {
-        console.log('[Socket] Status updated:', payload);
-        if (!payload || String(payload.commissionId) !== String(commissionId)) return;
-        const next = payload.status;
-        if (next) {
-            setStatus(next);
-            setCommission(prev => prev ? { ...prev, Status: next, status: next } : prev);
-        }
-    };
-    socket.on('statusUpdated', onStatusUpdated);
-
+        socket.on('newMessage', onNewMessage);
+        socket.on('paymentUpdate', onPaymentUpdate);
+        socket.on('stageSubmitted', onStageSubmitted);
+        socket.on('stageReview', onStageReview);
+        socket.on('statusUpdated', onStatusUpdated);
         return () => {
-        console.log('[Socket] Cleaning up, leaving room:', room);
-        socket.emit('leave', room);
-        socket.off('newMessage', handler);
-        socket.off('stageSubmitted', onStageSubmitted);
-        socket.off('paymentUpdate', onPaymentUpdate);
-        socket.off('stageReview', onStageReview);
-        socket.off('statusUpdated', onStatusUpdated);
-        socket.off('connect');
-        socket.off('disconnect');
-        socket.off('error');
-        socket.close();
-    };
-}, [commissionId, user, partnerAvatar, scrollToBottom]);
+            socket.off('newMessage', onNewMessage);
+            socket.off('paymentUpdate', onPaymentUpdate);
+            socket.off('stageSubmitted', onStageSubmitted);
+            socket.off('stageReview', onStageReview);
+            socket.off('statusUpdated', onStatusUpdated);
+        };
+    }, [socket, commissionId]);
 
     // автопрокрутка при изменении сообщений
     useEffect(() => {
@@ -308,7 +249,7 @@ const CommissionChat = ({ commissionId, user, onBack }) => {
             // Optional: limit file size (e.g., 5MB)
             const MAX_SIZE = 5 * 1024 * 1024;
             if (file.size > MAX_SIZE) {
-                alert('File is too large. Max 5MB');
+                toast.error(t('chat.fileTooLarge'));
                 return;
             }
 
@@ -327,11 +268,11 @@ const CommissionChat = ({ commissionId, user, onBack }) => {
                         setStageDecision(null);
                     } else {
                         console.error('Stage submit failed', res.data);
-                        alert('Failed to submit for review');
+                        toast.error(t('chat.submitFailed'));
                     }
                 } catch (err) {
                     console.error('Error submitting stage:', err);
-                    alert('Error submitting for review');
+                    toast.error(t('chat.submitFailed'));
                 } finally {
                     setSubmittingStage(false);
                 }
@@ -350,7 +291,7 @@ const CommissionChat = ({ commissionId, user, onBack }) => {
         if (!file) return;
         const MAX_SIZE = 5 * 1024 * 1024;
         if (file.size > MAX_SIZE) {
-            alert('File is too large. Max 5MB');
+            toast.error(t('chat.fileTooLarge'));
             return;
         }
         const reader = new FileReader();
@@ -371,11 +312,11 @@ const CommissionChat = ({ commissionId, user, onBack }) => {
                     setMessages(prev => prev.some(x => String(x.id) === String(mapped.id)) ? prev : [...prev, mapped]);
                     scrollToBottom();
                 } else {
-                    alert('Failed to upload image');
+                    toast.error(t('chat.uploadFailed'));
                 }
             } catch (err) {
                 console.error('Chat image upload error:', err);
-                alert('Error uploading image');
+                toast.error(t('chat.uploadFailed'));
             }
         };
         reader.readAsDataURL(file);
@@ -429,6 +370,7 @@ const CommissionChat = ({ commissionId, user, onBack }) => {
             if (res.data && res.data.success) {
                 setStageDecision('approve');
                 if (res.data.nextStatus) setStatus(res.data.nextStatus);
+                setCommission(prev => prev ? { ...prev, reviewState: 'none', autoApproveAt: null } : prev);
             }
         } catch (e) {
             console.error('approve error', e);
@@ -444,6 +386,7 @@ const CommissionChat = ({ commissionId, user, onBack }) => {
             const res = await axios.post(`/commissions/chat/${commissionId}/review`, { decision: 'reject', messageId: pendingStageMessageId });
             if (res.data && res.data.success) {
                 setStageDecision('reject');
+                setCommission(prev => prev ? { ...prev, reviewState: 'changes_requested', autoApproveAt: null } : prev);
             }
         } catch (e) {
             console.error('reject error', e);
@@ -454,47 +397,42 @@ const CommissionChat = ({ commissionId, user, onBack }) => {
 
     // src/.../CommissionChat.js
 
-    const updateStatus = async (newStatus) => {
-        try {
-            // Замініть URL на ваш реальний шлях до API
-            await axios.patch(`/commissions/${commissionId}/status`, { status: newStatus });
 
-            // Оновлюємо локальний стейт
-            setCommission(prev => ({ ...prev, Status: newStatus }));
-            setStatus(newStatus); // Якщо у вас є окремий стейт для статусу
-        } catch (error) {
-            console.error("Failed to update status", error);
-            alert("Error updating status");
-        }
-    };
-
-    const chatPartnerName = partnerName || (isCustomer ? "Creator" : "Customer");
+    const chatPartnerName = partnerName || (isCustomer ? t('chat.artist') : t('chat.customer'));
 
     // Відкриття модального вікна з деталями комісії по кліку на назві
 
     const statusLower = String(status || '').toLowerCase();
-    const statusProgress =
-        statusLower === 'completed' ? 3 :
-        statusLower === 'edits' ? 2 :
-        statusLower === 'sketch' ? 1 : 0; // open/other → 0
+    // Stages: Sketch → Lineart → Color → Final → Completed (open/cancelled/declined → 0)
+    const STAGE_ORDER = ['sketch', 'lineart', 'color', 'final', 'completed'];
+    const statusProgress = STAGE_ORDER.indexOf(statusLower) + 1;
+    const isWorkStage = ['sketch', 'lineart', 'color', 'final'].includes(statusLower);
+    const statusNote = (() => {
+        if (statusLower === 'declined') return t('chat.note.declined');
+        if (statusLower === 'cancelled') return t('chat.note.cancelled');
+        if (commission?.reviewState === 'changes_requested') return t('chat.note.changesRequested');
+        if (commission?.reviewState === 'pending' && commission?.autoApproveAt) {
+            return t('chat.note.waitingReview', { date: formatDate(commission.autoApproveAt) });
+        }
+        return null;
+    })();
 
     const handlePayClick = async () => {
         try {
             // Создаем сессию оплаты через ваш backend
-            const res = await axios.post('/fondy/create-session', {
-                amount: commission.price,     // Цена из объекта commission
-                commissionId: commissionId,   // ID для вебхука
+            const res = await axios.post('/payments/create-session', {
+                commissionId: commissionId,   // сума рахується на бекенді з ціни комішену
                 type: 'commission'            // Указываем тип, чтобы backend понял, что это не корзина
             });
 
-            if (res.data && res.data.response && res.data.response.checkout_url) {
-                window.location.href = res.data.response.checkout_url;
+            if (res.data && res.data.checkoutUrl) {
+                window.location.href = res.data.checkoutUrl;
             } else {
-                alert('Error creating payment session');
+                toast.error(t('checkout.createFailed'));
             }
         } catch (err) {
             console.error('Payment error:', err);
-            alert('Failed to initiate payment');
+            toast.error(t('checkout.createFailed'));
         }
     };
 
@@ -514,7 +452,7 @@ const CommissionChat = ({ commissionId, user, onBack }) => {
                     <div className={styles.imageWrapper}>
                         <img
                             src={mainImage}
-                            alt="Commission"
+                            alt={t('chat.reference')}
                             className={styles.thumbImage}
                             onClick={openImageViewer} // Відкрити Viewer при кліку
                         />
@@ -532,12 +470,12 @@ const CommissionChat = ({ commissionId, user, onBack }) => {
 
                         {/* Опис */}
                         <p className={styles.descriptionText}>
-                            {commission?.description || "Create a cozy living room with a view of the forest..."}
+                            {commission?.description || ''}
                         </p>
 
                         {/* Ціна */}
                         <div className={styles.priceTag}>
-                            {commission?.price || "45"}$
+                            {formatPrice(commission?.price)}
                         </div>
                     </div>
                 </div>
@@ -547,15 +485,38 @@ const CommissionChat = ({ commissionId, user, onBack }) => {
                     <div className={styles.statusHeader}>
                         <div className={styles.statusTitleBlock}>
                             <div className={statusProgress > 0 ? styles.bigDot : styles.bigDotHollow}></div>
-                            <span className={styles.statusName}>{status}</span>
+                            <span className={styles.statusName}>{t(`status.${status}`, { defaultValue: status })}</span>
+                            {statusProgress > 0 && (
+                                <span className={styles.stageCount}>
+                                    {statusProgress > 4 ? t('chat.stagesDone') : t('chat.stageProgress', { n: statusProgress, total: 4 })}
+                                </span>
+                            )}
                         </div>
 
-                        {/* Пусті/заповнені круги праворуч */}
-                        <div className={styles.dotsRow}>
-                            <div className={`${styles.hollowDot} ${statusProgress > 1 ? styles.hollowDotFilled : ''}`}></div>
-                            <div className={`${styles.hollowDot} ${statusProgress > 2 ? styles.hollowDotFilled : ''}`}></div>
-                        </div>
+                        {/* Progress: Lineart, Color, Final, Completed after the current stage on the left */}
+                        <ol className={styles.dotsRow} aria-label={t('chat.stageProgress', { n: Math.min(Math.max(statusProgress, 1), 4), total: 4 })}>
+                            {['Lineart', 'Color', 'Final', 'Completed'].map((name, i) => {
+                                const step = i + 2;
+                                const done = statusProgress >= step;
+                                return (
+                                    <li key={name} title={t(`status.${name}`)}
+                                        className={`${styles.hollowDot} ${done ? styles.hollowDotFilled : ''}`}>
+                                        <span className="sr-only">{t(`status.${name}`)}{done ? ' ✓' : ''}</span>
+                                    </li>
+                                );
+                            })}
+                        </ol>
                     </div>
+                    {(statusNote || commission?.deadline) && (
+                        <div style={{ fontSize: 13, opacity: 0.85, margin: '4px 0 8px', display: 'flex', flexDirection: 'column', gap: 2 }}>
+                            {statusNote && <span>{statusNote}</span>}
+                            {commission?.deadline && (
+                                <span style={{ color: commission.overdue ? '#ff8a8a' : undefined }}>
+                                    {t('commission.deadline')}: {formatDate(`${commission.deadline}T00:00:00`)}{commission.overdue ? ` (${t('commission.overdue')})` : ''}
+                                </span>
+                            )}
+                        </div>
+                    )}
 
                     {/* 3. Основне поле (Рамка) */}
                     <div className={styles.stageBox}>
@@ -564,14 +525,14 @@ const CommissionChat = ({ commissionId, user, onBack }) => {
                             {/* --- ЛОГИКА ОТОБРАЖЕНИЯ КАРТИНКИ --- */}
                             {/* 1. Если есть активная подача на ревью (pendingStageImage) - показываем её (приоритет) */}
                             {pendingStageImage ? (
-                                <img src={pendingStageImage} alt="Stage" className={styles.currentStageImage} />
+                                <img src={pendingStageImage} alt={t('chat.stageImage')} className={styles.currentStageImage} />
                             ) : (
                                 /* 2. Иначе, если статус Completed - показываем финальный результат (resultImage) */
                                 statusLower === 'completed' ? (
                                     <img
                                         /* Берем resultImage из данных комишена, или mainImage как запасной вариант */
                                         src={commission.resultImage || mainImage}
-                                        alt="Final Result"
+                                        alt={t('chat.finalResult')}
                                         className={styles.currentStageImage}
                                     />
                                 ) : (
@@ -590,7 +551,7 @@ const CommissionChat = ({ commissionId, user, onBack }) => {
                                         <>
                                             {/* Повідомлення про успіх (бачать усі) */}
                                             <div style={{ color: '#4CAF50', fontWeight: 'bold', fontSize: '16px', marginBottom: '5px' }}>
-                                                Payment Successful! ✅
+                                                {t('chat.paid')} ✅
                                             </div>
 
                                             {/* Кнопка скачування (ТІЛЬКИ ДЛЯ ЗАМОВНИКА) */}
@@ -600,8 +561,16 @@ const CommissionChat = ({ commissionId, user, onBack }) => {
                                                     onClick={handleDownloadClick}
                                                     style={{ width: 'auto', padding: '10px 20px', fontSize: '14px', borderRadius: '8px', background: '#28a745', color: '#fff', border: 'none', cursor: 'pointer' }}
                                                 >
-                                                    Download Files 📥
+                                                    {t('chat.download')}
                                                 </button>
+                                            )}
+
+                                            {/* Відгук про художника (лише замовник, один раз) */}
+                                            {isCustomer && (
+                                                <ReviewBox
+                                                    commission={commission}
+                                                    onSaved={(review) => setCommission(prev => ({ ...prev, review, canReview: false }))}
+                                                />
                                             )}
                                         </>
                                     ) : (
@@ -612,12 +581,12 @@ const CommissionChat = ({ commissionId, user, onBack }) => {
                                                 onClick={handlePayClick}
                                                 style={{ width: 'auto', padding: '10px 20px', fontSize: '14px', borderRadius: '8px', background: '#007BFF', color: '#fff', border: 'none', cursor: 'pointer' }}
                                             >
-                                                Pay {commission.price}$ 💳
+                                                {t('chat.pay', { price: formatPrice(commission.price) })}
                                             </button>
                                         ) : (
                                             /* Повідомлення для художника */
                                             <div style={{ padding: '8px 12px', background: 'rgba(255,255,255,0.1)', color: 'white', borderRadius: 4 }}>
-                                                Waiting for payment... ⏳
+                                                {t('chat.waitingPayment')}
                                             </div>
                                         )
                                     )}
@@ -648,12 +617,13 @@ const CommissionChat = ({ commissionId, user, onBack }) => {
                         </div>
 
                         {/* КНОПКА ЗАГРУЗКИ СКЕТЧЕЙ (Только для автора и если не завершено) */}
-                        {isCreator && statusLower !== 'completed' && (
+                        {isCreator && isWorkStage && (
                             <>
                                 <input type="file" ref={fileInputRef} style={{display: 'none'}} accept="image/*" onChange={handleFileChange} />
-                                <div className={styles.addSketchBar} onClick={() => { if (!submittingStage) handleAddSketchClick(); }}>
-                                    {submittingStage ? 'Uploading...' : 'Add Sketch'}
-                                </div>
+                                <button type="button" className={`unstyled-button ${styles.addSketchBar}`} disabled={submittingStage}
+                                        onClick={() => { if (!submittingStage) handleAddSketchClick(); }}>
+                                    {submittingStage ? t('upload.uploading') : t('chat.submitStage', { stage: t(`status.${status}`, { defaultValue: status }) })}
+                                </button>
                             </>
                         )}
                     </div>
@@ -666,10 +636,10 @@ const CommissionChat = ({ commissionId, user, onBack }) => {
                     <div className={styles.headerUserName}>
                         {chatPartnerName}
                     </div>
-                    <button className={styles.backButton} onClick={onBack}>✕</button>
+                    <button className={styles.backButton} onClick={onBack} aria-label={t('common.close')}>✕</button>
                 </div>
 
-                <div className={styles.messagesList}>
+                <div className={styles.messagesList} role="log" aria-live="polite" aria-label={t('chat.messages')}>
                     {messages.map(msg => (
                         <div key={msg.id} className={`${styles.messageRow} ${msg.senderId === user.id ? styles.own : ''}`}>
                             {msg.senderId !== user.id && (
@@ -696,20 +666,21 @@ const CommissionChat = ({ commissionId, user, onBack }) => {
                     <div className={styles.inputWrapper}>
                         <input
                             type="text"
-                            placeholder="Write message"
+                            placeholder={t('chat.placeholder')}
+                            aria-label={t('chat.messageLabel')}
                             className={styles.chatInput}
                                     value={inputText}
                                     onChange={(e) => setInputText(e.target.value)}
                                     onKeyDown={handleInputKeyDown}
                         />
                         {/* Іконка завантаження файлу в чат */}
-                        <div className={styles.inputIcon} onClick={handleChatFileClick}>
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <button type="button" className={`unstyled-button ${styles.inputIcon}`} onClick={handleChatFileClick} aria-label={t('chat.attach')}>
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                                 <path d="M21 19V5C21 3.9 20.1 3 19 3H5C3.9 3 3 3.9 3 5V19C3 20.1 3.9 21 5 21H19C20.1 21 21 20.1 21 19ZM8.5 13.5L11 16.51L14.5 12L19 18H5L8.5 13.5Z" fill="white"/>
                             </svg>
-                        </div>
+                        </button>
                         <input type="file" ref={fileInputChatRef} style={{display:'none'}} accept="image/*" onChange={handleChatFileChange} />
-                        <button className={styles.sendButton} onClick={handleSendMessage}>Send</button>
+                        <button type="button" className={styles.sendButton} onClick={handleSendMessage}>{t('common.send')}</button>
                     </div>
                 </div>
             </div>

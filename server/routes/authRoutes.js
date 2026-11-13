@@ -1,55 +1,131 @@
 const express = require('express');
+const logger = require('../utils/logger');
 const bcrypt = require('bcrypt');
 const db = require('../config/db');
-const path = require('path');
-const fs = require('fs');
+const { DEFAULT_AVATAR_BUFFER, toUserPayload, loadUserPayload, toSessionUser } = require('../utils/userProfile');
+const { consumeToken, sendVerificationEmail, sendPasswordResetEmail } = require('../services/accountTokens');
 const router = express.Router();
 
-// Preload default avatar from project assets (frontend repo) once
-let DEFAULT_AVATAR_BUFFER = null;
-let DEFAULT_AVATAR_DATA_URI = null;
-try {
-    const candidatePaths = [
-        // typical location in this project
-        path.join(__dirname, '..', '..', 'src', 'assets', 'baseAvatar.png'),
-        // fallback: if copied to server/public later
-        path.join(__dirname, '..', 'public', 'baseAvatar.png')
-    ];
-    for (const p of candidatePaths) {
-        if (fs.existsSync(p)) {
-            const buf = fs.readFileSync(p);
-            DEFAULT_AVATAR_BUFFER = buf;
-            DEFAULT_AVATAR_DATA_URI = `data:image/png;base64,${buf.toString('base64')}`;
-            break;
-        }
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const MIN_PASSWORD_LENGTH = 6; // як minLength у формі реєстрації
+const ROLES = ['artist', 'customer'];
+
+// Email confirmation is required to log in unless explicitly turned off (e.g. for a demo)
+const verificationRequired = () => process.env.REQUIRE_EMAIL_VERIFICATION !== 'false';
+
+const validPassword = (p) => typeof p === 'string' && p.length >= MIN_PASSWORD_LENGTH && p.length <= 72;
+
+function validateRegistration(body) {
+    const username = String(body.username || '').trim();
+    const email = String(body.email || '').trim().toLowerCase();
+    const password = typeof body.password === 'string' ? body.password : '';
+    const birthday = body.birthday ? String(body.birthday) : null;
+    const role = body.role === undefined || body.role === '' ? 'customer' : String(body.role);
+
+    if (!username || username.length > 50) return { error: 'Username is required (max 50 characters)' };
+    if (!EMAIL_RE.test(email) || email.length > 255) return { error: 'Invalid email address' };
+    if (!validPassword(password)) {
+        return { error: `Password must be ${MIN_PASSWORD_LENGTH}–72 characters long` };
     }
-} catch (e) {
-    console.warn('Default avatar preload failed:', e.message);
+    if (birthday && (!/^\d{4}-\d{2}-\d{2}$/.test(birthday) || Number.isNaN(Date.parse(birthday)))) {
+        return { error: 'Invalid birthday date' };
+    }
+    if (!ROLES.includes(role)) return { error: 'Role must be artist or customer' };
+    return { values: { username, email, password, birthday, role } };
 }
 
-function detectImageMime(buffer) {
-    if (!buffer || buffer.length < 4) return 'image/jpeg';
-    // JPEG magic: FF D8 FF
-    if (buffer[0] === 0xFF && buffer[1] === 0xD8 && buffer[2] === 0xFF) return 'image/jpeg';
-    // PNG magic: 89 50 4E 47
-    if (buffer[0] === 0x89 && buffer[1] === 0x50 && buffer[2] === 0x4E && buffer[3] === 0x47) return 'image/png';
-    // GIF magic: 47 49 46 38
-    if (buffer[0] === 0x47 && buffer[1] === 0x49 && buffer[2] === 0x46 && buffer[3] === 0x38) return 'image/gif';
-    return 'image/jpeg';
-}
-
-// Register
+// POST /api/auth/register { username, email, password, birthday?, role? }
+// Creates an unverified account and emails a confirmation link.
 router.post('/register', async (req, res) => {
-    const { username, email, password, birthday } = req.body;
+    const { values, error } = validateRegistration(req.body || {});
+    if (error) return res.status(400).json({ success: false, message: error });
+
+    const { username, email, password, birthday, role } = values;
     try {
+        const [existing] = await db.query('SELECT 1 FROM creators WHERE Email = ?', [email]);
+        if (existing.length > 0) {
+            return res.status(409).json({ success: false, message: 'This email is already registered.' });
+        }
+
         const hash = await bcrypt.hash(password, 10);
-        // Insert with default avatar image (if available)
-        const sql = `INSERT INTO creators (Name, Email, Password, Birthday, Image) VALUES (?, ?, ?, ?, ?)`;
-        await db.query(sql, [username, email, hash, birthday || null, DEFAULT_AVATAR_BUFFER]);
-        res.status(201).json({ success: true, message: 'User registered' });
+        const verified = verificationRequired() ? 0 : 1;
+        const [result] = await db.query(
+            'INSERT INTO creators (Name, Email, Password, Role, Email_Verified, Birthday, Image, Language) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+            [username, email, hash, role, verified, birthday, DEFAULT_AVATAR_BUFFER, req.lang]
+        );
+        if (!verified) await sendVerificationEmail({ id: result.insertId, name: username, email }, req.lang);
+
+        res.status(201).json({
+            success: true,
+            verificationRequired: !verified,
+            message: verified ? 'User registered' : 'Check your email to confirm the account',
+        });
     } catch (err) {
-        console.error('Error registering user:', err);
+        if (err && err.code === 'ER_DUP_ENTRY') {
+            return res.status(409).json({ success: false, message: 'This email is already registered.' });
+        }
+        logger.error('Error registering user:', err);
         res.status(500).json({ success: false, message: 'Database error during registration' });
+    }
+});
+
+// POST /api/auth/verify-email { token }
+router.post('/verify-email', async (req, res) => {
+    try {
+        const userId = await consumeToken(req.body?.token, 'verify_email');
+        if (!userId) return res.status(400).json({ success: false, message: 'The link is invalid or has expired' });
+        await db.query('UPDATE creators SET Email_Verified = 1 WHERE Creator_ID = ?', [userId]);
+        res.json({ success: true, message: 'Email confirmed. You can log in now.' });
+    } catch (err) {
+        logger.error('verify-email error:', err);
+        res.status(500).json({ success: false, message: 'Internal server error' });
+    }
+});
+
+// POST /api/auth/resend-verification { email } — same answer whether or not the account exists
+router.post('/resend-verification', async (req, res) => {
+    const email = String(req.body?.email || '').trim().toLowerCase();
+    try {
+        const [[user]] = await db.query('SELECT Creator_ID, Name, Email, Email_Verified FROM creators WHERE Email = ?', [email]);
+        if (user && !user.Email_Verified) {
+            await sendVerificationEmail({ id: user.Creator_ID, name: user.Name, email: user.Email }, req.lang);
+        }
+        res.json({ success: true, message: 'If the account exists and is not confirmed yet, we sent a new link.' });
+    } catch (err) {
+        logger.error('resend-verification error:', err);
+        res.status(500).json({ success: false, message: 'Internal server error' });
+    }
+});
+
+// POST /api/auth/forgot-password { email } — same answer whether or not the account exists
+router.post('/forgot-password', async (req, res) => {
+    const email = String(req.body?.email || '').trim().toLowerCase();
+    try {
+        const [[user]] = await db.query('SELECT Creator_ID, Name, Email FROM creators WHERE Email = ?', [email]);
+        if (user) await sendPasswordResetEmail({ id: user.Creator_ID, name: user.Name, email: user.Email }, req.lang);
+        res.json({ success: true, message: 'If an account with this email exists, we sent a password reset link.' });
+    } catch (err) {
+        logger.error('forgot-password error:', err);
+        res.status(500).json({ success: false, message: 'Internal server error' });
+    }
+});
+
+// POST /api/auth/reset-password { token, password }
+router.post('/reset-password', async (req, res) => {
+    const { token, password } = req.body || {};
+    if (!validPassword(password)) {
+        return res.status(400).json({ success: false, message: `Password must be ${MIN_PASSWORD_LENGTH}–72 characters long` });
+    }
+    try {
+        const userId = await consumeToken(token, 'reset_password');
+        if (!userId) return res.status(400).json({ success: false, message: 'The link is invalid or has expired' });
+        const hash = await bcrypt.hash(password, 10);
+        // Following the emailed link proves access to the mailbox, so the email counts as confirmed
+        await db.query('UPDATE creators SET Password = ?, Email_Verified = 1 WHERE Creator_ID = ?', [hash, userId]);
+        res.json({ success: true, message: 'Password changed. You can log in with the new password.' });
+    } catch (err) {
+        logger.error('reset-password error:', err);
+        res.status(500).json({ success: false, message: 'Internal server error' });
     }
 });
 
@@ -65,64 +141,43 @@ router.post('/check-email', async (req, res) => {
 
 // Login
 router.post('/login', async (req, res) => {
-    const { email, password } = req.body;
+    const { email, password } = req.body || {};
+    if (typeof email !== 'string' || typeof password !== 'string' || !email || !password) {
+        return res.status(400).json({ success: false, message: 'Email and password are required' });
+    }
     try {
-        // Додаємо вибірку нових полів: styles, languages, likes
         const [rows] = await db.query('SELECT * FROM creators WHERE Email = ?', [email]);
-        if (rows.length === 0) return res.status(401).json({ success: false, message: 'User not found' });
+        if (rows.length === 0) return res.status(401).json({ success: false, message: 'Invalid email or password' });
 
         const user = rows[0];
         const match = await bcrypt.compare(password, user.Password);
-        if (!match) return res.status(401).json({ success: false, message: 'Incorrect password' });
+        if (!match) return res.status(401).json({ success: false, message: 'Invalid email or password' });
 
-        const imageData = user.Image;
-        let profileImage;
-        if (Buffer.isBuffer(imageData)) {
-            // If DB stores a data URI string as BLOB, prefer using it directly
-            try {
-                const asString = imageData.toString('utf8');
-                if (asString.startsWith('data:image')) {
-                    profileImage = asString;
-                } else {
-                    const mime = detectImageMime(imageData);
-                    profileImage = `data:${mime};base64,${imageData.toString('base64')}`;
-                }
-            } catch {
-                const mime = detectImageMime(imageData);
-                profileImage = `data:${mime};base64,${imageData.toString('base64')}`;
-            }
-        } else if (typeof imageData === 'string' && imageData.trim()) {
-            profileImage = imageData;
-        } else {
-            profileImage = DEFAULT_AVATAR_DATA_URI || 'img/icons/profile.jpg';
+        // Only after the password is right, so this does not reveal which emails exist
+        if (!user.Email_Verified && verificationRequired()) {
+            return res.status(403).json({
+                success: false,
+                code: 'EMAIL_NOT_VERIFIED',
+                message: 'Please confirm your email first. We can send the link again.',
+            });
         }
 
-        // ПАРСИНГ масивів (як ми робили раніше)
-        let userStyles = [];
-        let userLanguages = [];
-        try {
-            if (user.styles) userStyles = (typeof user.styles === 'string') ? JSON.parse(user.styles) : user.styles;
-            if (user.languages) userLanguages = (typeof user.languages === 'string') ? JSON.parse(user.languages) : user.languages;
-        } catch (e) {
-            console.error("JSON parse error:", e);
+        // Notifications and emails for this user follow the language of the page they log in from
+        if (user.Language !== req.lang) {
+            await db.query('UPDATE creators SET Language = ? WHERE Creator_ID = ?', [req.lang, user.Creator_ID]);
+            user.Language = req.lang;
         }
 
-        // ВАЖЛИВО: Не зберігаємо _imageBlob у сесії! Це вбиває пам'ять.
-        req.session.user = {
-            id: user.Creator_ID,
-            name: user.Name,
-            email: user.Email,
-            bio: user.Other_Details || '',
-            profileImage, // Залишаємо Base64 (для аватарки це допустимо)
-            // _imageBlob: ... <-- ВИДАЛЕНО! Не зберігайте буфер у сесії
-            styles: userStyles,
-            languages: userLanguages,
-            likes: user.likes || 0
-        };
+        // Нова сесія після логіну (захист від session fixation)
+        await new Promise((resolve, reject) => req.session.regenerate(err => (err ? reject(err) : resolve())));
 
-        res.json({ success: true, message: 'Login successful', user: req.session.user });
+        // У сесії — лише id/name/email; аватар і профіль віддаємо з БД (сесія лишається маленькою).
+        const payload = toUserPayload(user);
+        req.session.user = toSessionUser(payload);
+
+        res.json({ success: true, message: 'Login successful', user: payload });
     } catch (err) {
-        console.error('Login error:', err);
+        logger.error('Login error:', err);
         res.status(500).json({ success: false, message: 'Internal server error' });
     }
 });
@@ -131,14 +186,26 @@ router.post('/login', async (req, res) => {
 // Перевірка сесії
 router.get('/check-session', async (req, res) => {
     if (!req.session.user) return res.json({ loggedIn: false });
-    res.json({ loggedIn: true, user: req.session.user });
+    try {
+        const payload = await loadUserPayload(req.session.user.id);
+        if (!payload) {
+            // Акаунт видалено — сесія більше не дійсна
+            return req.session.destroy(() => res.json({ loggedIn: false }));
+        }
+        // Старі сесії могли містити base64-аватар — замінюємо на мінімальний набір полів
+        req.session.user = toSessionUser(payload);
+        res.json({ loggedIn: true, user: payload });
+    } catch (err) {
+        logger.error('check-session error:', err);
+        res.status(500).json({ loggedIn: false, message: 'Internal server error' });
+    }
 });
 
 // Logout
 router.post('/logout', (req, res) => {
     req.session.destroy(err => {
         if (err) return res.status(500).json({ success: false });
-        res.clearCookie('connect.sid');
+        res.clearCookie(req.app.locals.sessionCookieName || 'bestart.sid');
         res.json({ success: true, message: 'Logout successful' });
     });
 });

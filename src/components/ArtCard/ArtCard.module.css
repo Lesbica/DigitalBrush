@@ -18,11 +18,14 @@
 }
 
 .artCardImage {
+    display: block;
+    width: calc(100% - 32px);
     height: 65%;
-    background-size: cover;
-    background-position: center;
+    object-fit: cover;
+    object-position: center;
     margin: 16px 16px 0 16px;
     border-radius: 8px;
+    background: rgba(255, 255, 255, 0.05);
 }
 
 .artCardInfo {
@@ -65,8 +68,14 @@
 .artistName {
     font-family: 'Roboto', sans-serif;
     font-weight: 400;
-    font-size: 11px;
-    line-height: 1; /* 100% */
+    font-size: 14px;
+    line-height: 1.2;
+    display: block;
+    max-width: 130px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: rgba(255, 255, 255, 0.85);
 }
 
 .artistStyle {
@@ -82,8 +91,8 @@
     gap: 6px;
     font-family: 'Roboto', sans-serif;
     font-weight: 400;
-    font-size: 11px;
-    line-height: 1; /* 100% */
+    font-size: 14px;
+    line-height: 1;
 }
 
 /* ОНОВЛЕНО: Стилі для ціни */
@@ -92,7 +101,7 @@
     align-items: center;
     gap: 6px; /* Відступ для іконки */
     font-family: 'Roboto', sans-serif;
-    font-weight: 600;
-    font-size: 14px; /* Округлено з 13.93px */
-    line-height: 1; /* 100% */
+    font-weight: 700;
+    font-size: 17px;
+    line-height: 1;
 }

@@ -184,7 +184,10 @@
     position: relative;
 }
 
-.formGroup p {
+.formGroup p,
+.formGroup > label,
+.formGroup > span:first-child,
+.formHeader label {
     margin-bottom: 8px;
     margin-top: 0;
 }
@@ -404,7 +407,10 @@
         font-size: 16px;
     }
 
-    .formGroup p {
+    .formGroup p,
+.formGroup > label,
+.formGroup > span:first-child,
+.formHeader label {
         font-size: 20px;
     }
 
@@ -424,4 +430,10 @@
     .priceInput, .createBtn {
         font-size: 18px;
     }
+}
+/* field captions are <label> now: keep them on their own line like the old <p> */
+.formGroup > label,
+.formGroup > span:first-child,
+.formHeader label {
+    display: block;
 }

@@ -5,6 +5,9 @@ import deleteCrossIcon from "../../../../../assets/icons/deleteCrossIcon.svg";
 import plusIcon from "../../../../../assets/icons/plusIcon.svg";
 import arrowIcon from "../../../../../assets/icons/arrowIcon.svg";
 import uploadIconPlaceholder from "../../../../../assets/image-placeholder-icon.svg";
+import {useAuth} from "../../../../../context/AuthContext";
+import { useToast } from '../../../../../context/ToastContext';
+import { useTranslation } from 'react-i18next';
 
 const AVAILABLE_STYLES = [
     "Retro", "Psychedelia", "Minimalism", "Cyberpunk", "Realism", "Abstract", "Pop Art"
@@ -15,9 +18,15 @@ const AVAILABLE_LANGUAGES = [
 ];
 
 function ProfileSettings({user}) {
+    const { t } = useTranslation();
+    const toast = useToast();
+    const {refresh} = useAuth();
     const fileInputRef = useRef(null);
 
-    const [status, setStatus] = useState('available');
+    // Availability for commissions: open | busy | vacation (saved with the profile)
+    const [status, setStatus] = useState('open');
+    // artist = sells art and takes commissions; customer = buys and orders
+    const [isArtist, setIsArtist] = useState(false);
     const [avatarPreview, setAvatarPreview] = useState(user.profileImage || "https://via.placeholder.com/220");
     const [selectedFile, setSelectedFile] = useState(null);
 
@@ -49,6 +58,8 @@ function ProfileSettings({user}) {
             if (user.profileImage) {
                 setAvatarPreview(user.profileImage);
             }
+            setStatus(user.availability || 'open');
+            setIsArtist(user.role === 'artist');
 
             // Завантаження стилів
             if (user.styles && Array.isArray(user.styles) && user.styles.length > 0) {
@@ -116,6 +127,8 @@ function ProfileSettings({user}) {
         dataToSend.append('username', formData.username);
         dataToSend.append('email', formData.email);
         dataToSend.append('description', formData.description);
+        dataToSend.append('availability', status);
+        dataToSend.append('role', isArtist ? 'artist' : 'customer');
 
         // Додаємо нові соцмережі
         dataToSend.append('instagram', formData.instagram);
@@ -140,8 +153,8 @@ function ProfileSettings({user}) {
             );
 
             if (response.data.success) {
-                alert("Profile updated successfully!");
-                window.location.reload();
+                await refresh();
+                toast.success(t('settings.saved'));
             }
         } catch (error) {
             console.error("Error updating profile:", error);
@@ -152,10 +165,10 @@ function ProfileSettings({user}) {
                 } else if (msg.includes("email")) {
                     setErrors({email: error.response.data.message});
                 } else {
-                    alert(error.response.data.message);
+                    toast.error(error.response.data.message);
                 }
             } else {
-                alert("Failed to update profile. Please try again.");
+                toast.error(t('settings.saveFailed'));
             }
         }
     };
@@ -173,25 +186,29 @@ function ProfileSettings({user}) {
                             <input
                                 type="checkbox"
                                 className={styles.checkboxInput}
-                                checked={status === 'available'}
-                                onChange={() => handleStatusChange('available')}
+                                checked={isArtist}
+                                onChange={(e) => setIsArtist(e.target.checked)}
                             />
-                            available
+                            {t('settings.artistAccount')}
                         </label>
-                        <label className={styles.checkboxLabel}>
-                            <input
-                                type="checkbox"
-                                className={styles.checkboxInput}
-                                checked={status === 'unavailable'}
-                                onChange={() => handleStatusChange('unavailable')}
-                            />
-                            unavailable
-                        </label>
+                        {isArtist && ['open', 'busy', 'vacation'].map((value) => (
+                            <label key={value} className={styles.checkboxLabel}>
+                                <input
+                                    type="checkbox"
+                                    className={styles.checkboxInput}
+                                    checked={status === value}
+                                    onChange={() => handleStatusChange(value)}
+                                />
+                                {t(`availability.${value}`)}
+                            </label>
+                        ))}
                     </div>
 
                     <div className={styles.formGroup}>
-                        <label>User's name</label>
+                        <label htmlFor="settings-username">{t('settings.name')}</label>
                         <input
+                            id="settings-username"
+                            autoComplete="username"
                             type="text"
                             name="username"
                             value={formData.username}
@@ -201,8 +218,10 @@ function ProfileSettings({user}) {
                         {errors.username && <span className={styles.errorMessage}>{errors.username}</span>}
                     </div>
                     <div className={styles.formGroup}>
-                        <label>Email</label>
+                        <label htmlFor="settings-email">{t('auth.email')}</label>
                         <input
+                            id="settings-email"
+                            autoComplete="email"
                             type="text"
                             name="email"
                             value={formData.email}
@@ -214,7 +233,7 @@ function ProfileSettings({user}) {
 
                     {/* Styles Tags */}
                     <div className={styles.formGroup}>
-                        <label>Style</label>
+                        <span className={styles.groupLabel} id="settings-styles-label">{t('art.style')}</span>
                         <div className={styles.tagsContainer}>
                             {styleTags.map((tag, index) => (
                                 <div key={index} className={styles.tagRow}>
@@ -223,19 +242,20 @@ function ProfileSettings({user}) {
                                             value={tag}
                                             onChange={(e) => handleTagChange(index, e.target.value, setStyleTags, styleTags)}
                                             className={styles.selectField}
+                                            aria-label={t('settings.styleN', { n: index + 1 })}
                                         >
                                             {AVAILABLE_STYLES.map(option => (
                                                 <option key={option} value={option}>{option}</option>
                                             ))}
                                         </select>
-                                        <img src={arrowIcon} className={styles.arrowIcon} alt="arrow"/>
+                                        <img src={arrowIcon} className={styles.arrowIcon} alt=""/>
                                     </div>
                                     <button
                                         type="button"
                                         className={styles.removeTagBtn}
                                         onClick={() => removeTag(index, setStyleTags, styleTags)}
                                     >
-                                        <img src={deleteCrossIcon} alt="Remove"/>
+                                        <img src={deleteCrossIcon} alt={t('common.remove')}/>
                                     </button>
                                 </div>
                             ))}
@@ -245,13 +265,13 @@ function ProfileSettings({user}) {
                             className={styles.addTagButton}
                             onClick={() => addTag(setStyleTags, styleTags, AVAILABLE_STYLES)}
                         >
-                            <img src={plusIcon} alt="Add"/>
+                            <img src={plusIcon} alt={t('common.add')}/>
                         </button>
                     </div>
 
                     {/* Language Tags */}
                     <div className={styles.formGroup}>
-                        <label>Language</label>
+                        <span className={styles.groupLabel} id="settings-languages-label">{t('author.languages')}</span>
                         <div className={styles.tagsContainer}>
                             {languageTags.map((tag, index) => (
                                 <div key={index} className={styles.tagRow}>
@@ -260,19 +280,20 @@ function ProfileSettings({user}) {
                                             value={tag}
                                             onChange={(e) => handleTagChange(index, e.target.value, setLanguageTags, languageTags)}
                                             className={styles.selectField}
+                                            aria-label={t('settings.languageN', { n: index + 1 })}
                                         >
                                             {AVAILABLE_LANGUAGES.map(option => (
                                                 <option key={option} value={option}>{option}</option>
                                             ))}
                                         </select>
-                                        <img src={arrowIcon} className={styles.arrowIcon} alt="arrow"/>
+                                        <img src={arrowIcon} className={styles.arrowIcon} alt=""/>
                                     </div>
                                     <button
                                         type="button"
                                         className={styles.removeTagBtn}
                                         onClick={() => removeTag(index, setLanguageTags, languageTags)}
                                     >
-                                        <img src={deleteCrossIcon} alt="Remove"/>
+                                        <img src={deleteCrossIcon} alt={t('common.remove')}/>
                                     </button>
                                 </div>
                             ))}
@@ -282,7 +303,7 @@ function ProfileSettings({user}) {
                             className={styles.addTagButton}
                             onClick={() => addTag(setLanguageTags, languageTags, AVAILABLE_LANGUAGES)}
                         >
-                            <img src={plusIcon} alt="Add"/>
+                            <img src={plusIcon} alt={t('common.add')}/>
                         </button>
                     </div>
                 </div>
@@ -300,39 +321,40 @@ function ProfileSettings({user}) {
                             accept="image/*"
                         />
 
-                        <div className={styles.avatarContainer} onClick={handleAvatarClick}>
+                        <button type="button" className={`unstyled-button ${styles.avatarContainer}`} onClick={handleAvatarClick} aria-label={t('settings.changeAvatar')}>
                             <img
                                 src={avatarPreview}
-                                alt="User Avatar"
+                                alt={t('settings.avatar')}
                                 className={styles.avatarImage}
                             />
                             <div className={styles.avatarOverlay}>
-                                <img src={uploadIconPlaceholder} className={styles.uploadIcon} alt="Upload"/>
+                                <img src={uploadIconPlaceholder} className={styles.uploadIcon} alt=""/>
                             </div>
-                        </div>
+                        </button>
                     </div>
 
                     {/* Social Links */}
                     <div className={styles.formGroup}>
-                        <label>Instagram (link)</label>
-                        <input type="text" name="instagram" value={formData.instagram} onChange={handleInputChange}
+                        <label htmlFor="settings-instagram">{t('settings.link', { name: 'Instagram' })}</label>
+                        <input type="url" id="settings-instagram" name="instagram" value={formData.instagram} onChange={handleInputChange}
                                className={styles.inputField}/>
                     </div>
                     <div className={styles.formGroup}>
-                        <label>Behance (link)</label>
-                        <input type="text" name="behance" value={formData.behance} onChange={handleInputChange}
+                        <label htmlFor="settings-behance">{t('settings.link', { name: 'Behance' })}</label>
+                        <input type="url" id="settings-behance" name="behance" value={formData.behance} onChange={handleInputChange}
                                className={styles.inputField}/>
                     </div>
                     <div className={styles.formGroup}>
-                        <label>Tik Tok (link)</label>
-                        <input type="text" name="tiktok" value={formData.tiktok} onChange={handleInputChange}
+                        <label htmlFor="settings-tiktok">{t('settings.link', { name: 'TikTok' })}</label>
+                        <input type="url" id="settings-tiktok" name="tiktok" value={formData.tiktok} onChange={handleInputChange}
                                className={styles.inputField}/>
                     </div>
                 </div>
 
                 <div className={`${styles.formGroup} ${styles.fullWidth}`}>
-                    <label>Description</label>
+                    <label htmlFor="settings-description">{t('settings.description')}</label>
                     <textarea
+                        id="settings-description"
                         name="description"
                         value={formData.description}
                         onChange={handleInputChange}
@@ -341,7 +363,7 @@ function ProfileSettings({user}) {
                 </div>
             </div>
 
-            <button type="submit" className={styles.saveButton}>Save</button>
+            <button type="submit" className={styles.saveButton}>{t('common.save')}</button>
         </form>
     );
 }

@@ -5,11 +5,13 @@ import ArtCard from "../../../../ArtCard/ArtCard";
 import CategoryFilters from "../../../../CategoryFilters/CategoryFilters";
 import Pagination from "../../../../hooks/Pagination/Pagination";
 import { usePagination } from "../../../../hooks/Pagination/usePagination";
+import { useTranslation } from 'react-i18next';
 
-function MyImages({ user, onTotalLikesChange }) {
+function MyImages({ user, onTotalLikesChange, initialView = 'created' }) {
+    const { t } = useTranslation();
     const [paintings, setPaintings] = useState([]);
     const [activeCategory, setActiveCategory] = useState(null);
-    const [viewMode, setViewMode] = useState('created'); // 'created' | 'bought'
+    const [viewMode, setViewMode] = useState(initialView); // 'created' | 'bought'
     const itemsPerPage = 24;
     const viewFilters = ['MyImages', 'BoughtImages'];
 
@@ -55,14 +57,6 @@ function MyImages({ user, onTotalLikesChange }) {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [paintings]);
 
-    const handleCategoryClick = (category) => {
-        if (activeCategory === category) {
-            setActiveCategory(null);
-        } else {
-            setActiveCategory(category);
-        }
-        setCurrentPage(0);
-    };
 
     // Обработчик для переключения между MyImages / BoughtImages через CategoryFilters
     const handleViewFilterClick = (filter) => {
@@ -137,9 +131,7 @@ function MyImages({ user, onTotalLikesChange }) {
                     ))
                 ) : (
                     <div className={styles.noArtworks}>
-                        {viewMode === 'created'
-                            ? "You haven't uploaded any artworks yet."
-                            : "You haven't bought any artworks yet."}
+                        {viewMode === 'created' ? t('profile.noUploads') : t('profile.noPurchases')}
                     </div>
                 )}
             </div>

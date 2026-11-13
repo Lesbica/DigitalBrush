@@ -5,13 +5,20 @@ import closeIcon from '../../../assets/closeCross.svg';
 import ImageViewer from "../ImageViewer/ImageViewer";
 import { useCart } from '../../Cart/CartContext';
 import { useNavigate } from "react-router-dom";
-import URL from '../../../URL';
+import { useToast } from '../../../context/ToastContext';
+import { useTranslation } from 'react-i18next';
+import { formatPrice } from '../../../i18n/format';
+import useDialog from '../../Dialog/useDialog';
 
 const lerp = (current, target, factor) => {
     return current * (1 - factor) + target * factor;
 };
 
 const ArtDetailsModal = ({art, onClose, isLoggedIn}) => {
+    const { t } = useTranslation();
+    const dialogRef = useRef(null);
+    useDialog(dialogRef, onClose);
+    const toast = useToast();
 
     const [isViewerOpen, setIsViewerOpen] = useState(false);
     const [viewerInitialIndex, setViewerInitialIndex] = useState(0);
@@ -32,7 +39,6 @@ const ArtDetailsModal = ({art, onClose, isLoggedIn}) => {
 
     useEffect(() => {
         document.body.style.overflow = 'hidden';
-        startScrollAnimation();
         return () => {
             document.body.style.overflow = 'auto';
             if (animationFrameId.current) {
@@ -69,7 +75,7 @@ const ArtDetailsModal = ({art, onClose, isLoggedIn}) => {
     const [likeLoading, setLikeLoading] = useState(false);
     const handleLikeClick = async () => {
         if (!isLoggedIn) {
-            alert('Увійдіть, щоб ставити лайки.');
+            toast.info(t('art.signInToLike'));
             return;
         }
         if (!art?.id || likeLoading) return;
@@ -173,7 +179,7 @@ const ArtDetailsModal = ({art, onClose, isLoggedIn}) => {
 
     const handleBuyClick = () => {
         if (!isLoggedIn) {
-            alert("Please sign in to add items to your basket.");
+            toast.info(t('art.signInToBuy'));
             onClose();
             return;
         }
@@ -219,53 +225,61 @@ const ArtDetailsModal = ({art, onClose, isLoggedIn}) => {
             window.URL.revokeObjectURL(blobUrl);
         } catch (e) {
             console.error('Download failed:', e);
-            alert('Failed to download file. Please try again later.');
+            toast.error(t('art.downloadFailed'));
         }
     };
 
     return (
         <div className={styles.overlay} onClick={handleOverlayClick}>
-            <div className={styles.modal}>
+            <div className={styles.modal} ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="art-dialog-title">
 
                 <div className={styles.modalContent} onWheel={handleWheelScroll}>
-                    <button className={styles.closeBtnFixed} onClick={onClose}>
-                        <img src={closeIcon} alt="Close"/>
+                    <button type="button" className={styles.closeBtnFixed} onClick={onClose}>
+                        <img src={closeIcon} alt={t('common.close')}/>
                     </button>
 
                     <div className={styles.leftColumn} ref={leftColumnRef}>
                         {imagesToShow.map((imgUrl, index) => (
-                            <img
+                            <button
                                 key={index}
-                                src={imgUrl}
-                                alt={`${art.title} preview ${index + 1}`}
-                                className={styles.artImage}
-                                onError={(e) => {
-                                    e.target.src = "/images/placeholder.png";
-                                }}
+                                type="button"
+                                className="unstyled-button"
+                                style={{ display: 'block', width: '100%' }}
                                 onClick={() => openImageViewer(index)}
-                            />
+                                aria-label={t('art.openImage', { n: index + 1 })}
+                            >
+                                <img
+                                    src={imgUrl}
+                                    alt={`${art.title} ${index + 1}`}
+                                    className={styles.artImage}
+                                    onError={(e) => {
+                                        e.target.src = "/images/placeholder.svg";
+                                    }}
+                                />
+                            </button>
                         ))}
                     </div>
 
                     <div className={styles.rightColumn}>
                         <div className={styles.scrollableInfo} ref={rightInfoRef}>
                             <div className={styles.topSection}>
-                                <h2 className={styles.title}>{art.title} </h2>
+                                <h2 className={styles.title} id="art-dialog-title">{art.title}</h2>
                             </div>
 
-                            <p
-                                className={styles.artistName}
+                            <button
+                                type="button"
+                                className={`unstyled-button ${styles.artistName}`}
                                 onClick={handleArtistNameClick}
-                                title="View artist profile"
+                                title={t('art.viewArtist')}
                             >
                                 {art.artistName}
-                            </p>
+                            </button>
 
                             <div className={styles.detailsList}>
-                                <p className={styles.field}><span>Category</span> {art.category}</p>
-                                <p className={styles.field}><span>Style</span> {art.style}</p>
-                                <p className={styles.field}><span>File format</span> {art.fileFormat}</p>
-                                <p className={styles.field}><span>Size</span> {art.size}</p>
+                                <p className={styles.field}><span>{t('art.category')}</span> {art.category ? t(`labels.${art.category}`, { defaultValue: art.category }) : '—'}</p>
+                                <p className={styles.field}><span>{t('art.style')}</span> {art.style || '—'}</p>
+                                <p className={styles.field}><span>{t('art.format')}</span> {art.fileFormat || '—'}</p>
+                                <p className={styles.field}><span>{t('art.size')}</span> {art.size || '—'}</p>
                             </div>
 
                             <p className={styles.description}>
@@ -276,34 +290,32 @@ const ArtDetailsModal = ({art, onClose, isLoggedIn}) => {
                         <div className={styles.actions}>
                             <div className={styles.infoRow}>
                                 <p className={styles.priceText}>
-                                    <svg width="24" height="24" viewBox="0 0 24 24" >
-                                        <g transform="translate(5 0) scale(1.3333 1.3333) translate(-7 -3)">
-                                            <path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-.9.6-1.75 2.1-1.75 1.7 0 2.2.8 2.3 2.1h2.1c-.1-1.7-1.1-3.2-3-3.8V3h-3v2.1c-1.9.5-3.1 1.9-3.1 3.8 0 2.2 1.8 3.4 4.5 4 2.8.6 3 1.3 3 2.2 0 1-.6 1.8-2.2 1.8-1.8 0-2.3-.9-2.4-2.1H7c.1 1.7 1.1 3.2 3.1 3.8V21h3v-2.1c1.9-.5 3.1-1.9 3.1-3.8 0-2.3-1.8-3.5-4.6-4.1z"/>
-                                        </g>
-                                    </svg>
-                                    {art.price}
+                                    {formatPrice(art.price)}
                                 </p>
 
-                                <span className={styles.likesText}>
-                                    <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                                {/* One like control: the heart is the button, the number is its count */}
+                                <button
+                                    type="button"
+                                    className={styles.likeToggle}
+                                    onClick={handleLikeClick}
+                                    disabled={likeLoading}
+                                    aria-pressed={isLiked}
+                                    aria-label={`${isLiked ? t('art.unlike') : t('art.like')} (${likes})`}
+                                >
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" className={isLiked ? styles.likedHeart : styles.unlikedHeart}>
                                         <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
                                     </svg>
-                                    {likes}
-                                </span>
+                                    <span aria-hidden="true">{likes}</span>
+                                </button>
                             </div>
 
                             <div className={styles.buttonRow}>
                                 {owned ? (
-                                    <button className={styles.buyBtn} onClick={handleDownloadClick}>Download</button>
+                                    <button className={styles.buyBtn} onClick={handleDownloadClick}>{t('art.download')}</button>
                                 ) : (
-                                    <button className={styles.buyBtn} onClick={handleBuyClick}>Buy</button>
+                                    <button className={styles.buyBtn} onClick={handleBuyClick}>{t('art.addToBasket')}</button>
                                 )}
 
-                                <button className={styles.likeBtn} onClick={handleLikeClick} disabled={likeLoading}>
-                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className={isLiked ? styles.likedHeart : styles.unlikedHeart}>
-                                        <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
-                                    </svg>
-                                </button>
                             </div>
                         </div>
                     </div>

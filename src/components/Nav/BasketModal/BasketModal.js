@@ -4,9 +4,13 @@ import { useCart } from '../../Cart/CartContext'; // Перевірте шлях
 import { useNavigate } from 'react-router-dom';
 import closeIcon from '../../../assets/closeCross.svg';
 import trash from "../../../assets/trashBin.svg";
+import { useTranslation } from 'react-i18next';
+import { formatPrice } from '../../../i18n/format';
+import useDialog from '../../Dialog/useDialog';
 
 
 const BasketModal = ({ onClose, onViewItemDetails, position}) => {
+    const { t } = useTranslation();
     const { cartItems, removeFromCart } = useCart();
     const navigate = useNavigate();
     const modalRef = useRef(null);
@@ -19,6 +23,7 @@ const BasketModal = ({ onClose, onViewItemDetails, position}) => {
             onClose();
         }, 300);
     }, [onClose]);
+    useDialog(modalRef, handleClose);
 
     useEffect(() => {
         document.body.style.overflow = 'hidden';
@@ -47,21 +52,24 @@ const BasketModal = ({ onClose, onViewItemDetails, position}) => {
         <div className={styles.overlay} onClick={handleOverlayClick}>
             <div className={`${styles.modal} ${isClosing ? styles.closing : ''}`}
                  ref={modalRef}
+                 role="dialog"
+                 aria-modal="true"
+                 aria-labelledby="basket-title"
                  style={{
                      top: position ? `${position.top}px` : '15vh',
                      right: position ? `${position.right}px` : 'auto'
                  }}
             >
                 <div className={styles.header}>
-                    <h2>BASKET</h2>
-                    <button className={styles.closeBtn} onClick={handleClose}>
-                        <img src={closeIcon} alt="Close" />
+                    <h2 id="basket-title">{t('basket.title')}</h2>
+                    <button type="button" className={styles.closeBtn} onClick={handleClose}>
+                        <img src={closeIcon} alt={t('common.close')} />
                     </button>
                 </div>
 
                 <div className={styles.itemList}>
                     {cartItems.length === 0 ? (
-                        <p className={styles.emptyMessage}>Your basket is empty.</p>
+                        <p className={styles.emptyMessage}>{t('basket.empty')}</p>
                     ) : (
                         cartItems.map((item) => (
                             <div className={styles.item}
@@ -70,23 +78,25 @@ const BasketModal = ({ onClose, onViewItemDetails, position}) => {
                                      onViewItemDetails(item);
                                  }}
                             >
-                                <img src={item.imageUrl || "/images/placeholder.png"} alt={item.title} className={styles.itemImage} />
+                                <img src={item.imageUrl || "/images/placeholder.svg"} alt="" className={styles.itemImage} />
 
                                 <div className={styles.itemInfo}>
 
                                     <div className={styles.infoText}>
-                                        <span className={styles.itemTitle}>{item.title}</span>
+                                        <button type="button" className={`unstyled-button ${styles.itemTitle}`} aria-label={t('basket.openItem', { title: item.title })}
+                                                onClick={(e) => { e.stopPropagation(); onViewItemDetails(item); }}>{item.title}</button>
                                         <span className={styles.itemArtist}>{item.artistName}</span>
                                         <p className={styles.itemDesc}>{item.description.substring(0, 100)}...</p>
                                     </div>
 
                                     <div className={styles.itemActions}>
-                                        <span className={styles.itemPrice}>{item.price}$</span>
-                                        <button className={styles.removeBtn} onClick={(e) => {
+                                        <span className={styles.itemPrice}>{formatPrice(item.price)}</span>
+                                        <button className={styles.removeBtn}
+                                                aria-label={t('basket.removeItem', { title: item.title })} onClick={(e) => {
                                             e.stopPropagation();
                                             removeFromCart(item.id);
                                         }}>
-                                            <img width="36" height="36" viewBox="0 0 36 36" fill="none" src={trash} />
+                                            <img width="36" height="36" src={trash} alt="" />
                                         </button>
                                     </div>
                                 </div>
@@ -97,15 +107,15 @@ const BasketModal = ({ onClose, onViewItemDetails, position}) => {
 
                 <div className={styles.footer}>
                     <div className={styles.subtotal}>
-                        <span>Subtotal</span>
-                        <span className={styles.price}>{subtotal}$</span>
+                        <span>{t('common.subtotal')}</span>
+                        <span className={styles.price}>{formatPrice(subtotal)}</span>
                     </div>
                     <button
                         className={styles.buyBtn}
                         onClick={handleCheckout}
                         disabled={cartItems.length === 0}
                     >
-                        Buy
+                        {t('basket.buy')}
                     </button>
                 </div>
             </div>

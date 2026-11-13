@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import axios from 'axios';
 import styles from './AuthorPage.module.css';
 import ArtCard from '../ArtCard/ArtCard';
@@ -11,7 +11,9 @@ import infoIcon from '../../assets/infoIcon.svg'
 import globeIcon from '../../assets/icons/globeIcon.svg'
 import heartIcon from '../../assets/icons/heartIcon.svg'
 import AddCommissionModal from '../Commission/CommissionModals/AddCommissionModal';
-import URL from '../../URL';
+import { CATEGORIES } from '../../constants/categories';
+import { useTranslation } from 'react-i18next';
+import { formatDate } from '../../i18n/format';
 
 // Конфіг
 const additionalFilterConfig = [
@@ -27,16 +29,17 @@ const additionalFilterConfig = [
     }
 ];
 
-const categories = ['ICONS', 'UI/UX', 'ADVERTISING', 'BRENDING'];
+const categories = CATEGORIES;
 
 const AuthorPage = () => {
+    const { t } = useTranslation();
     const { id } = useParams();
-    const navigate = useNavigate();
 
     const [artist, setArtist] = useState(null);
     const [loading, setLoading] = useState(true);
     const [activeCategory, setActiveCategory] = useState(null);
     const [isCommissionModalOpen, setIsCommissionModalOpen] = useState(false);
+    const [reviews, setReviews] = useState({ summary: { average: null, count: 0 }, reviews: [] });
 
     useEffect(() => {
         const fetchArtist = async () => {
@@ -50,6 +53,13 @@ const AuthorPage = () => {
             }
         };
         if (id) fetchArtist();
+    }, [id]);
+
+    useEffect(() => {
+        if (!id) return;
+        axios.get(`/reviews/artist/${id}`, { params: { limit: 20 } })
+            .then(res => setReviews({ summary: res.data.summary, reviews: res.data.reviews || [] }))
+            .catch(err => console.error("Error loading reviews:", err));
     }, [id]);
 
     const handleCommissionClick = () => {
@@ -151,21 +161,29 @@ const AuthorPage = () => {
                     <div>
                         <h1 className={styles.artistName}>
                             {artistName}
-                            <span className={styles.status}>(available)</span>
+                            <span className={styles.status}>({t(`availability.${['busy', 'vacation'].includes(artist.availability) ? artist.availability : 'open'}`)})</span>
                         </h1>
                     </div>
 
                     <div className={styles.metaInfo}>
                         <div className={styles.metaRow}>
-                            <img src={infoIcon} alt="Style"/>
+                            <img src={infoIcon} alt={t('artists.style')}/>
                             <span>{artistStyle}</span>
                         </div>
                         <div className={styles.metaRow}>
-                            <img src={globeIcon} alt="Languages"/>
+                            <img src={globeIcon} alt={t('author.languages')}/>
                             <span>{artistLanguages}</span>
                         </div>
                         <div className={styles.metaRow}>
-                            <img src={heartIcon} alt="Likes"/>
+                            <span className={styles.ratingStar}>★</span>
+                            <span>
+                                {reviews.summary.count > 0
+                                    ? `${Number(reviews.summary.average).toFixed(1)} (${t('author.reviewCount', { count: reviews.summary.count })})`
+                                    : t('author.noReviews')}
+                            </span>
+                        </div>
+                        <div className={styles.metaRow}>
+                            <img src={heartIcon} alt={t('artists.likes')}/>
                             <span>{totalLikes > 1000 ? (totalLikes/1000).toFixed(1) + 'k' : totalLikes}</span>
                         </div>
                     </div>
@@ -175,12 +193,12 @@ const AuthorPage = () => {
                     </p>
 
                     <button className={styles.commissionBtn} onClick={handleCommissionClick}>
-                        Commission
+                        {t('author.commission')}
                     </button>
                 </aside>
 
                 {/* --- ПРАВА ЧАСТИНА (ГАЛЕРЕЯ) --- */}
-                <main className={styles.gallerySection}>
+                <section className={styles.gallerySection}>
 
                     {/* Верхні контроли */}
                     <div className={styles.topControls}>
@@ -214,7 +232,7 @@ const AuthorPage = () => {
                                 />
                             ))
                         ) : (
-                            <div className={styles.noArt}>No artworks available.</div>
+                            <div className={styles.noArt}>{t('artists.noArtworks')}</div>
                         )}
                     </div>
 
@@ -224,7 +242,26 @@ const AuthorPage = () => {
                         totalPages={totalPages}
                         onPageChange={setCurrentPage}
                     />
-                </main>
+
+                    <section className={styles.reviews}>
+                        <h2 className={styles.reviewsTitle}>{t('author.reviews')}</h2>
+                        {reviews.reviews.length === 0 ? (
+                            <div className={styles.noArt}>{t('author.noReviews')}</div>
+                        ) : reviews.reviews.map(r => (
+                            <div key={r.id} className={styles.reviewItem}>
+                                <div className={styles.reviewHeader}>
+                                    <img src={r.customer.avatar} alt="" className={styles.reviewAvatar} />
+                                    <span className={styles.reviewAuthor}>{r.customer.name}</span>
+                                    <span className={styles.reviewStars} aria-label={`${r.rating} of 5`}>
+                                        {'★'.repeat(r.rating)}{'☆'.repeat(5 - r.rating)}
+                                    </span>
+                                    <span className={styles.reviewDate}>{formatDate(r.createdAt)}</span>
+                                </div>
+                                {r.text && <p className={styles.reviewText}>{r.text}</p>}
+                            </div>
+                        ))}
+                    </section>
+                </section>
             </div>
 
             {isCommissionModalOpen && (

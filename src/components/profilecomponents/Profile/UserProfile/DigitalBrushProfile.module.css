@@ -91,7 +91,8 @@
     width: 100%;
 }
 
-.actionButtonsContainer > button {
+.actionButtonsContainer > button,
+.tabWithAction > button:first-child {
     font-size: 20px;
     height: 44px;
     padding: 6px 0 6px 14px;
@@ -107,7 +108,8 @@
             linear-gradient(168.05deg, #595C64 1.51%, rgba(71, 77, 95, 0.44) 90.56%) border-box;
 }
 
-.actionButtonsContainer > button:hover {
+.actionButtonsContainer > button:hover,
+.tabWithAction > button:first-child:hover {
     opacity: 0.9;
     transform: translateY(-2px);
 }
@@ -118,7 +120,8 @@
     align-items: center;
 }
 
-.actionButtonsContainer > button.active {
+.actionButtonsContainer > button.active,
+.tabWithAction > button.active {
     background: linear-gradient(rgba(89, 92, 100, 0.8), rgba(89, 92, 100, 0.8)) padding-box,
     linear-gradient(168.05deg, #595C64 1.51%, rgba(71, 77, 95, 0.44) 90.56%) border-box;
     transform: translateX(5px);
@@ -241,4 +244,34 @@
     .artGrid {
         grid-template-columns: repeat(auto-fill, minmax(100%, 1fr));
     }
+}
+/* Tab + its "add" action: two separate buttons, the action sits at the right edge of the tab */
+.tabWithAction {
+    position: relative;
+    width: 100%;
+}
+
+.tabWithAction > button:first-child {
+    padding-right: 52px;
+}
+
+.plusButton {
+    position: absolute;
+    top: 50%;
+    right: 6px;
+    transform: translateY(-50%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: none;
+    cursor: pointer;
+}
+
+.plusButton:hover {
+    background: rgba(255, 255, 255, 0.12);
 }

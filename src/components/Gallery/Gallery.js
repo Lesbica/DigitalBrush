@@ -3,23 +3,24 @@ import styles from "./Gallery.module.css";
 import { useNavigate } from "react-router-dom";
 import ArtCard from '../ArtCard/ArtCard';
 import axios from 'axios';
-import url from '../../URL';
+import { useTranslation } from 'react-i18next';
 
 const placeholderFeaturedCards = [
-    { id: 'card-back', imageUrl: '/images/card-center.png', className: styles.cardBack, title: "We build the", likes: "253.5k" },
-    { id: 'card-middle', imageUrl: '/images/card-right.png', className: styles.cardMiddle, title: "We build the", likes: "253.5k" },
-    { id: 'card-front', imageUrl: '/images/card-left.png', className: styles.cardFront, title: "We build the", likes: "253.5k" }
+    { id: 'card-back', imageUrl: '/images/card-center.webp', className: styles.cardBack, title: "DigitalBrush", likes: "253.5k" },
+    { id: 'card-middle', imageUrl: '/images/card-right.webp', className: styles.cardMiddle, title: "DigitalBrush", likes: "253.5k" },
+    { id: 'card-front', imageUrl: '/images/card-left.webp', className: styles.cardFront, title: "DigitalBrush", likes: "253.5k" }
 ];
 
 const placeholderScatteredImages = [
-    { id: 'scatter-1', imageUrl: '/images/image1.png', className: styles.image1 },
-    { id: 'scatter-2', imageUrl: '/images/image5.png', className: styles.image2 },
-    { id: 'scatter-3', imageUrl: '/images/image4.png', className: styles.image3 },
-    { id: 'scatter-4', imageUrl: '/images/image2.png', className: styles.image4 },
-    { id: 'scatter-5', imageUrl: '/images/image3.png', className: styles.image5 }
+    { id: 'scatter-1', imageUrl: '/images/image1.webp', className: styles.image1 },
+    { id: 'scatter-2', imageUrl: '/images/image5.webp', className: styles.image2 },
+    { id: 'scatter-3', imageUrl: '/images/image4.webp', className: styles.image3 },
+    { id: 'scatter-4', imageUrl: '/images/image2.webp', className: styles.image4 },
+    { id: 'scatter-5', imageUrl: '/images/image3.webp', className: styles.image5 }
 ];
 
 const Gallery = () => {
+    const { t } = useTranslation();
     const [paintings, setPaintings] = useState([]);
     const [loading, setLoading] = useState(true);
     const [currentSlide, setCurrentSlide] = useState(0);
@@ -62,7 +63,7 @@ const Gallery = () => {
                         artistName: p.author_name || p.creatorName || 'Artist',
                         artistId: p.Creator_ID || p.creator_id || p.artistId || null,
                         description: p.Description || p.description || '',
-                        imageUrl: imageSrc || '/images/placeholder.png',
+                        imageUrl: imageSrc || '/images/placeholder.svg',
                         likes: p.likes ?? p.Likes ?? 0,
                         price: p.Price ?? p.price ?? '',
                         style: p.Style ?? p.style ?? '',
@@ -125,8 +126,16 @@ const Gallery = () => {
     };
 
     return (
-        <main id="mainContent" className={styles.container}>
+        <div id="mainContent" className={styles.container}>
             <div className={styles.gallery}>
+                <section className={styles.heroIntro} aria-labelledby="home-title">
+                    <h1 id="home-title" className={styles.heroTitle}>{t('home.title')}</h1>
+                    <p className={styles.heroText}>{t('home.heroText')}</p>
+                    <div className={styles.heroActions}>
+                        <button type="button" className={styles.heroPrimary} onClick={() => handleNavigation('/shop')}>{t('home.toShop')}</button>
+                        <button type="button" className={styles.heroSecondary} onClick={() => handleNavigation('/commission')}>{t('home.toCommission')}</button>
+                    </div>
+                </section>
                 {/* --- TOP SCROLLING GRID (Real Images) --- */}
                 <div className={styles.ScrollContainer}>
                     <div className={styles.scrollingGrid}>
@@ -151,12 +160,11 @@ const Gallery = () => {
                     {/* RESTORED: Artist registration section */}
                     <div className={styles.contentSection}>
                         <div className={styles.textContainer}>
-                            <div className={styles.textHeader1}>Are you an artist? <br /> Sell your work here!</div>
+                            <h2 className={styles.textHeader1}>{t('home.artistTitle1')} <br /> {t('home.artistTitle2')}</h2>
                             <div className={styles.text1}>
-                                Create a profile, upload your paintings, and find buyers all over the world.
-                                DigitalBrush is a space where your talent becomes visible and valuable.
+                                {t('home.artistText')}
                             </div>
-                            <button className={styles.button1} onClick={() => handleNavigation('/profile')}>Registration</button>
+                            <button className={styles.button1} onClick={() => handleNavigation('/profile')}>{t('common.registration')}</button>
                         </div>
                         <div className={styles.imageCardsContainer}>
                             {placeholderFeaturedCards.map(card => (
@@ -185,12 +193,11 @@ const Gallery = () => {
                             ))}
                         </div>
                         <div className={styles.textContainer}>
-                            <div className={styles.textHeader1}>Don't you draw? <br /> No problem.</div>
+                            <h2 className={styles.textHeader1}>{t('home.buyerTitle1')} <br /> {t('home.buyerTitle2')}</h2>
                             <div className={styles.text1}>
-                                Choose works that resonate with your emotions. Here, art is not just a commodity, but a
-                                way to tell the world something important.
+                                {t('home.buyerText')}
                             </div>
-                            <button className={styles.button1} onClick={() => handleNavigation('/profile')}>Registration</button>
+                            <button className={styles.button1} onClick={() => handleNavigation('/profile')}>{t('common.registration')}</button>
                         </div>
                     </div>
                 </div>
@@ -198,16 +205,17 @@ const Gallery = () => {
                 {/* --- TRENDS SECTION (Real Images) --- */}
                 <div className={styles.trendsContentWrapper}>
                     <div className={styles.TrendsContainer}>
-                        <div className={styles.TrendsHeader}>TRENDS</div>
+                        <h2 className={styles.TrendsHeader}>{t('home.trends')}</h2>
                         <div className={styles.searchBarContainer}>
                             <input
-                                type="text"
+                                type="search"
                                 className={styles.searchInput}
-                                placeholder="Search by title, artist, style..."
+                                aria-label={t('common.searchLabel')}
+                                placeholder={t('home.searchPlaceholder')}
                                 value={searchQuery}
                                 onChange={handleSearchChange}
                             />
-                            <button className={styles.searchButton}>
+                            <button type="button" className={styles.searchButton} tabIndex={-1} aria-hidden="true">
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20">
                                     <path d="M21 21l-4.35-4.35M10 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16z" stroke="black" strokeWidth="2" fill="none" />
                                 </svg>
@@ -216,7 +224,7 @@ const Gallery = () => {
                     </div>
 
                     {loading ? (
-                        <div className={styles.noResults}>Loading masterpieces...</div>
+                        <div className={styles.noResults}>{t('home.loading')}</div>
                     ) : slides.length > 0 ? (
                         <div className={styles.artGridSection}>
                             <div className={styles.artGridCarouselWrapper}>
@@ -243,11 +251,11 @@ const Gallery = () => {
                             </div>
                         </div>
                     ) : (
-                        <div className={styles.noResults}>No results found for your search.</div>
+                        <div className={styles.noResults}>{t('home.noResults')}</div>
                     )}
                 </div>
             </div>
-        </main>
+        </div>
     );
 };
 

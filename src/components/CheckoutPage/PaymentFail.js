@@ -1,21 +1,21 @@
-import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import styles from './PaymentResult.module.css';
+import { useTranslation } from 'react-i18next';
 
 const PaymentFail = () => {
-  const navigate = useNavigate();
+    const { t } = useTranslation();
+    const navigate = useNavigate();
 
-  return (
-    <div style={{ paddingTop: '120px', textAlign: 'center', color: 'white' }}>
-      <h1>Payment failed ❌</h1>
-      <p>Something went wrong. Please try again.</p>
-      <button
-        style={{ marginTop: '24px' }}
-        onClick={() => navigate('/checkout')}
-      >
-        Return to checkout
-      </button>
-    </div>
-  );
+    return (
+        <div className={styles.page}>
+            <h1 className={styles.title}>{t('payment.failedTitle')}</h1>
+            <p className={styles.text}>{t('payment.failedText')}</p>
+            <div className={styles.actions}>
+                <button className={styles.button} onClick={() => navigate('/checkout')}>{t('payment.backToCheckout')}</button>
+                <button className={`${styles.button} ${styles.secondary}`} onClick={() => navigate('/shop')}>{t('payment.backToShop')}</button>
+            </div>
+        </div>
+    );
 };
 
 export default PaymentFail;

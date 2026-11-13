@@ -9,34 +9,49 @@ import Pagination from '../hooks/Pagination/Pagination';
 import leftArrow from '../../assets/leftArrow.svg';
 import rightArrow from '../../assets/rightArrow.svg';
 import axios from 'axios';
-import URL from "../../URL";
+import { CATEGORIES } from '../../constants/categories';
+import { useTranslation } from 'react-i18next';
 
-const categories = [
-    "2D AVATARS", "3D MODELS", "BOOKS", "ANIME", "ICONS", "GAMES",
-    "MOCKUPS", "UI/UX", "ADVERTISING", "BRENDING", "POSTER",
-    "ARCHITECTURE", "FASHION", "SKETCH", "PHOTOGRAPHY"
-];
+const categories = CATEGORIES;
 
 const artistFilterConfig = [
     { title: "SORT BY", options: [
-            { name: "NONE" }, { name: "NAME (A-Z)" }, { name: "NAME (Z-A)" }, { name: "LATEST" }
+            { name: "NONE" }, { name: "NAME (A-Z)" }, { name: "NAME (Z-A)" }, { name: "TOP RATED" }, { name: "LATEST" }
         ]},
-    { title: "COUNTRY", options: [
-            { name: "NONE" }, { name: "Ukraine" }, { name: "Poland" }, { name: "USA" }, { name: "Italy" }, { name: "Spain" }
+    { title: "RATING", options: [
+            { name: "ANY" }, { name: "4★ & UP" }, { name: "3★ & UP" }
+        ]},
+    { title: "AVAILABILITY", options: [
+            { name: "ANY" }, { name: "OPEN" }, { name: "BUSY" }, { name: "VACATION" }
+        ]},
+    { title: "PRICE", options: [
+            { name: "ANY" }, { name: "UP TO 500" }, { name: "UP TO 1000" }, { name: "UP TO 5000" }
         ]}
 ];
 
+const DEFAULT_FILTERS = { "SORT BY": "NONE", "RATING": "ANY", "AVAILABILITY": "ANY", "PRICE": "ANY" };
+
+// Selected panel options → query params of /artists/getartists
+function filtersToParams(f) {
+    const params = {};
+    const sort = { "NAME (A-Z)": "name_asc", "NAME (Z-A)": "name_desc", "TOP RATED": "rating", "LATEST": "newest" }[f["SORT BY"]];
+    if (sort) params.sort = sort;
+    const minRating = { "4★ & UP": 4, "3★ & UP": 3 }[f["RATING"]];
+    if (minRating) params.minRating = minRating;
+    if (f["AVAILABILITY"] !== "ANY") params.availability = f["AVAILABILITY"].toLowerCase();
+    const maxPrice = { "UP TO 500": 500, "UP TO 1000": 1000, "UP TO 5000": 5000 }[f["PRICE"]];
+    if (maxPrice) params.maxPrice = maxPrice;
+    return params;
+}
+
 export default function ArtistsPage() {
+    const { t } = useTranslation();
     const [searchQuery, setSearchQuery] = useState("");
     const [activeCategory, setActiveCategory] = useState(null);
     // const [showAdvanced, setShowAdvanced] = useState(false); // ВИДАЛЕНО: компонент тепер керує цим сам
     const [galleryStates, setGalleryStates] = useState({});
     const [artistsData, setArtistsData] = useState([]);
-
-    useEffect(() => {
-        axios.get(`/auth/check-session`)
-            .catch(err => console.log(err));
-    }, []);
+    const [advancedFilters, setAdvancedFilters] = useState(DEFAULT_FILTERS);
 
     const galleryRefs = useRef({});
 
@@ -58,7 +73,7 @@ export default function ArtistsPage() {
     useEffect(() => {
         const fetchArtists = async () => {
             try {
-                const res = await axios.get(`/artists/getartists`);
+                const res = await axios.get(`/artists/getartists`, { params: filtersToParams(advancedFilters) });
                 const serverArtists = Array.isArray(res.data) ? res.data : (res.data.artists || []);
 
                 const mapped = serverArtists.map((a, idx) => {
@@ -109,7 +124,7 @@ export default function ArtistsPage() {
                     };
 
                     const stylesArr = resolveStyles();
-                    const styleDisplay = stylesArr.length ? stylesArr.join(' / ') : 'Unknown';
+                    const styleDisplay = stylesArr.length ? stylesArr.join(' / ') : '—';
 
                     // likes: prefer aggregated creator likes if present, else sum artworks likes
                     const likesFromArtworks = artworks.reduce((s, p) => s + (Number(p.likes) || 0), 0);
@@ -117,11 +132,14 @@ export default function ArtistsPage() {
                     return {
                         id: currentArtistId,
                         name,
-                        country: a.Country || a.country || 'Unknown',
+                        country: a.Country || a.country || '',
                         style: styleDisplay,
                         styles: stylesArr,
                         avatar: a.imageBase64 || a.profileImage || '/images/profileImg.jpg',
                         likesCount,
+                        ratingAvg: a.ratingAvg ?? null,
+                        ratingCount: a.ratingCount || 0,
+                        availability: a.availability || 'open',
                         artworks
                     };
                 });
@@ -133,7 +151,7 @@ export default function ArtistsPage() {
         };
 
         fetchArtists();
-    }, []);
+    }, [advancedFilters]);
 
     const filteredArtists = useMemo(() => {
         let items = artistsData;
@@ -206,16 +224,17 @@ export default function ArtistsPage() {
             <div className={styles.contentWrapper}>
                 <header className={styles.header}>
                     <div className={styles.headerLeft}>
-                        <h1 className={styles.artistsTitle}>Artists</h1>
+                        <h1 className={styles.artistsTitle}>{t('artists.title')}</h1>
                         <div className={styles.searchBarContainer}>
                             <input
-                                type="text"
+                                type="search"
                                 className={styles.searchInput}
-                                placeholder="Search by artist name..."
+                                aria-label={t('common.searchLabel')}
+                                placeholder={t('artists.searchPlaceholder')}
                                 value={searchQuery}
                                 onChange={handleSearchChange}
                             />
-                            <button className={styles.searchButton}>
+                            <button type="button" className={styles.searchButton} tabIndex={-1} aria-hidden="true">
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20">
                                     <path d="M21 21l-4.35-4.35M10 18a8 8 0 1 1 0 -16 8 8 0 0 1 0 16z" strokeWidth="2" fill="none" />
                                 </svg>
@@ -233,7 +252,14 @@ export default function ArtistsPage() {
 
                     {/* ОНОВЛЕНО: Просто вставляємо AdvancedFilters */}
                     <div className={styles.filtersContainer}>
-                        <AdvancedFilters filterConfig={artistFilterConfig} />
+                        <AdvancedFilters
+                            filterConfig={artistFilterConfig}
+                            selected={advancedFilters}
+                            onSelect={(title, option) => {
+                                setAdvancedFilters(prev => ({ ...prev, [title]: option }));
+                                setCurrentPage(0);
+                            }}
+                        />
                     </div>
                 </div>
 
@@ -256,8 +282,14 @@ export default function ArtistsPage() {
                                             <h3 className={styles.artistName}>{artist.name}</h3>
 
                                             <div className={styles.artistDetails}>
-                                                <span>Style: {artist.style}</span><br/>
-                                                <span>Likes: {artist.likesCount}</span>
+                                                <span>{t('artists.style')}: {artist.style}</span><br/>
+                                                <span>{t('artists.likes')}: {artist.likesCount}</span><br/>
+                                                <span>
+                                                    {t('artists.rating')}: {artist.ratingCount > 0
+                                                        ? `${artist.ratingAvg.toFixed(1)} ★ (${artist.ratingCount})`
+                                                        : t('reviews.none')}
+                                                </span><br/>
+                                                <span>{t('artists.status')}: {t(`availability.${artist.availability}`, { defaultValue: artist.availability })}</span>
                                             </div>
                                         </div>
                                     </Link>
@@ -268,7 +300,7 @@ export default function ArtistsPage() {
                                                 className={`${styles.navButton} ${styles.left}`}
                                                 onClick={() => scrollGallery(artist.id, 'left')}
                                             >
-                                                <img src={leftArrow} alt="Scroll left" />
+                                                <img src={leftArrow} alt={t('artists.scrollLeft')} />
                                             </button>
                                         )}
 
@@ -282,7 +314,7 @@ export default function ArtistsPage() {
                                                     <ArtCard key={card.id} art={card} />
                                                 ))
                                             ) : (
-                                                <div className={styles.noArtworks}>No artworks available</div>
+                                                <div className={styles.noArtworks}>{t('artists.noArtworks')}</div>
                                             )}
                                         </div>
 
@@ -291,7 +323,7 @@ export default function ArtistsPage() {
                                                 className={`${styles.navButton} ${styles.right}`}
                                                 onClick={() => scrollGallery(artist.id, 'right')}
                                             >
-                                                <img src={rightArrow} alt="Scroll right" />
+                                                <img src={rightArrow} alt={t('artists.scrollRight')} />
                                             </button>
                                         )}
                                     </div>
@@ -299,7 +331,7 @@ export default function ArtistsPage() {
                             );
                         })
                     ) : (
-                        <div className={styles.noResults}>No artists found</div>
+                        <div className={styles.noResults}>{t('artists.empty')}</div>
                     )}
                 </div>
                 <Pagination

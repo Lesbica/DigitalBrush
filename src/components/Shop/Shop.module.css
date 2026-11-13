@@ -131,3 +131,8 @@
         justify-content: center;
     }
 }
+/* keyboard focus: the whole search bar gets the ring (the input itself has no outline) */
+.searchBarContainer:focus-within {
+    outline: 2px solid #b991ff;
+    outline-offset: 2px;
+}
