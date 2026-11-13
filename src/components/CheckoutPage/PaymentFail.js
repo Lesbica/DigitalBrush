@@ -7,14 +7,14 @@ const PaymentFail = () => {
     const navigate = useNavigate();
 
     return (
-        <main className={styles.page}>
+        <div className={styles.page}>
             <h1 className={styles.title}>{t('payment.failedTitle')}</h1>
             <p className={styles.text}>{t('payment.failedText')}</p>
             <div className={styles.actions}>
                 <button className={styles.button} onClick={() => navigate('/checkout')}>{t('payment.backToCheckout')}</button>
                 <button className={`${styles.button} ${styles.secondary}`} onClick={() => navigate('/shop')}>{t('payment.backToShop')}</button>
             </div>
-        </main>
+        </div>
     );
 };
 

@@ -8,6 +8,7 @@ import { useNavigate } from "react-router-dom";
 import { useToast } from '../../../context/ToastContext';
 import { useTranslation } from 'react-i18next';
 import { formatPrice } from '../../../i18n/format';
+import useDialog from '../../Dialog/useDialog';
 
 const lerp = (current, target, factor) => {
     return current * (1 - factor) + target * factor;
@@ -15,6 +16,8 @@ const lerp = (current, target, factor) => {
 
 const ArtDetailsModal = ({art, onClose, isLoggedIn}) => {
     const { t } = useTranslation();
+    const dialogRef = useRef(null);
+    useDialog(dialogRef, onClose);
     const toast = useToast();
 
     const [isViewerOpen, setIsViewerOpen] = useState(false);
@@ -228,41 +231,49 @@ const ArtDetailsModal = ({art, onClose, isLoggedIn}) => {
 
     return (
         <div className={styles.overlay} onClick={handleOverlayClick}>
-            <div className={styles.modal}>
+            <div className={styles.modal} ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="art-dialog-title">
 
                 <div className={styles.modalContent} onWheel={handleWheelScroll}>
-                    <button className={styles.closeBtnFixed} onClick={onClose}>
+                    <button type="button" className={styles.closeBtnFixed} onClick={onClose}>
                         <img src={closeIcon} alt={t('common.close')}/>
                     </button>
 
                     <div className={styles.leftColumn} ref={leftColumnRef}>
                         {imagesToShow.map((imgUrl, index) => (
-                            <img
+                            <button
                                 key={index}
-                                src={imgUrl}
-                                alt={`${art.title} preview ${index + 1}`}
-                                className={styles.artImage}
-                                onError={(e) => {
-                                    e.target.src = "/images/placeholder.svg";
-                                }}
+                                type="button"
+                                className="unstyled-button"
+                                style={{ display: 'block', width: '100%' }}
                                 onClick={() => openImageViewer(index)}
-                            />
+                                aria-label={t('art.openImage', { n: index + 1 })}
+                            >
+                                <img
+                                    src={imgUrl}
+                                    alt={`${art.title} ${index + 1}`}
+                                    className={styles.artImage}
+                                    onError={(e) => {
+                                        e.target.src = "/images/placeholder.svg";
+                                    }}
+                                />
+                            </button>
                         ))}
                     </div>
 
                     <div className={styles.rightColumn}>
                         <div className={styles.scrollableInfo} ref={rightInfoRef}>
                             <div className={styles.topSection}>
-                                <h2 className={styles.title}>{art.title} </h2>
+                                <h2 className={styles.title} id="art-dialog-title">{art.title}</h2>
                             </div>
 
-                            <p
-                                className={styles.artistName}
+                            <button
+                                type="button"
+                                className={`unstyled-button ${styles.artistName}`}
                                 onClick={handleArtistNameClick}
                                 title={t('art.viewArtist')}
                             >
                                 {art.artistName}
-                            </p>
+                            </button>
 
                             <div className={styles.detailsList}>
                                 <p className={styles.field}><span>{t('art.category')}</span> {art.category ? t(`labels.${art.category}`, { defaultValue: art.category }) : '—'}</p>
@@ -282,26 +293,29 @@ const ArtDetailsModal = ({art, onClose, isLoggedIn}) => {
                                     {formatPrice(art.price)}
                                 </p>
 
-                                <span className={styles.likesText}>
-                                    <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                                {/* One like control: the heart is the button, the number is its count */}
+                                <button
+                                    type="button"
+                                    className={styles.likeToggle}
+                                    onClick={handleLikeClick}
+                                    disabled={likeLoading}
+                                    aria-pressed={isLiked}
+                                    aria-label={`${isLiked ? t('art.unlike') : t('art.like')} (${likes})`}
+                                >
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" className={isLiked ? styles.likedHeart : styles.unlikedHeart}>
                                         <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
                                     </svg>
-                                    {likes}
-                                </span>
+                                    <span aria-hidden="true">{likes}</span>
+                                </button>
                             </div>
 
                             <div className={styles.buttonRow}>
                                 {owned ? (
                                     <button className={styles.buyBtn} onClick={handleDownloadClick}>{t('art.download')}</button>
                                 ) : (
-                                    <button className={styles.buyBtn} onClick={handleBuyClick}>{t('basket.buy')}</button>
+                                    <button className={styles.buyBtn} onClick={handleBuyClick}>{t('art.addToBasket')}</button>
                                 )}
 
-                                <button className={styles.likeBtn} onClick={handleLikeClick} disabled={likeLoading}>
-                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className={isLiked ? styles.likedHeart : styles.unlikedHeart}>
-                                        <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
-                                    </svg>
-                                </button>
                             </div>
                         </div>
                     </div>

@@ -65,7 +65,7 @@
     cursor: pointer;
 }
 
-.monthRow:focus { outline: none; }
+.monthRow:focus:not(:focus-visible) { outline: none; }
 
 .barTrack {
     width: 555px;

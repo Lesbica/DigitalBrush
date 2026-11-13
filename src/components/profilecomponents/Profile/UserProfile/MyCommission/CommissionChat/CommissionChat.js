@@ -486,14 +486,26 @@ const CommissionChat = ({ commissionId, user, onBack }) => {
                         <div className={styles.statusTitleBlock}>
                             <div className={statusProgress > 0 ? styles.bigDot : styles.bigDotHollow}></div>
                             <span className={styles.statusName}>{t(`status.${status}`, { defaultValue: status })}</span>
+                            {statusProgress > 0 && (
+                                <span className={styles.stageCount}>
+                                    {statusProgress > 4 ? t('chat.stagesDone') : t('chat.stageProgress', { n: statusProgress, total: 4 })}
+                                </span>
+                            )}
                         </div>
 
-                        {/* Пусті/заповнені круги праворуч */}
-                        <div className={styles.dotsRow}>
-                            {[2, 3, 4, 5].map(step => (
-                                <div key={step} className={`${styles.hollowDot} ${statusProgress >= step ? styles.hollowDotFilled : ''}`}></div>
-                            ))}
-                        </div>
+                        {/* Progress: Lineart, Color, Final, Completed after the current stage on the left */}
+                        <ol className={styles.dotsRow} aria-label={t('chat.stageProgress', { n: Math.min(Math.max(statusProgress, 1), 4), total: 4 })}>
+                            {['Lineart', 'Color', 'Final', 'Completed'].map((name, i) => {
+                                const step = i + 2;
+                                const done = statusProgress >= step;
+                                return (
+                                    <li key={name} title={t(`status.${name}`)}
+                                        className={`${styles.hollowDot} ${done ? styles.hollowDotFilled : ''}`}>
+                                        <span className="sr-only">{t(`status.${name}`)}{done ? ' ✓' : ''}</span>
+                                    </li>
+                                );
+                            })}
+                        </ol>
                     </div>
                     {(statusNote || commission?.deadline) && (
                         <div style={{ fontSize: 13, opacity: 0.85, margin: '4px 0 8px', display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -608,9 +620,10 @@ const CommissionChat = ({ commissionId, user, onBack }) => {
                         {isCreator && isWorkStage && (
                             <>
                                 <input type="file" ref={fileInputRef} style={{display: 'none'}} accept="image/*" onChange={handleFileChange} />
-                                <div className={styles.addSketchBar} onClick={() => { if (!submittingStage) handleAddSketchClick(); }}>
+                                <button type="button" className={`unstyled-button ${styles.addSketchBar}`} disabled={submittingStage}
+                                        onClick={() => { if (!submittingStage) handleAddSketchClick(); }}>
                                     {submittingStage ? t('upload.uploading') : t('chat.submitStage', { stage: t(`status.${status}`, { defaultValue: status }) })}
-                                </div>
+                                </button>
                             </>
                         )}
                     </div>
@@ -626,7 +639,7 @@ const CommissionChat = ({ commissionId, user, onBack }) => {
                     <button className={styles.backButton} onClick={onBack} aria-label={t('common.close')}>✕</button>
                 </div>
 
-                <div className={styles.messagesList}>
+                <div className={styles.messagesList} role="log" aria-live="polite" aria-label={t('chat.messages')}>
                     {messages.map(msg => (
                         <div key={msg.id} className={`${styles.messageRow} ${msg.senderId === user.id ? styles.own : ''}`}>
                             {msg.senderId !== user.id && (
@@ -654,19 +667,20 @@ const CommissionChat = ({ commissionId, user, onBack }) => {
                         <input
                             type="text"
                             placeholder={t('chat.placeholder')}
+                            aria-label={t('chat.messageLabel')}
                             className={styles.chatInput}
                                     value={inputText}
                                     onChange={(e) => setInputText(e.target.value)}
                                     onKeyDown={handleInputKeyDown}
                         />
                         {/* Іконка завантаження файлу в чат */}
-                        <div className={styles.inputIcon} onClick={handleChatFileClick}>
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <button type="button" className={`unstyled-button ${styles.inputIcon}`} onClick={handleChatFileClick} aria-label={t('chat.attach')}>
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                                 <path d="M21 19V5C21 3.9 20.1 3 19 3H5C3.9 3 3 3.9 3 5V19C3 20.1 3.9 21 5 21H19C20.1 21 21 20.1 21 19ZM8.5 13.5L11 16.51L14.5 12L19 18H5L8.5 13.5Z" fill="white"/>
                             </svg>
-                        </div>
+                        </button>
                         <input type="file" ref={fileInputChatRef} style={{display:'none'}} accept="image/*" onChange={handleChatFileChange} />
-                        <button className={styles.sendButton} onClick={handleSendMessage}>{t('common.send')}</button>
+                        <button type="button" className={styles.sendButton} onClick={handleSendMessage}>{t('common.send')}</button>
                     </div>
                 </div>
             </div>

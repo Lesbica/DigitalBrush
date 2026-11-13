@@ -7,6 +7,7 @@ import { ModalProvider } from './context/ModalContext';
 import { AuthProvider } from './context/AuthContext';
 import { SocketProvider } from './context/SocketContext';
 import { ToastProvider } from './context/ToastContext';
+import SkipLink from './components/SkipLink/SkipLink';
 
 function App() {
     return (
@@ -17,8 +18,11 @@ function App() {
                         <CartProvider>
                             <ModalProvider>
                                 <div className="App">
+                                    <SkipLink />
                                     <Nav />
-                                    <AppRouter />
+                                    <main id="main-content" tabIndex={-1}>
+                                        <AppRouter />
+                                    </main>
                                     <Footer />
                                 </div>
                             </ModalProvider>

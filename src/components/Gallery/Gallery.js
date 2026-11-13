@@ -126,8 +126,16 @@ const Gallery = () => {
     };
 
     return (
-        <main id="mainContent" className={styles.container}>
+        <div id="mainContent" className={styles.container}>
             <div className={styles.gallery}>
+                <section className={styles.heroIntro} aria-labelledby="home-title">
+                    <h1 id="home-title" className={styles.heroTitle}>{t('home.title')}</h1>
+                    <p className={styles.heroText}>{t('home.heroText')}</p>
+                    <div className={styles.heroActions}>
+                        <button type="button" className={styles.heroPrimary} onClick={() => handleNavigation('/shop')}>{t('home.toShop')}</button>
+                        <button type="button" className={styles.heroSecondary} onClick={() => handleNavigation('/commission')}>{t('home.toCommission')}</button>
+                    </div>
+                </section>
                 {/* --- TOP SCROLLING GRID (Real Images) --- */}
                 <div className={styles.ScrollContainer}>
                     <div className={styles.scrollingGrid}>
@@ -152,7 +160,7 @@ const Gallery = () => {
                     {/* RESTORED: Artist registration section */}
                     <div className={styles.contentSection}>
                         <div className={styles.textContainer}>
-                            <div className={styles.textHeader1}>{t('home.artistTitle1')} <br /> {t('home.artistTitle2')}</div>
+                            <h2 className={styles.textHeader1}>{t('home.artistTitle1')} <br /> {t('home.artistTitle2')}</h2>
                             <div className={styles.text1}>
                                 {t('home.artistText')}
                             </div>
@@ -185,7 +193,7 @@ const Gallery = () => {
                             ))}
                         </div>
                         <div className={styles.textContainer}>
-                            <div className={styles.textHeader1}>{t('home.buyerTitle1')} <br /> {t('home.buyerTitle2')}</div>
+                            <h2 className={styles.textHeader1}>{t('home.buyerTitle1')} <br /> {t('home.buyerTitle2')}</h2>
                             <div className={styles.text1}>
                                 {t('home.buyerText')}
                             </div>
@@ -197,16 +205,17 @@ const Gallery = () => {
                 {/* --- TRENDS SECTION (Real Images) --- */}
                 <div className={styles.trendsContentWrapper}>
                     <div className={styles.TrendsContainer}>
-                        <div className={styles.TrendsHeader}>{t('home.trends')}</div>
+                        <h2 className={styles.TrendsHeader}>{t('home.trends')}</h2>
                         <div className={styles.searchBarContainer}>
                             <input
-                                type="text"
+                                type="search"
                                 className={styles.searchInput}
+                                aria-label={t('common.searchLabel')}
                                 placeholder={t('home.searchPlaceholder')}
                                 value={searchQuery}
                                 onChange={handleSearchChange}
                             />
-                            <button className={styles.searchButton}>
+                            <button type="button" className={styles.searchButton} tabIndex={-1} aria-hidden="true">
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20">
                                     <path d="M21 21l-4.35-4.35M10 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16z" stroke="black" strokeWidth="2" fill="none" />
                                 </svg>
@@ -246,7 +255,7 @@ const Gallery = () => {
                     )}
                 </div>
             </div>
-        </main>
+        </div>
     );
 };
 

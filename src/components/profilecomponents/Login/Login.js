@@ -17,6 +17,7 @@ function Login({ toggleForm, handleLogin, handleInputChange, onForgotPassword })
         <AuthLayout onCreateAccount={toggleForm}>
 
             {/* 4. <form> тепер всередині */}
+            <h1 className="sr-only">{t('auth.loginTitle')}</h1>
             <form className={styles.formContainer} onSubmit={handleSubmit}>
                 <div className={styles.field}>
                     <label htmlFor="login-email">{t('auth.email')}</label>
@@ -24,6 +25,7 @@ function Login({ toggleForm, handleLogin, handleInputChange, onForgotPassword })
                         id="login-email"
                         type="email"
                         name="email"
+                        autoComplete="email"
                         onChange={handleInputChange}
                         required
                     />
@@ -35,6 +37,7 @@ function Login({ toggleForm, handleLogin, handleInputChange, onForgotPassword })
                         <input
                             id="login-password"
                             name="password"
+                            autoComplete="current-password"
                             type={showPassword ? "text" : "password"}
                             onChange={handleInputChange}
                             required
@@ -42,6 +45,8 @@ function Login({ toggleForm, handleLogin, handleInputChange, onForgotPassword })
                         <button
                             type="button"
                             className={styles.eyeBtn}
+                            aria-label={showPassword ? t('auth.hidePassword') : t('auth.showPassword')}
+                            aria-pressed={showPassword}
                             onClick={() => setShowPassword((s) => !s)}
                         >
                             {showPassword ? <EyeIcon /> : <EyeSlashIcon />}

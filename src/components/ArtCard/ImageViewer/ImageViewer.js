@@ -1,8 +1,13 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
+import useDialog from '../../Dialog/useDialog';
 import styles from './ImageViewer.module.css'; // Створимо CSS для цього компонента
 
 const ImageViewer = ({ images, initialImageIndex, onClose }) => {
+    const { t } = useTranslation();
     const [currentIndex, setCurrentIndex] = useState(initialImageIndex);
+    const dialogRef = useRef(null);
+    useDialog(dialogRef, onClose); // focus, Tab and Escape
 
     // Оновлення початкового індексу, якщо він змінюється
     useEffect(() => {
@@ -26,8 +31,6 @@ const ImageViewer = ({ images, initialImageIndex, onClose }) => {
                 goToNext();
             } else if (event.key === 'ArrowLeft') {
                 goToPrev();
-            } else if (event.key === 'Escape') {
-                onClose();
             }
         };
 
@@ -35,25 +38,26 @@ const ImageViewer = ({ images, initialImageIndex, onClose }) => {
         return () => {
             window.removeEventListener('keydown', handleKeyDown);
         };
-    }, [goToNext, goToPrev, onClose]);
+    }, [goToNext, goToPrev]);
 
 
     if (!currentImage) return null; // Не рендерити, якщо немає зображення
 
     return (
         <div className={styles.viewerOverlay} onClick={onClose}>
-            <div className={styles.viewerContent} onClick={(e) => e.stopPropagation()}>
-                <button className={styles.closeButton} onClick={onClose}>
+            <div className={styles.viewerContent} onClick={(e) => e.stopPropagation()}
+                 ref={dialogRef} role="dialog" aria-modal="true" aria-label={t('viewer.label')}>
+                <button type="button" className={styles.closeButton} onClick={onClose} aria-label={t('common.close')}>
                     &times;
                 </button>
-                <img src={currentImage} alt={`Full view ${currentIndex + 1}`} className={styles.fullImage} />
+                <img src={currentImage} alt={t('viewer.image', { n: currentIndex + 1, total: images.length })} className={styles.fullImage} />
 
                 {images.length > 1 && ( // Показувати стрілки, тільки якщо є більше одного зображення
                     <>
-                        <button className={styles.navButton + ' ' + styles.prev} onClick={goToPrev}>
+                        <button type="button" className={styles.navButton + ' ' + styles.prev} onClick={goToPrev} aria-label={t('viewer.prev')}>
                             &#10094; {/* Ліва стрілка */}
                         </button>
-                        <button className={styles.navButton + ' ' + styles.next} onClick={goToNext}>
+                        <button type="button" className={styles.navButton + ' ' + styles.next} onClick={goToNext} aria-label={t('viewer.next')}>
                             &#10095; {/* Права стрілка */}
                         </button>
                     </>

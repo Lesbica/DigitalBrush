@@ -58,7 +58,7 @@ const CheckoutPage = () => {
                     <h2 className={styles.title}>{t('basket.title')}</h2>
                     <div className={styles.itemList}>
                         {cartItems.length === 0 ? (
-                            <p className={styles.emptyMessage}>{t('basket.empty')} <span onClick={() => navigate('/shop')}>{t('checkout.goShopping')}</span></p>
+                            <p className={styles.emptyMessage}>{t('basket.empty')} <button type="button" className="unstyled-button" style={{ textDecoration: 'underline' }} onClick={() => navigate('/shop')}>{t('checkout.goShopping')}</button></p>
                         ) : (
                             cartItems.map((item) => (
                                 <div
@@ -66,10 +66,11 @@ const CheckoutPage = () => {
                                     key={item.id}
                                     onClick={() => openModal(item)}
                                 >
-                                    <img src={item.imageUrl || "/images/placeholder.svg"} alt={item.title} className={styles.itemImage} />
+                                    <img src={item.imageUrl || "/images/placeholder.svg"} alt="" className={styles.itemImage} />
                                     <div className={styles.itemInfo}>
                                         <div className={styles.infoText}>
-                                            <span className={styles.itemTitle}>{item.title}</span>
+                                            <button type="button" className={`unstyled-button ${styles.itemTitle}`} aria-label={t('basket.openItem', { title: item.title })}
+                                                onClick={(e) => { e.stopPropagation(); openModal(item); }}>{item.title}</button>
                                             <span className={styles.itemArtist}>{item.artistName}</span>
                                             <p className={styles.itemDesc}>{(item.description || '').length > 100 ? `${item.description.substring(0, 100)}…` : item.description}</p>
                                         </div>
@@ -77,12 +78,13 @@ const CheckoutPage = () => {
                                             <span className={styles.itemPrice}>{formatPrice(item.price)}</span>
                                             <button
                                                 className={styles.removeBtn}
+                                                aria-label={t('basket.removeItem', { title: item.title })}
                                                 onClick={(e) => {
                                                     e.stopPropagation();
                                                     removeFromCart(item.id);
                                                 }}
                                             >
-                                                <img width="36" height="36" src={trash} alt={t('common.remove')} />
+                                                <img width="36" height="36" src={trash} alt="" />
                                             </button>
                                         </div>
                                     </div>

@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useState} from "react";
+import React, {useCallback, useEffect, useRef, useState} from "react";
 import styles from "./CommissionModalDetails.module.css";
 import closeIcon from '../../../assets/closeCross.svg';
 import axios from 'axios';
@@ -7,11 +7,14 @@ import logo from '../../../assets/logo.svg'
 import { useToast } from '../../../context/ToastContext';
 import { useTranslation } from 'react-i18next';
 import { formatPrice, formatDate } from '../../../i18n/format';
+import useDialog from '../../Dialog/useDialog';
 
 // respondAsArtist: artist of a direct open commission can accept or decline it
 // canCancel: customer can cancel an unpaid commission; onStatusChange(newStatus) refreshes the caller
 const CommissionModalDetails = ({ commission, onClose, disableTake = false, respondAsArtist = false, canCancel = false, onStatusChange }) => {
     const { t } = useTranslation();
+    const dialogRef = useRef(null);
+    useDialog(dialogRef, onClose);
     const toast = useToast();
 
     const [isLoading, setIsLoading] = useState(true);
@@ -189,8 +192,9 @@ const CommissionModalDetails = ({ commission, onClose, disableTake = false, resp
 
     return (
         <div className={styles.overlay}>
-            <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
-                <button className={styles.closeBtn} onClick={onClose}>
+            <div className={styles.modal} onClick={(e) => e.stopPropagation()}
+                 ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="commission-dialog-title">
+                <button type="button" className={styles.closeBtn} onClick={onClose}>
                     <img src={closeIcon} alt={t('common.close')} />
                 </button>
 
@@ -235,7 +239,7 @@ const CommissionModalDetails = ({ commission, onClose, disableTake = false, resp
 
                     {/* --- ПРАВА КОЛОНКА (Без змін) --- */}
                     <div className={styles.info}>
-                        <p className={styles.title}>{details.title}</p>
+                        <h2 className={styles.title} id="commission-dialog-title">{details.title}</h2>
                         <p className={styles.field}>
                             <span>{t('art.category')}</span> {details.category ? t(`labels.${details.category}`, { defaultValue: details.category }) : '—'}
                         </p>

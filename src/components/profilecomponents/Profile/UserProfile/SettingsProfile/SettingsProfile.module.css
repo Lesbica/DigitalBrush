@@ -154,7 +154,6 @@
     color: white;
     font-size: 22px;
     font-family: inherit;
-    outline: none;
     width: 371px;
 }
 
@@ -192,7 +191,6 @@
     color: white;
     font-size: 22px;
     font-family: inherit;
-    outline: none;
     appearance: none;
     cursor: pointer;
 }
@@ -260,7 +258,6 @@
     font-family: inherit;
     resize: vertical;
     min-height: 120px;
-    outline: none;
 }
 
 .saveButton {
@@ -299,4 +296,16 @@
         grid-template-columns: 1fr;
         gap: 30px;
     }
+}
+/* Heading of a group of selects (styles, languages) — looks like the field labels */
+.groupLabel {
+    display: block;
+    margin-bottom: 8px;
+}
+
+.inputField:focus-visible,
+.selectField:focus-visible,
+.textArea:focus-visible {
+    outline: 2px solid #b991ff;
+    outline-offset: 2px;
 }

@@ -51,7 +51,7 @@ function AuthLayout({ children, onCreateAccount }) {
 
             <button
                 type="button"
-                className={styles.secondaryBtn}
+                className={styles.createAccountBtn}
                 onClick={onCreateAccount}
             >
                 {t('auth.createAccount')}

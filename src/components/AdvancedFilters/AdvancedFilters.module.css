@@ -98,6 +98,8 @@
 }
 
 .subList {
+    list-style: none;
+    margin: 0;
     position: absolute;
     top: 0;
     left: 105%;
@@ -148,4 +150,14 @@
     color: #b991ff;
     font-weight: 600;
     background: rgba(185, 145, 255, 0.12);
+}
+
+/* The clickable part of an option fills its row */
+.optionButton {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    min-height: 28px;
+    gap: 8px;
 }

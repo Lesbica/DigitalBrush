@@ -6,6 +6,7 @@ import addImageIcon from '../../../assets/image-placeholder-icon.svg';
 import { useToast } from '../../../context/ToastContext';
 import { PAINTING_FORMATS } from '../../../constants/filters';
 import { useTranslation } from 'react-i18next';
+import useDialog from '../../Dialog/useDialog';
 
 const getOptions = (config, title) => {
   const section = config.find(f => f.title === title);
@@ -22,6 +23,8 @@ const AddArtModal = ({
   existingPaintingId = null
 }) => {
   const toast = useToast();
+  const dialogRef = useRef(null);
+  useDialog(dialogRef, onClose);
     const { t } = useTranslation();
   const styleOptions = getOptions(filterConfig, "STYLE");
   const formatOptions = PAINTING_FORMATS;
@@ -269,34 +272,37 @@ const AddArtModal = ({
 
   return (
     <div className={styles.overlay} onClick={handleOverlayClick}>
-      <div className={styles.modalContent} onClick={(e) => e.stopPropagation()} onWheel={handleWheelScroll}>
+      <div className={styles.modalContent} onClick={(e) => e.stopPropagation()} onWheel={handleWheelScroll}
+           ref={dialogRef} role="dialog" aria-modal="true" aria-label={t('shop.addImage')}>
 
-        <button className={styles.closeBtnFixed} onClick={onClose}>
+        <button type="button" className={styles.closeBtnFixed} onClick={onClose}>
           <img src={closeIcon} alt={t('common.close')} />
         </button>
 
         {/* LEFT COLUMN */}
         <div className={styles.leftColumn} ref={leftColumnRef}>
           <div className={`${styles.imageUploadArea} ${errors.images ? styles.errorBorder : ''}`}>
-            <img src={addImageIcon} alt="Upload" className={styles.uploadIcon} />
+            <img src={addImageIcon} alt="" className={styles.uploadIcon} />
             <input
               type="file"
               accept="image/*"
+              aria-label={t('upload.addImages')}
               className={styles.fileInput}
               onChange={handleFileAdd}
               multiple
             />
           </div>
 
-          {errors.images && <span className={styles.error}>{errors.images}</span>}
+          {errors.images && <span className={styles.error} role="alert">{errors.images}</span>}
 
           <div className={styles.imageStack}>
             {images.map((img, i) => (
               <div key={i} className={styles.stackImagePreview}>
                 <img src={img.preview} className={styles.imagePreview} alt="" />
-                <div className={styles.deleteOverlay} onClick={(e) => handleImageDelete(e, i)}>
-                  <img src={closeIcon} className={styles.deleteIcon} alt="delete" />
-                </div>
+                <button type="button" className={`unstyled-button ${styles.deleteOverlay}`} onClick={(e) => handleImageDelete(e, i)}
+                        aria-label={t('upload.removeImage', { n: i + 1 })}>
+                  <img src={closeIcon} className={styles.deleteIcon} alt="" />
+                </button>
               </div>
             ))}
           </div>
@@ -308,8 +314,11 @@ const AddArtModal = ({
 
             {/* NAME */}
             <div className={styles.formGroup}>
-              <p>{t('upload.name')}</p>
+              <label htmlFor="art-name">{t('upload.name')}</label>
               <textarea
+                id="art-name"
+                aria-invalid={Boolean(errors.name)}
+                aria-describedby={errors.name ? 'art-name-error' : undefined}
                 className={`${styles.formInput} ${errors.name ? styles.errorBorderInput : ''}`}
                 value={name}
                 onChange={e => setName(e.target.value)}
@@ -318,13 +327,14 @@ const AddArtModal = ({
                 placeholder={t('upload.namePlaceholder')}
               />
               <span className={styles.charCounter}>{name.length} / 150</span>
-              {errors.name && <span className={styles.error}>{errors.name}</span>}
+              {errors.name && <span className={styles.error} id="art-name-error" role="alert">{errors.name}</span>}
             </div>
 
             {/* CATEGORY */}
             <div className={styles.formGroup}>
-              <p>{t('art.category')}</p>
+              <label htmlFor="art-category">{t('art.category')}</label>
               <select
+                id="art-category"
                 className={styles.formSelect}
                 value={category}
                 onChange={e => setCategory(e.target.value)}
@@ -337,8 +347,9 @@ const AddArtModal = ({
 
             {/* STYLE */}
             <div className={styles.formGroup}>
-              <p>{t('art.style')}</p>
+              <label htmlFor="art-style">{t('art.style')}</label>
               <select
+                id="art-style"
                 className={styles.formSelect}
                 value={style}
                 onChange={e => setStyle(e.target.value)}
@@ -348,13 +359,14 @@ const AddArtModal = ({
                   <option key={s}>{s}</option>
                 ))}
               </select>
-              {errors.style && <span className={styles.error}>{errors.style}</span>}
+              {errors.style && <span className={styles.error} role="alert">{errors.style}</span>}
             </div>
 
             {/* FORMAT */}
             <div className={styles.formGroup}>
-              <p>{t('art.format')}</p>
+              <label htmlFor="art-format">{t('art.format')}</label>
               <select
+                id="art-format"
                 className={styles.formSelect}
                 value={fileFormat}
                 onChange={e => setFileFormat(e.target.value)}
@@ -364,40 +376,47 @@ const AddArtModal = ({
                   <option key={f}>{f}</option>
                 ))}
               </select>
-              {errors.fileFormat && <span className={styles.error}>{errors.fileFormat}</span>}
+              {errors.fileFormat && <span className={styles.error} role="alert">{errors.fileFormat}</span>}
             </div>
 
             {/* SIZE */}
             <div className={styles.formGroup}>
-              <p>{t('art.size')}</p>
-              <div className={`${styles.sizeInputGroup} ${errors.size ? styles.errorBorderInput : ''}`}>
+              <span id="art-size-label">{t('art.size')}</span>
+              <div className={`${styles.sizeInputGroup} ${errors.size ? styles.errorBorderInput : ''}`} role="group" aria-labelledby="art-size-label">
                 <input
                   type="text"
                   placeholder="W"
+                  inputMode="numeric"
+                  aria-label={t('upload.width')}
                   value={sizeW}
                   onChange={e => setSizeW(e.target.value.replace(/\D/g, ''))}
                 />
-                <span>X</span>
+                <span aria-hidden="true">X</span>
                 <input
                   type="text"
                   placeholder="H"
+                  inputMode="numeric"
+                  aria-label={t('upload.height')}
                   value={sizeH}
                   onChange={e => setSizeH(e.target.value.replace(/\D/g, ''))}
                 />
               </div>
-              {errors.size && <span className={styles.error}>{errors.size}</span>}
+              {errors.size && <span className={styles.error} role="alert">{errors.size}</span>}
             </div>
 
             {/* ABOUT */}
             <div className={styles.formGroup}>
-              <p>{t('commission.about')}</p>
+              <label htmlFor="art-about">{t('commission.about')}</label>
               <textarea
+                id="art-about"
+                aria-invalid={Boolean(errors.about)}
+                aria-describedby={errors.about ? 'art-about-error' : undefined}
                 className={`${styles.formInput} ${errors.about ? styles.errorBorderInput : ''}`}
                 value={about}
                 onChange={e => setAbout(e.target.value)}
                 rows={3}
               />
-              {errors.about && <span className={styles.error}>{errors.about}</span>}
+              {errors.about && <span className={styles.error} id="art-about-error" role="alert">{errors.about}</span>}
             </div>
 
             {/* PRICE + SUBMIT */}
@@ -406,11 +425,14 @@ const AddArtModal = ({
                 <input
                   type="text"
                   placeholder={t('upload.pricePlaceholder')}
+                  inputMode="decimal"
+                  aria-label={t('upload.price')}
+                  aria-invalid={Boolean(errors.price)}
                   value={price}
                   onChange={e => setPrice(e.target.value.replace(/\D/g, ''))}
                   className={`${styles.priceInput} ${errors.price ? styles.errorBorderInput : ''}`}
                 />
-                {errors.price && <span className={styles.errorPrice}>{errors.price}</span>}
+                {errors.price && <span className={styles.errorPrice} role="alert">{errors.price}</span>}
               </div>
 
               <button

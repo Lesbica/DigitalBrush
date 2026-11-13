@@ -135,6 +135,8 @@
 }
 
 .button1 {
+    max-width: 100%;
+    box-sizing: border-box;
     margin-top: 30px;
     padding: 18px 0;
     width: 390px;
@@ -763,3 +765,74 @@
         transform: rotate(5deg);
     }
 }
+/* keyboard focus: the whole search bar gets the ring (the input itself has no outline) */
+.searchBarContainer:focus-within {
+    outline: 2px solid #b991ff;
+    outline-offset: 2px;
+}
+
+/* Headings that used to be <div>: no browser default margins/weight */
+h2.textHeader1,
+h2.TrendsHeader {
+    margin-bottom: 0;
+}
+
+h2.textHeader1 {
+    margin-top: 0;
+}
+
+/* First screen: what the site is and where to go */
+.heroIntro {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 40px 16px 24px;
+    text-align: center;
+}
+
+.heroTitle {
+    margin: 0 0 12px;
+    font-family: 'Orbitron', sans-serif;
+    font-size: clamp(26px, 4vw, 48px);
+    line-height: 1.15;
+}
+
+.heroText {
+    margin: 0 auto 24px;
+    max-width: 640px;
+    font-size: clamp(16px, 1.6vw, 20px);
+    line-height: 1.5;
+    color: rgba(255, 255, 255, 0.85);
+}
+
+.heroActions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 12px;
+}
+
+.heroPrimary,
+.heroSecondary {
+    min-height: 48px;
+    padding: 12px 28px;
+    border-radius: 12px;
+    font-size: 18px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.heroPrimary {
+    border: none;
+    background: #5050EB;
+    color: #ffffff;
+}
+
+.heroPrimary:hover { background: #3f3fd6; }
+
+.heroSecondary {
+    border: 2px solid rgba(255, 255, 255, 0.8);
+    background: transparent;
+    color: #ffffff;
+}
+
+.heroSecondary:hover { background: rgba(255, 255, 255, 0.1); }

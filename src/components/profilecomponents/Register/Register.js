@@ -89,7 +89,7 @@ function Register({toggleForm}) {
 
             <div className={styles.field}>
                 <label htmlFor="reg-username">{t('register.username')}</label>
-                <input id="reg-username" name="username"
+                <input id="reg-username" autoComplete="username" name="username"
                        value={formData.username}
                        onChange={handleChange}
                        required
@@ -99,7 +99,7 @@ function Register({toggleForm}) {
             </div>
             <div className={styles.field}>
                 <label htmlFor="reg-email">{t('auth.email')}</label>
-                <input id="reg-email" type="email" name="email"
+                <input id="reg-email" autoComplete="email" type="email" name="email"
                        value={formData.email}
                        onChange={handleChange}
                        required
@@ -108,7 +108,7 @@ function Register({toggleForm}) {
             </div>
             <div className={styles.field}>
                 <label htmlFor="reg-birthday">{t('register.birthday')}</label>
-                <input id="reg-birthday" type="date" name="birthday"
+                <input id="reg-birthday" autoComplete="bday" type="date" name="birthday"
                        value={formData.birthday}
                        onChange={handleChange}
                        required
@@ -119,7 +119,7 @@ function Register({toggleForm}) {
             <div className={styles.field}>
                 <label htmlFor="reg-password">{t('auth.password')}</label>
                 <div className={styles.passwordWrapper}>
-                    <input id="reg-password" name="password"
+                    <input id="reg-password" autoComplete="new-password" name="password"
                            type={showPassword ? "text" : "password"}
                            value={formData.password}
                            onChange={handleChange}

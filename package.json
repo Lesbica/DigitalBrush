@@ -19,7 +19,7 @@
     "server": "npm --prefix server start",
     "migrate": "npm --prefix server run migrate",
     "test:api": "npm --prefix server test",
-    "setup": "npm install && npm --prefix server install",
+    "setup": "npm install && cd server && npm install",
     "lint:server": "eslint --no-eslintrc -c server/.eslintrc.json server --ext .js",
     "withdrawals": "npm --prefix server run withdrawals --",
     "preview": "vite preview",

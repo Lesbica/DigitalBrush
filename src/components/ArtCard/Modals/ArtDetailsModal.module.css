@@ -240,7 +240,6 @@
     border: none;
     cursor: pointer;
     padding: 0;
-    outline: none;
     -webkit-tap-highlight-color: transparent;
 
     flex-shrink: 0;
@@ -271,3 +270,22 @@
     fill: rgba(255, 255, 255, 0.2); /* Легка заливка при наведенні */
     stroke: white;
 }
+/* Like toggle next to the price: heart + count in one button */
+.likeToggle {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-height: 44px;
+    padding: 4px 8px;
+    border: none;
+    border-radius: 999px;
+    background: none;
+    color: #D9D9D9;
+    font: inherit;
+    font-size: 30px;
+    cursor: pointer;
+}
+
+.likeToggle:hover { background: rgba(255, 255, 255, 0.08); }
+.likeToggle:disabled { cursor: progress; opacity: 0.7; }
+.likeToggle svg { width: 40px; height: 40px; }

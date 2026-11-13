@@ -227,13 +227,14 @@ export default function ArtistsPage() {
                         <h1 className={styles.artistsTitle}>{t('artists.title')}</h1>
                         <div className={styles.searchBarContainer}>
                             <input
-                                type="text"
+                                type="search"
                                 className={styles.searchInput}
+                                aria-label={t('common.searchLabel')}
                                 placeholder={t('artists.searchPlaceholder')}
                                 value={searchQuery}
                                 onChange={handleSearchChange}
                             />
-                            <button className={styles.searchButton}>
+                            <button type="button" className={styles.searchButton} tabIndex={-1} aria-hidden="true">
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20">
                                     <path d="M21 21l-4.35-4.35M10 18a8 8 0 1 1 0 -16 8 8 0 0 1 0 16z" strokeWidth="2" fill="none" />
                                 </svg>

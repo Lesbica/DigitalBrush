@@ -205,8 +205,10 @@ function ProfileSettings({user}) {
                     </div>
 
                     <div className={styles.formGroup}>
-                        <label>{t('settings.name')}</label>
+                        <label htmlFor="settings-username">{t('settings.name')}</label>
                         <input
+                            id="settings-username"
+                            autoComplete="username"
                             type="text"
                             name="username"
                             value={formData.username}
@@ -216,8 +218,10 @@ function ProfileSettings({user}) {
                         {errors.username && <span className={styles.errorMessage}>{errors.username}</span>}
                     </div>
                     <div className={styles.formGroup}>
-                        <label>{t('auth.email')}</label>
+                        <label htmlFor="settings-email">{t('auth.email')}</label>
                         <input
+                            id="settings-email"
+                            autoComplete="email"
                             type="text"
                             name="email"
                             value={formData.email}
@@ -229,7 +233,7 @@ function ProfileSettings({user}) {
 
                     {/* Styles Tags */}
                     <div className={styles.formGroup}>
-                        <label>{t('art.style')}</label>
+                        <span className={styles.groupLabel} id="settings-styles-label">{t('art.style')}</span>
                         <div className={styles.tagsContainer}>
                             {styleTags.map((tag, index) => (
                                 <div key={index} className={styles.tagRow}>
@@ -238,12 +242,13 @@ function ProfileSettings({user}) {
                                             value={tag}
                                             onChange={(e) => handleTagChange(index, e.target.value, setStyleTags, styleTags)}
                                             className={styles.selectField}
+                                            aria-label={t('settings.styleN', { n: index + 1 })}
                                         >
                                             {AVAILABLE_STYLES.map(option => (
                                                 <option key={option} value={option}>{option}</option>
                                             ))}
                                         </select>
-                                        <img src={arrowIcon} className={styles.arrowIcon} alt="arrow"/>
+                                        <img src={arrowIcon} className={styles.arrowIcon} alt=""/>
                                     </div>
                                     <button
                                         type="button"
@@ -266,7 +271,7 @@ function ProfileSettings({user}) {
 
                     {/* Language Tags */}
                     <div className={styles.formGroup}>
-                        <label>{t('author.languages')}</label>
+                        <span className={styles.groupLabel} id="settings-languages-label">{t('author.languages')}</span>
                         <div className={styles.tagsContainer}>
                             {languageTags.map((tag, index) => (
                                 <div key={index} className={styles.tagRow}>
@@ -275,12 +280,13 @@ function ProfileSettings({user}) {
                                             value={tag}
                                             onChange={(e) => handleTagChange(index, e.target.value, setLanguageTags, languageTags)}
                                             className={styles.selectField}
+                                            aria-label={t('settings.languageN', { n: index + 1 })}
                                         >
                                             {AVAILABLE_LANGUAGES.map(option => (
                                                 <option key={option} value={option}>{option}</option>
                                             ))}
                                         </select>
-                                        <img src={arrowIcon} className={styles.arrowIcon} alt="arrow"/>
+                                        <img src={arrowIcon} className={styles.arrowIcon} alt=""/>
                                     </div>
                                     <button
                                         type="button"
@@ -315,39 +321,40 @@ function ProfileSettings({user}) {
                             accept="image/*"
                         />
 
-                        <div className={styles.avatarContainer} onClick={handleAvatarClick}>
+                        <button type="button" className={`unstyled-button ${styles.avatarContainer}`} onClick={handleAvatarClick} aria-label={t('settings.changeAvatar')}>
                             <img
                                 src={avatarPreview}
                                 alt={t('settings.avatar')}
                                 className={styles.avatarImage}
                             />
                             <div className={styles.avatarOverlay}>
-                                <img src={uploadIconPlaceholder} className={styles.uploadIcon} alt="Upload"/>
+                                <img src={uploadIconPlaceholder} className={styles.uploadIcon} alt=""/>
                             </div>
-                        </div>
+                        </button>
                     </div>
 
                     {/* Social Links */}
                     <div className={styles.formGroup}>
-                        <label>{t('settings.link', { name: 'Instagram' })}</label>
-                        <input type="text" name="instagram" value={formData.instagram} onChange={handleInputChange}
+                        <label htmlFor="settings-instagram">{t('settings.link', { name: 'Instagram' })}</label>
+                        <input type="url" id="settings-instagram" name="instagram" value={formData.instagram} onChange={handleInputChange}
                                className={styles.inputField}/>
                     </div>
                     <div className={styles.formGroup}>
-                        <label>{t('settings.link', { name: 'Behance' })}</label>
-                        <input type="text" name="behance" value={formData.behance} onChange={handleInputChange}
+                        <label htmlFor="settings-behance">{t('settings.link', { name: 'Behance' })}</label>
+                        <input type="url" id="settings-behance" name="behance" value={formData.behance} onChange={handleInputChange}
                                className={styles.inputField}/>
                     </div>
                     <div className={styles.formGroup}>
-                        <label>{t('settings.link', { name: 'TikTok' })}</label>
-                        <input type="text" name="tiktok" value={formData.tiktok} onChange={handleInputChange}
+                        <label htmlFor="settings-tiktok">{t('settings.link', { name: 'TikTok' })}</label>
+                        <input type="url" id="settings-tiktok" name="tiktok" value={formData.tiktok} onChange={handleInputChange}
                                className={styles.inputField}/>
                     </div>
                 </div>
 
                 <div className={`${styles.formGroup} ${styles.fullWidth}`}>
-                    <label>{t('settings.description')}</label>
+                    <label htmlFor="settings-description">{t('settings.description')}</label>
                     <textarea
+                        id="settings-description"
                         name="description"
                         value={formData.description}
                         onChange={handleInputChange}

@@ -46,7 +46,8 @@
     "BoughtImages": "BOUGHT"
   },
   "filters": {
-    "additional": "ADDITIONAL FILTERS"
+    "additional": "ADDITIONAL FILTERS",
+    "optionsOf": "{{name}}: options"
   },
   "nav": {
     "main": "MAIN",
@@ -57,7 +58,14 @@
     "signIn": "SIGN IN",
     "basket": "Basket",
     "menu": "Menu",
-    "language": "Language"
+    "language": "Language",
+    "basketCount_one": "Basket, {{count}} item",
+    "basketCount_few": "Basket, {{count}} items",
+    "basketCount_many": "Basket, {{count}} items",
+    "basketCount_other": "Basket, {{count}} items",
+    "basketCount_zero": "Basket is empty",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu"
   },
   "notifications": {
     "title": "Notifications",
@@ -71,7 +79,8 @@
   "footer": {
     "about": "This is a space that unites artists and customers, ensures transparency, security, and convenience of collaboration, promotes the development of the creative economy and supports digital culture.",
     "contact": "Contact us if you have any problems:",
-    "follow": "Follow us:"
+    "follow": "Follow us:",
+    "social": "{{name}} (coming soon)"
   },
   "common": {
     "close": "Close",
@@ -85,14 +94,18 @@
     "send": "Send",
     "registration": "Registration",
     "saving": "Saving…",
-    "add": "Add"
+    "add": "Add",
+    "searchLabel": "Search",
+    "skipToContent": "Skip to content"
   },
   "basket": {
     "title": "BASKET",
     "empty": "Your basket is empty.",
     "buy": "Buy",
     "already": "This item is already in your basket.",
-    "added": "Added to the basket!"
+    "added": "Added to the basket!",
+    "removeItem": "Remove \"{{title}}\" from the basket",
+    "openItem": "Open \"{{title}}\""
   },
   "checkout": {
     "noPaymentUrl": "The payment page could not be opened. Please try again.",
@@ -118,7 +131,11 @@
     "trends": "TRENDS",
     "searchPlaceholder": "Search by title, artist, style...",
     "loading": "Loading masterpieces...",
-    "noResults": "No results found for your search."
+    "noResults": "No results found for your search.",
+    "title": "DigitalBrush — digital art marketplace",
+    "heroText": "Buy finished digital art or order a piece made for you — straight from the artists.",
+    "toShop": "Browse the shop",
+    "toCommission": "Order a commission"
   },
   "availability": {
     "open": "available",
@@ -147,7 +164,13 @@
     "style": "Style",
     "format": "File format",
     "size": "Size",
-    "download": "Download"
+    "download": "Download",
+    "openCard": "{{title}} by {{artist}}, {{price}}, {{likes}} likes",
+    "addToBasket": "Add to basket",
+    "like": "Like",
+    "unlike": "Remove like",
+    "openImage": "Open image {{n}} in full size",
+    "dialog": "Painting details"
   },
   "artists": {
     "title": "Artists",
@@ -196,7 +219,8 @@
     "savePassword": "Save password",
     "loginFailed": "Login failed",
     "google": "Continue with Google",
-    "googleFailed": "Could not sign in with Google. Try again or use your email and password."
+    "googleFailed": "Could not sign in with Google. Try again or use your email and password.",
+    "loginTitle": "Sign in"
   },
   "register": {
     "done": "Registration successful! You can log in now.",
@@ -244,7 +268,10 @@
     "name": "Name",
     "avatar": "Avatar",
     "link": "{{name}} (link)",
-    "description": "Description"
+    "description": "Description",
+    "changeAvatar": "Change avatar",
+    "styleN": "Style {{n}}",
+    "languageN": "Language {{n}}"
   },
   "wallet": {
     "months": {
@@ -365,7 +392,12 @@
     "saveFailed": "Could not save the artwork",
     "namePlaceholder": "Name...",
     "update": "Update",
-    "select": "Select..."
+    "select": "Select...",
+    "removeImage": "Remove image {{n}}",
+    "addImages": "Add images",
+    "width": "Width, px",
+    "height": "Height, px",
+    "price": "Price, ₴"
   },
   "chat": {
     "fileTooLarge": "The file is too large (max 5 MB).",
@@ -387,7 +419,12 @@
     "pay": "Pay {{price}}",
     "waitingPayment": "Waiting for payment…",
     "submitStage": "Submit: {{stage}}",
-    "placeholder": "Write a message"
+    "placeholder": "Write a message",
+    "attach": "Attach an image",
+    "messageLabel": "Message",
+    "messages": "Messages",
+    "stageProgress": "Stage {{n}} of {{total}}",
+    "stagesDone": "All stages done"
   },
   "payment": {
     "checking": "Checking your payment…",
@@ -408,5 +445,17 @@
     "failedTitle": "Payment failed",
     "failedText": "The payment was declined or cancelled, and nothing was charged. Please try again.",
     "backToCheckout": "Return to checkout"
+  },
+  "viewer": {
+    "label": "Image viewer",
+    "prev": "Previous image",
+    "next": "Next image",
+    "image": "Image {{n}} of {{total}}"
+  },
+  "pagination": {
+    "label": "Pages",
+    "page": "Page {{n}}",
+    "prev": "Previous page",
+    "next": "Next page"
   }
 }

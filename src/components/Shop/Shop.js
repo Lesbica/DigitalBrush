@@ -58,13 +58,14 @@ const Shop = () => {
                         <h1 className={styles.shopTitle}>{t('nav.shop')}</h1>
                         <div className={styles.searchBarContainer}>
                             <input
-                                type="text"
+                                type="search"
                                 className={styles.searchInput}
+                                aria-label={t('common.searchLabel')}
                                 placeholder={t('shop.searchPlaceholder')}
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                             />
-                            <button className={styles.searchButton}>
+                            <button type="button" className={styles.searchButton} tabIndex={-1} aria-hidden="true">
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20">
                                     <path d="M21 21l-4.35-4.35M10 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16z" stroke="black" strokeWidth="2" fill="none" />
                                 </svg>

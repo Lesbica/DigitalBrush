@@ -156,3 +156,23 @@
 .googleBtn:hover {
     background: #f1f1f1;
 }
+
+/* Second main path of the card: registration, as visible as "Log in" */
+.createAccountBtn {
+    width: 100%;
+    min-height: 44px;
+    margin-top: 12px;
+    padding: 10px 16px;
+    border: 2px solid #5050EB;
+    border-radius: 999px;
+    background: transparent;
+    color: #1e1b2e;
+    font-family: 'Montserrat Alternates', sans-serif;
+    font-weight: 600;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+.createAccountBtn:hover {
+    background: rgba(80, 80, 235, 0.08);
+}

@@ -9,20 +9,26 @@ import { useTranslation } from 'react-i18next';
  * Цей компонент SocialIcon використовує <img> теги,
  * щоб показувати повноколірні логотипи.
 */
-const SocialIcon = ({ type }) => {
-    const icons = {
-        twitter: twitterIcon,
-        facebook: facebookIcon,
-        instagram: instagramIcon,
-    };
+const SOCIAL = {
+    twitter: { icon: twitterIcon, name: 'X (Twitter)', url: import.meta.env.VITE_SOCIAL_TWITTER },
+    facebook: { icon: facebookIcon, name: 'Facebook', url: import.meta.env.VITE_SOCIAL_FACEBOOK },
+    instagram: { icon: instagramIcon, name: 'Instagram', url: import.meta.env.VITE_SOCIAL_INSTAGRAM },
+};
 
+// A link only when the account address is configured (VITE_SOCIAL_*); otherwise just the named icon
+const SocialIcon = ({ type }) => {
+    const { t } = useTranslation();
+    const { icon, name, url } = SOCIAL[type];
+    if (!url) {
+        return (
+            <span className={styles.socialIconLink} title={t('footer.social', { name })}>
+                <img src={icon} alt={t('footer.social', { name })} className={styles.socialIcon} />
+            </span>
+        );
+    }
     return (
-        <a href="#" className={styles.socialIconLink}>
-            <img
-                src={icons[type]}
-                alt={`${type} logo`}
-                className={styles.socialIcon}
-            />
+        <a href={url} className={styles.socialIconLink} target="_blank" rel="noopener noreferrer">
+            <img src={icon} alt={name} className={styles.socialIcon} />
         </a>
     );
 };

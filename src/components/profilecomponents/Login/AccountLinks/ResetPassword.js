@@ -45,12 +45,12 @@ export default function ResetPassword() {
                     <h2 className={styles.mainTitle}>{t('auth.newPassword')}</h2>
                     <div className={styles.field}>
                         <label htmlFor="new-password">{t('auth.newPassword')}</label>
-                        <input id="new-password" type="password" value={password} minLength="6" maxLength="72" required
+                        <input id="new-password" autoComplete="new-password" type="password" value={password} minLength="6" maxLength="72" required
                                onChange={(e) => setPassword(e.target.value)} disabled={loading}/>
                     </div>
                     <div className={styles.field}>
                         <label htmlFor="repeat-password">{t('auth.repeatPassword')}</label>
-                        <input id="repeat-password" type="password" value={repeat} minLength="6" maxLength="72" required
+                        <input id="repeat-password" autoComplete="new-password" type="password" value={repeat} minLength="6" maxLength="72" required
                                onChange={(e) => setRepeat(e.target.value)} disabled={loading}/>
                     </div>
                     {result && <p role="alert" style={{color: '#ff8a8a', margin: 0}}>{result.message}</p>}

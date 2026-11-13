@@ -166,35 +166,43 @@ function DigitalBrushProfile({ user, onLogout }) {
                             className={`${styles.profileSettingsBtn} ${activeTab === 'settings' ? styles.active : ''}`}
                             onClick={() => setActiveTab('settings')}
                         >
-                            <img src={userIcon} alt="UserIcon" className={styles.btnicon} />
+                            <img src={userIcon} alt="" className={styles.btnicon} />
                             {t('profile.settings')}
                         </button>
 
-                        <button
-                            className={`${styles.imagesBtn} ${activeTab === 'images' ? styles.active : ''}`}
-                            onClick={() => setActiveTab('images')}
-                        >
-                            <img src={pictureIcon} alt="PictureIcon" className={styles.btnicon} />
-                            {t('profile.myImages')}
-                            <img src={plusIcon} alt={t('shop.addImage')} className={styles.plusIcon}
-                                 onClick={handleOpenAddArt}
-                            />
-                        </button>
+                        <div className={styles.tabWithAction}>
+                            <button
+                                className={`${styles.imagesBtn} ${activeTab === 'images' ? styles.active : ''}`}
+                                onClick={() => setActiveTab('images')}
+                                aria-current={activeTab === 'images' ? 'page' : undefined}
+                            >
+                                <img src={pictureIcon} alt="" className={styles.btnicon} />
+                                {t('profile.myImages')}
+                            </button>
+                            <button type="button" className={styles.plusButton} onClick={handleOpenAddArt} aria-label={t('shop.addImage')}>
+                                <img src={plusIcon} alt="" />
+                            </button>
+                        </div>
 
-                        <button
-                            className={`${styles.comissionBtn} ${activeTab === 'commission' ? styles.active : ''}`}
-                            onClick={() => setActiveTab('commission')}
-                        >
-                            <img src={comissionIcon} alt="ComissionIcon" className={styles.btnicon} />
-                            {t('profile.myCommissions')}
-                            <img src={plusIcon} alt={t('commissions.add')} className={styles.plusIcon} onClick={handleOpenAddCommission}/>
-                        </button>
+                        <div className={styles.tabWithAction}>
+                            <button
+                                className={`${styles.comissionBtn} ${activeTab === 'commission' ? styles.active : ''}`}
+                                onClick={() => setActiveTab('commission')}
+                                aria-current={activeTab === 'commission' ? 'page' : undefined}
+                            >
+                                <img src={comissionIcon} alt="" className={styles.btnicon} />
+                                {t('profile.myCommissions')}
+                            </button>
+                            <button type="button" className={styles.plusButton} onClick={handleOpenAddCommission} aria-label={t('commissions.add')}>
+                                <img src={plusIcon} alt="" />
+                            </button>
+                        </div>
 
                         <button
                             className={`${styles.paymentBtn} ${activeTab === 'wallet' ? styles.active : ''}`}
                             onClick={() => setActiveTab('wallet')}
                         >
-                            <img src={walletIcon} alt="PaymentIcon" className={styles.btnicon} />
+                            <img src={walletIcon} alt="" className={styles.btnicon} />
                             {t('profile.wallet')}
                         </button>
 
@@ -202,21 +210,21 @@ function DigitalBrushProfile({ user, onLogout }) {
                             className={`${styles.calendarBtn} ${activeTab === 'calendar' ? styles.active : ''}`}
                             onClick={() => setActiveTab('calendar')}
                         >
-                            <img src={calendarIcon} alt="CalendarIcon" className={styles.btnicon} />
+                            <img src={calendarIcon} alt="" className={styles.btnicon} />
                             {t('profile.calendar')}
                         </button>
 
                         <button className={styles.logoutBtn} onClick={onLogout}>
-                            <img src={closeIcon} alt="LogoutIcon" className={styles.btnicon} />
+                            <img src={closeIcon} alt="" className={styles.btnicon} />
                             {t('profile.logout')}
                         </button>
                     </div>
                 </aside>
 
                 {/* --- ПРАВА ЧАСТИНА (ЗМІННИЙ КОНТЕНТ) --- */}
-                <main className={styles.gallerySection}>
+                <section className={styles.gallerySection}>
                     {renderContent()}
-                </main>
+                </section>
             </div>
 
             {showAddArtModal && (

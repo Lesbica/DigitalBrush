@@ -20,21 +20,21 @@ const PaymentSuccess = () => {
     }, [paidPaintings, removeManyFromCart]);
 
     if (state === 'loading') {
-        return <main className={styles.page}><p className={styles.text}>{t('payment.checking')}</p></main>;
+        return <div className={styles.page}><p className={styles.text}>{t('payment.checking')}</p></div>;
     }
 
     if (state === 'pending') {
         return (
-            <main className={styles.page}>
+            <div className={styles.page}>
                 <h1 className={styles.title}>{t('payment.pendingTitle')}</h1>
                 <p className={styles.text}>{t('payment.pendingText')}</p>
-            </main>
+            </div>
         );
     }
 
     if (state === 'failed') {
         return (
-            <main className={styles.page}>
+            <div className={styles.page}>
                 <h1 className={styles.title}>{t('payment.notCompletedTitle')}</h1>
                 <p className={styles.text}>{t('payment.notCompletedText')}</p>
                 <div className={styles.actions}>
@@ -42,14 +42,14 @@ const PaymentSuccess = () => {
                         {t('payment.tryAgain')}
                     </button>
                 </div>
-            </main>
+            </div>
         );
     }
 
     if (state === 'approved') {
         const isCommission = order.type === 'commission';
         return (
-            <main className={styles.page}>
+            <div className={styles.page}>
                 <h1 className={styles.title}>{t('payment.successTitle')}</h1>
                 <p className={styles.text}>
                     {isCommission ? t('payment.successCommission') : t('payment.successPaintings')}
@@ -62,18 +62,18 @@ const PaymentSuccess = () => {
                     )}
                     <button className={`${styles.button} ${styles.secondary}`} onClick={() => navigate('/shop')}>{t('payment.backToShop')}</button>
                 </div>
-            </main>
+            </div>
         );
     }
 
     return (
-        <main className={styles.page}>
+        <div className={styles.page}>
             <h1 className={styles.title}>{t('payment.unknownTitle')}</h1>
             <p className={styles.text}>{t('payment.unknownText')}</p>
             <div className={styles.actions}>
                 <button className={styles.button} onClick={() => navigate('/profile')}>{t('payment.toProfile')}</button>
             </div>
-        </main>
+        </div>
     );
 };
 

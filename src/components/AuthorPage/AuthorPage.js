@@ -198,7 +198,7 @@ const AuthorPage = () => {
                 </aside>
 
                 {/* --- ПРАВА ЧАСТИНА (ГАЛЕРЕЯ) --- */}
-                <main className={styles.gallerySection}>
+                <section className={styles.gallerySection}>
 
                     {/* Верхні контроли */}
                     <div className={styles.topControls}>
@@ -261,7 +261,7 @@ const AuthorPage = () => {
                             </div>
                         ))}
                     </section>
-                </main>
+                </section>
             </div>
 
             {isCommissionModalOpen && (

@@ -7,11 +7,14 @@ import { CATEGORIES } from '../../../constants/categories';
 import { useToast } from '../../../context/ToastContext';
 import { STYLES, COMMISSION_FORMATS } from '../../../constants/filters';
 import { useTranslation } from 'react-i18next';
+import useDialog from '../../Dialog/useDialog';
 
 const categories = CATEGORIES;
 
 const AddCommissionModal = ({ onClose, targetCreatorId = null }) => {
     const { t } = useTranslation();
+    const dialogRef = useRef(null);
+    useDialog(dialogRef, onClose);
     const toast = useToast();
     const [name, setName] = useState('');
     const [category, setCategory] = useState(categories[0]);
@@ -167,23 +170,25 @@ const AddCommissionModal = ({ onClose, targetCreatorId = null }) => {
 
     return (
         <div className={styles.overlay} onClick={onClose}>
-            <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.modal} onClick={(e) => e.stopPropagation()}
+                 ref={dialogRef} role="dialog" aria-modal="true" aria-label={t('commissions.add')}>
                 <div className={styles.contentWrapper}>
                     <div className={styles.leftColumn}>
                         <div className={`${styles.imageUploadArea} ${errors.images && images.length === 0 ? styles.errorBorder : ''}`}>
                             {mainDisplay ? (
                                 <>
                                     <img src={mainDisplay.preview} alt="Main preview" className={styles.imagePreview} />
-                                    <div className={styles.deleteOverlay} onClick={(e) => handleImageDelete(e, 4)}>
-                                        <img src={closeIcon} alt="Delete" className={styles.deleteIcon} />
-                                    </div>
+                                    <button type="button" className={`unstyled-button ${styles.deleteOverlay}`} onClick={(e) => handleImageDelete(e, 4)} aria-label={t('upload.removeImage', { n: Number(4) + 1 })}>
+                                        <img src={closeIcon} alt="" className={styles.deleteIcon} />
+                                    </button>
                                 </>
                             ) : (
                                 <>
-                                    <img src={addImageIcon} alt="Upload" className={styles.uploadIcon} />
+                                    <img src={addImageIcon} alt="" className={styles.uploadIcon} />
                                     <input
                                         type="file"
                                         accept="image/*"
+                                        aria-label={t('upload.addImages')}
                                         className={styles.fileInput}
                                         onChange={handleFileAdd}
                                         multiple
@@ -198,9 +203,9 @@ const AddCommissionModal = ({ onClose, targetCreatorId = null }) => {
                                     {img ? (
                                         <>
                                             <img src={img.preview} alt={`preview ${index}`} className={styles.imagePreview} />
-                                            <div className={styles.deleteOverlay} onClick={(e) => handleImageDelete(e, index)}>
-                                                <img src={closeIcon} alt="Delete" className={styles.deleteIcon} />
-                                            </div>
+                                            <button type="button" className={`unstyled-button ${styles.deleteOverlay}`} onClick={(e) => handleImageDelete(e, index)} aria-label={t('upload.removeImage', { n: Number(index) + 1 })}>
+                                                <img src={closeIcon} alt="" className={styles.deleteIcon} />
+                                            </button>
                                         </>
                                     ) : (
                                         <img src={addImageIcon} alt="preview slot" className={styles.uploadIconPreview} />
@@ -212,7 +217,7 @@ const AddCommissionModal = ({ onClose, targetCreatorId = null }) => {
                     <div className={styles.rightColumn}>
                         <div className={styles.formGroup}>
                             <div className={styles.formHeader}>
-                                <p>{t('upload.name')}</p>
+                                <label htmlFor="name">{t('upload.name')}</label>
                                 <button className={styles.closeBtn} onClick={onClose}>
                                     <img src={closeIcon} alt={t('common.close')} />
                                 </button>
@@ -220,6 +225,8 @@ const AddCommissionModal = ({ onClose, targetCreatorId = null }) => {
                             <input
                                 type="text"
                                 id="name"
+                                aria-invalid={Boolean(errors.name)}
+                                aria-describedby={errors.name ? 'name-error' : undefined}
                                 className={`${styles.formInput} ${styles.formInputName} ${errors.name ? styles.errorBorderInput : ''}`}
                                 value={name}
                                 onChange={(e) => {
@@ -227,50 +234,55 @@ const AddCommissionModal = ({ onClose, targetCreatorId = null }) => {
                                     if (errors.name) setErrors(prev => ({...prev, name: null}));
                                 }}
                             />
-                            {errors.name && <span className={styles.error}>{errors.name}</span>}
+                            {errors.name && <span className={styles.error} id="name-error" role="alert">{errors.name}</span>}
                         </div>
                         {/* ... Інші поля форми (category, style, format, size) ... */}
                         <div className={styles.formGroup}>
-                            <p>{t('art.category')}</p>
+                            <label htmlFor="category">{t('art.category')}</label>
                             <select id="category" className={styles.formSelect} value={category} onChange={(e) => setCategory(e.target.value)}>
                                 {categories.map(c => <option key={c} value={c}>{c}</option>)}
                             </select>
                         </div>
                         <div className={styles.formGroup}>
-                            <p>{t('art.style')}</p>
+                            <label htmlFor="style">{t('art.style')}</label>
                             <select id="style" className={styles.formSelect} value={style} onChange={(e) => setStyle(e.target.value)}>
                                 {STYLES.map(s => <option key={s} value={s}>{s}</option>)}
                             </select>
                         </div>
                         <div className={styles.formGroup}>
-                            <p>{t('art.format')}</p>
+                            <label htmlFor="fileFormat">{t('art.format')}</label>
                             <select id="fileFormat" className={styles.formSelect} value={fileFormat} onChange={(e) => setFileFormat(e.target.value)}>
                                 {COMMISSION_FORMATS.map(f => <option key={f} value={f}>{f}</option>)}
                             </select>
                         </div>
                         <div className={styles.formGroup}>
-                            <p>{t('art.size')}</p>
-                            <div className={`${styles.sizeInputGroup} ${errors.size ? styles.errorBorderInput : ''}`}>
+                            <span id="commission-size-label">{t('art.size')}</span>
+                            <div className={`${styles.sizeInputGroup} ${errors.size ? styles.errorBorderInput : ''}`} role="group" aria-labelledby="commission-size-label">
                                 <input
                                     type="text"
                                     value={sizeW}
                                     className={styles.formInput}
                                     onChange={(e) => handleSizeChange(e, 'w')}
+                                    inputMode="numeric"
+                                    aria-label={t('upload.width')}
                                     placeholder="W"
                                 />
-                                <span>X</span>
+                                <span aria-hidden="true">X</span>
                                 <input
                                     type="text"
                                     value={sizeH}
                                     className={styles.formInput}
                                     onChange={(e) => handleSizeChange(e, 'h')}
+                                    inputMode="numeric"
+                                    aria-label={t('upload.height')}
                                     placeholder="H"
                                 />
                             </div>
                         </div>
                         <div className={styles.formGroup}>
-                            <p>{t('upload.deadline')}</p>
+                            <label htmlFor="deadline">{t('upload.deadline')}</label>
                             <input
+                                id="deadline"
                                 type="date"
                                 className={styles.formInput}
                                 value={deadline}
@@ -281,9 +293,11 @@ const AddCommissionModal = ({ onClose, targetCreatorId = null }) => {
                     </div>
                 </div>
                 <div className={styles.formGroup}>
-                    <p>{t('commission.about')}</p>
+                    <label htmlFor="about">{t('commission.about')}</label>
                     <textarea
                         id="about"
+                        aria-invalid={Boolean(errors.about)}
+                        aria-describedby={errors.about ? 'about-error' : undefined}
                         className={`${styles.formInput} ${styles.formInputAbout} ${errors.about ? styles.errorBorder : ''}`}
                         value={about}
                         onChange={(e) => {
@@ -291,7 +305,7 @@ const AddCommissionModal = ({ onClose, targetCreatorId = null }) => {
                             if (errors.about) setErrors(prev => ({...prev, about: null}));
                         }}
                     />
-                    {errors.about && <span className={styles.error}>{errors.about}</span>}
+                    {errors.about && <span className={styles.error} id="about-error" role="alert">{errors.about}</span>}
                 </div>
                 <div className={styles.actions}>
                     <div className={styles.priceInputWrapper}>
@@ -301,8 +315,12 @@ const AddCommissionModal = ({ onClose, targetCreatorId = null }) => {
                             value={price}
                             onChange={handlePriceChange}
                             placeholder={t('upload.pricePlaceholder')}
+                            inputMode="decimal"
+                            aria-label={t('upload.price')}
+                            aria-invalid={Boolean(errors.price)}
+                            aria-describedby={errors.price ? 'price-error' : undefined}
                         />
-                        {errors.price && <span className={styles.errorPrice}>{errors.price}</span>}
+                        {errors.price && <span className={styles.errorPrice} id="price-error" role="alert">{errors.price}</span>}
                     </div>
                     <button className={styles.createBtn} onClick={handleCreate} disabled={submitting}>
                         {submitting ? t('upload.uploading') : t('upload.create')}

@@ -32,6 +32,7 @@ function ForgotPassword({ onBack, toggleForm }) {
                     <input
                         id="reset-email"
                         type="email"
+                        autoComplete="email"
                         name="email"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
