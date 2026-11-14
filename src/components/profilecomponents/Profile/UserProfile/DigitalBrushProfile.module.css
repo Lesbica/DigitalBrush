@@ -1,277 +1,320 @@
+/* My profile: a compact glass sidebar (who I am + menu), overview cards on top, the chosen section below.
+   On phones the sidebar becomes a header with a scrollable row of tabs. */
+
 .pageContainer {
-    min-height: 100vh;
-    color: #ffffff;
-    padding-bottom: 4rem;
-    font-family: 'Roboto', sans-serif;
-    font-weight: 400;
-    box-sizing: border-box;
+    padding-bottom: 48px;
+    color: var(--fg);
 }
 
 .contentWrapper {
-    display: flex;
-    flex-direction: row;
-    padding: 66px 47px;
-    gap: 132px;
+    display: grid;
+    grid-template-columns: 270px minmax(0, 1fr);
+    gap: 24px;
+    align-items: start;
+    max-width: var(--container);
+    margin: 0 auto;
+    padding: 28px var(--gutter-r) 0 var(--gutter);
 }
 
-/* --- Sidebar (Left Column) --- */
+/* --- sidebar --- */
 .sidebar {
-    flex: 0 0 330px;
+    position: sticky;
+    top: calc(var(--nav-h) + 20px);
     display: flex;
     flex-direction: column;
-    gap: 30px;
+    gap: 18px;
+    padding: 20px 14px;
+    border-radius: var(--radius-lg);
 }
 
-.avatarContainer {
-    width: 304px;
-    height: 304px;
-    border-radius: 50%;
-    overflow: hidden;
-    border: 13px solid #46464799; /* Стиль рамки як на AuthorPage */
-    align-self: flex-start;
+.identity {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0 6px;
 }
 
 .avatar {
-    width: 100%;
-    height: 100%;
+    flex: none;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
     object-fit: cover;
+    border: 2px solid var(--edge);
 }
 
-.artistName {
-    display: flex;
-    font-size: 30px;
-    font-weight: 400;
+.identityText {
+    min-width: 0;
+}
+
+.userName {
     margin: 0;
+    font-size: 18px;
     line-height: 1.2;
-    align-items: center;
-    gap: 5px;
+    overflow-wrap: anywhere;
 }
 
-.status {
-    font-size: 0.6em;
-    color: #4caf50; /* Зелений колір "available" */
-    font-weight: 300;
+.role {
+    color: var(--muted);
+    font-size: 13px;
 }
 
-.metaInfo {
+.menu {
     display: flex;
     flex-direction: column;
-    gap: 19px;
-    font-size: 22px;
-    color: #e0e0e0;
+    gap: 4px;
 }
 
-.metaRow {
+.menuRow {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
+    gap: 4px;
 }
 
-.socialicon {
-    width: 24px;
-    height: 24px;
-}
-
-.bio {
-    font-family: 'Roboto', sans-serif;
-    font-weight: 300;
-    font-style: normal;
-    font-size: 22px;
-    letter-spacing: 0;
-    color: #C6C4C4;
-    margin: 0;
-    white-space: pre-wrap;
-}
-
-.actionButtonsContainer {
-    display: flex;
-    flex-direction: column;
-    gap: 21px;
-    margin-top: 10px;
-    width: 100%;
-}
-
-.actionButtonsContainer > button,
-.tabWithAction > button:first-child {
-    font-size: 20px;
-    height: 44px;
-    padding: 6px 0 6px 14px;
-    color: white;
-    text-align: center;
-    cursor: pointer;
-    width: 100%;
-    transition: all 0.2s ease;
-    border-radius: 3.26px;
-    border: 2px solid transparent;
-    background:
-            linear-gradient(#46464799, #46464799) padding-box,
-            linear-gradient(168.05deg, #595C64 1.51%, rgba(71, 77, 95, 0.44) 90.56%) border-box;
-}
-
-.actionButtonsContainer > button:hover,
-.tabWithAction > button:first-child:hover {
-    opacity: 0.9;
-    transform: translateY(-2px);
-}
-
-.profileSettingsBtn, .imagesBtn, .comissionBtn, .paymentBtn, .calendarBtn, .logoutBtn{
-    display: flex;
-    gap: 6px;
-    align-items: center;
-}
-
-.actionButtonsContainer > button.active,
-.tabWithAction > button.active {
-    background: linear-gradient(rgba(89, 92, 100, 0.8), rgba(89, 92, 100, 0.8)) padding-box,
-    linear-gradient(168.05deg, #595C64 1.51%, rgba(71, 77, 95, 0.44) 90.56%) border-box;
-    transform: translateX(5px);
-}
-
-.profileSettingsBtn.active {
-    border-color: #F75252;
-}
-
-.imagesBtn.active {
-    border-color: #FD4CCC;
-}
-
-.comissionBtn.active {
-    border-color: #853FF6;
-}
-
-.paymentBtn.active {
-    border-color: #5050EB;
-}
-
-.calendarBtn.active {
-    border-color: #2090FF;
-}
-
-.imagesBtn:hover {
-    border-color: #FD4CCC;
-}
-
-.comissionBtn:hover {
-    border-color: #853FF6;
-}
-
-.paymentBtn:hover {
-    border-color: #5050EB;
-}
-
-.calendarBtn:hover {
-    border-color: #2090FF;
-}
-
-.profileSettingsBtn:hover {
-    border-color: #F75252;
-}
-
-.btnicon {
-    width: 32px;
-    height: 32px;
-}
-
-.plusIcon {
-    margin-left: auto;
-    margin-right: 9px;
-}
-
-.plusIcon:hover {
-    opacity: 0.9;
-}
-
-.logoutBtn {
-    cursor: pointer;
-    margin-top: 30px;
-}
-
-.logoutBtn:hover {
-    background: rgba(255, 68, 68, 0.1);
-}
-
-/* --- Right Column (Gallery) --- */
-.gallerySection {
+.menuItem {
     flex: 1;
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-}
-
-.topControls {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-    margin-bottom: 30px;
-}
-
-.artGrid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(212px, 1fr));
-    gap: 17px;
-    margin-bottom: 40px;
-}
-
-.noArtworks {
-    grid-column: 1 / -1;
-    text-align: center;
-    padding: 3rem;
-    color: #888;
-    font-size: 1.2rem;
-}
-
-/* --- Responsive --- */
-@media (max-width: 768px) {
-    .contentWrapper {
-        flex-direction: column;
-        padding: 1rem;
-        gap: 40px;
-    }
-    .avatarContainer {
-        margin: 0 auto;
-        width: 200px;
-        height: 200px;
-    }
-    .sidebar {
-        flex: auto;
-        width: 100%;
-        align-items: center;
-        text-align: center;
-    }
-    .metaInfo {
-        align-items: center;
-    }
-    .artGrid {
-        grid-template-columns: repeat(auto-fill, minmax(100%, 1fr));
-    }
-}
-/* Tab + its "add" action: two separate buttons, the action sits at the right edge of the tab */
-.tabWithAction {
-    position: relative;
-    width: 100%;
-}
-
-.tabWithAction > button:first-child {
-    padding-right: 52px;
-}
-
-.plusButton {
-    position: absolute;
-    top: 50%;
-    right: 6px;
-    transform: translateY(-50%);
+    min-width: 0;
     display: flex;
     align-items: center;
-    justify-content: center;
-    width: 36px;
-    height: 36px;
-    padding: 0;
+    gap: 12px;
+    min-height: 44px;
+    padding: 8px 12px;
     border: none;
+    border-radius: 14px;
+    background: none;
+    color: var(--muted);
+    font: inherit;
+    font-size: 15px;
+    font-weight: 500;
+    text-align: left;
+    cursor: pointer;
+}
+
+.menuItem:hover {
+    color: var(--fg);
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.menuItem.active {
+    color: var(--fg);
+    background: rgba(255, 255, 255, 0.08);
+    font-weight: 600;
+}
+
+.menuItem.active svg {
+    color: var(--lime);
+}
+
+.menuLabel {
+    flex: 1;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.badge {
+    flex: none;
+    padding: 2px 8px;
+    border-radius: var(--radius-pill);
+    background: var(--gradient-warm);
+    color: var(--on-accent);
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.count {
+    flex: none;
+    min-width: 24px;
+    padding: 1px 7px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.08);
+    font-size: 12px;
+    text-align: center;
+}
+
+.menuAction {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    border: 1px solid var(--edge);
     border-radius: 50%;
     background: none;
+    color: var(--fg);
     cursor: pointer;
 }
 
-.plusButton:hover {
-    background: rgba(255, 255, 255, 0.12);
+.menuAction:hover {
+    border-color: var(--lime);
+    color: var(--lime);
+}
+
+.logout {
+    margin-top: 8px;
+    border-top: 1px solid var(--edge);
+    border-radius: 0 0 14px 14px;
+    padding-top: 14px;
+}
+
+.logout:hover {
+    color: #FF8A8A;
+}
+
+/* --- overview cards --- */
+.main {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.stats {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.stat {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    padding: 18px 20px;
+    border-radius: var(--radius-lg);
+    color: var(--fg);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.stat:hover {
+    border-color: rgba(198, 245, 122, 0.45);
+}
+
+.statAccent {
+    background: linear-gradient(140deg, rgba(198, 245, 122, 0.16), rgba(255, 255, 255, 0.04));
+}
+
+.statLabel {
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.statValue {
+    font-family: var(--font-display);
+    font-size: 30px;
+    line-height: 1.1;
+}
+
+.statHint {
+    color: var(--muted);
+    font-size: 13px;
+}
+
+/* --- section --- */
+.gallerySection {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    padding: 22px;
+    border-radius: var(--radius-lg);
+}
+
+.placeholder {
+    padding: 40px;
+    border: 1px dashed var(--edge);
+    border-radius: var(--radius-lg);
+    color: var(--muted);
+    text-align: center;
+}
+
+@media (max-width: 900px) {
+    .contentWrapper {
+        grid-template-columns: 1fr;
+        gap: 16px;
+        padding-top: 16px;
+    }
+
+    .sidebar {
+        position: static;
+        padding: 16px 12px 12px;
+    }
+
+    .menu {
+        flex-direction: row;
+        gap: 6px;
+        overflow-x: auto;
+        scrollbar-width: none;
+        margin: 0 -12px;
+        padding: 0 12px;
+    }
+
+    .menu::-webkit-scrollbar {
+        display: none;
+    }
+
+    .menuRow {
+        flex: none;
+    }
+
+    .menuItem {
+        flex: none;
+        min-height: 38px;
+        padding: 6px 12px;
+        border: 1px solid var(--edge);
+        border-radius: var(--radius-pill);
+        font-size: 14px;
+    }
+
+    .menuItem.active {
+        background: var(--fg);
+        border-color: var(--fg);
+        color: var(--bg);
+    }
+
+    .menuItem.active svg {
+        color: var(--bg);
+    }
+
+    .menuAction {
+        display: none;
+    }
+
+    .logout {
+        flex: none;
+        margin-top: 0;
+        padding-top: 6px;
+        border-radius: var(--radius-pill);
+        border-top: 1px solid var(--edge);
+    }
+
+    .stats {
+        grid-template-columns: repeat(3, minmax(150px, 1fr));
+        overflow-x: auto;
+        scrollbar-width: none;
+    }
+
+    .gallerySection {
+        padding: 14px;
+    }
+}
+
+@media (max-width: 560px) {
+    .statValue {
+        font-size: 24px;
+    }
+
+    .stat {
+        padding: 14px 16px;
+    }
 }

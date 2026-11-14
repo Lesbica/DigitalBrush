@@ -1,211 +1,293 @@
-.navbar {
-    position: relative;
-    z-index: 50;
-    font-family: 'Roboto', sans-serif;
+/* Top bar: sticky glass header. Phones get a compact bar plus a fixed tab bar at the bottom. */
+
+.header {
+    position: sticky;
+    top: 0;
+    z-index: 60;
+    padding-top: env(safe-area-inset-top, 0px);
+    background: rgba(10, 10, 18, 0.72);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    border-bottom: 1px solid var(--edge);
+}
+
+.bar {
+    display: flex;
+    align-items: center;
+    gap: 28px;
+    height: var(--nav-h);
 }
 
 .logo {
-    width: 100%;
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 23px;
+    letter-spacing: -0.02em;
+    color: var(--fg);
+    flex-shrink: 0;
 }
 
-.navbarMain {
-    background-color: transparent;
-    padding: 1rem 1.5rem;
+.logo span {
+    color: var(--lime);
 }
 
-.navbarContainer {
+.links {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    margin: 0 auto;
+    gap: 4px;
 }
 
-.navbarLeft {
-    display: flex;
-    align-items: center;
-    gap: 20px;
-}
-
-.navbarLogo {
-    display: flex;
-    align-items: center;
-    margin-left: 6.5%;
-}
-
-.navbarLinks {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    margin-left: -3%;
-}
-
-.navLink {
-    background: none;
-    border: 1.5px solid transparent;
-    border-radius: 23px;
-    color: white;
-    padding: 1.2em 1.5em;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 22px;
-    font-family: 'Roboto', sans-serif;
-    cursor: pointer;
-    transition: color 0.2s, border-color 0.2s;
-    width: 214px;
-    height: 55px;
-}
-
-.navLink:hover {
-    color: #a5b4fc;
-    border-color: rgba(255, 255, 255, 0.5);
-}
-
-.navButtonActive {
-    composes: navLink;
-    font-weight: bold;
-    background: linear-gradient(90deg, rgba(1, 0, 38, 0.2) 0%, rgba(253, 76, 204, 0.2) 100%);
-    border-color: rgba(255, 255, 255, 0.8);
-    width: 214px;
-    height: 55px;
-}
-
-.navButtonActive:hover {
-    transform: scale(1.05);
-    color: white;
-    border-color: rgba(255, 255, 255, 0.8);
-}
-
-.navbarRight {
-    display: flex;
-    align-items: center;
-    gap: 1.5rem;
-}
-
-.iconsLeft {
-    display: flex;
-    align-items: center;
-    gap: 25px;
-}
-
-.settingsAndBasket {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    color: white;
-    cursor: pointer;
-}
-
-.navSigninButton {
+.link {
+    appearance: none;
     background: none;
     border: none;
-    color: white;
-    padding: 0;
-    font-size: 0.875rem;
-    line-height: 1.2;
-    text-align: left;
+    border-radius: var(--radius-pill);
+    padding: 9px 16px;
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--muted);
     cursor: pointer;
+    transition: color 0.15s, background 0.15s;
 }
 
-.navbarBottomBorder {
-    height: 1px;
-    background-color: rgba(255, 255, 255, 0.5);
-    margin-top: 1rem;
+.link:hover {
+    color: var(--fg);
+    background: var(--glass);
+}
+
+.linkActive {
+    color: var(--fg);
+    background: var(--glass-2);
+}
+
+.actions {
     margin-left: auto;
-    margin-right: auto;
-}
-
-.burgerMenu {
-    display: none;
-    background: none;
-    border: none;
-    color: white;
-    cursor: pointer;
-    z-index: 1001;
-}
-
-.mobileMenu {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: #0d0b1f;
     display: flex;
-    flex-direction: column;
     align-items: center;
-    justify-content: center;
-    opacity: 0;
-    visibility: hidden;
-    transform: translateY(-100%);
-    transition: transform 0.4s ease-in-out, opacity 0.4s ease-in-out, visibility 0.4s;
-    z-index: 1000;
+    gap: 10px;
 }
 
-.mobileMenu.open {
-    opacity: 1;
-    visibility: visible;
-    transform: translateY(0);
-}
-
-.closeButton {
-    position: absolute;
-    top: 1.5rem;
-    right: 1.5rem;
-    background: none;
-    border: none;
-    color: white;
+.iconButton {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    border: 1px solid var(--edge);
+    background: var(--glass);
+    color: var(--fg);
     cursor: pointer;
-    z-index: 1002;
 }
 
-.mobileNavLinks {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 2rem;
+.iconButton:hover {
+    background: var(--glass-2);
 }
 
-.mobileNavLinks button {
-    background: none;
-    border: none;
-    color: white;
-    font-size: 1.5rem;
-    font-family: 'Orbitron', sans-serif;
-    cursor: pointer;
-    padding: 0.5rem;
+.cartWrap {
+    position: relative;
 }
 
 .cartBadge {
     position: absolute;
-    top: 0;
-    right: 0;
-    transform: translate(40%, -40%);
-    background-color: #FF5A5A;
-    color: white;
-    border-radius: 50%;
-    width: 18px;
+    top: -3px;
+    right: -3px;
+    min-width: 18px;
     height: 18px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 12px;
-    font-weight: bold;
-}
-.settingsAndBasket {
-    position: relative;
+    padding: 0 4px;
+    border-radius: 9px;
+    background: var(--pink);
+    color: var(--on-accent);
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 18px;
+    text-align: center;
 }
 
-@media (max-width: 1420px) {
-    .navbarLinks, .navbarRight {
+.profileButton {
+    min-height: 42px;
+    padding: 9px 20px;
+    font-size: 14px;
+}
+
+/* --- Tab bar (phones) --- */
+
+.tabbar {
+    display: none;
+}
+
+@media (max-width: 899px) {
+    .bar {
+        gap: 12px;
+    }
+
+    .links,
+    .profileButton {
         display: none;
     }
-    .burgerMenu {
-        display: flex;
+
+    .logo {
+        font-size: 20px;
+    }
+
+    .actions {
+        gap: 8px;
+    }
+
+    .iconButton {
+        width: 40px;
+        height: 40px;
+    }
+
+    .tabbar {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 70;
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        align-items: end;
+        padding: 8px max(8px, env(safe-area-inset-right, 0px)) calc(8px + env(safe-area-inset-bottom, 0px)) max(8px, env(safe-area-inset-left, 0px));
+        background: rgba(12, 11, 22, 0.86);
+        backdrop-filter: blur(18px);
+        -webkit-backdrop-filter: blur(18px);
+        border-top: 1px solid var(--edge);
     }
 }
 
-.hidden {
-    visibility: hidden;
-    opacity: 0;
+.tab {
+    appearance: none;
+    background: none;
+    border: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    padding: 4px 0;
+    min-height: 48px;
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.tab span {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.tabActive {
+    color: var(--fg);
+}
+
+.tabActive svg {
+    color: var(--lime);
+}
+
+.tabPlus {
+    justify-self: center;
+    width: 52px;
+    height: 52px;
+    margin-top: -22px;
+    border: none;
+    border-radius: 18px;
+    background: var(--gradient-warm);
+    color: var(--on-accent);
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    box-shadow: 0 8px 20px rgba(255, 122, 182, 0.35);
+}
+
+/* --- Create sheet --- */
+
+.sheetLayer {
+    position: fixed;
+    inset: 0;
+    z-index: 90;
+}
+
+.sheetBackdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+}
+
+.sheet {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-width: 560px;
+    margin: 0 auto;
+    padding: 10px max(18px, env(safe-area-inset-right, 0px)) calc(22px + env(safe-area-inset-bottom, 0px)) max(18px, env(safe-area-inset-left, 0px));
+    border-radius: 28px 28px 0 0;
+    background: var(--surface);
+    border-top: 1px solid var(--edge);
+}
+
+.grab {
+    align-self: center;
+    width: 40px;
+    height: 5px;
+    border-radius: 3px;
+    background: var(--edge-strong);
+}
+
+.sheetTitle {
+    margin: 4px 0;
+    font-size: 21px;
+}
+
+.sheetAction {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    width: 100%;
+    padding: 14px;
+    border-radius: var(--radius);
+    border: 1px solid var(--edge);
+    background: var(--glass);
+    color: var(--fg);
+    text-align: left;
+    cursor: pointer;
+}
+
+.sheetAction:hover {
+    background: var(--glass-2);
+}
+
+.sheetAction strong {
+    display: block;
+    font-size: 15px;
+}
+
+.sheetAction small {
+    display: block;
+    color: var(--muted);
+    font-size: 13px;
+}
+
+.sheetIcon {
+    display: grid;
+    place-items: center;
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    color: var(--on-accent);
+}
+
+.sheetIconLime {
+    background: var(--lime);
+}
+
+.sheetIconPeach {
+    background: var(--peach);
 }

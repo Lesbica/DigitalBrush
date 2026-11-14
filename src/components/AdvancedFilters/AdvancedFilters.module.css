@@ -1,58 +1,61 @@
-/* AdvancedFilters.module.css */
+/* "More filters" toggle and its glass panel */
 
 .wrapper {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    gap: 15px;
+    gap: 12px;
     width: 100%;
 }
 
-/* Стилі кнопки перенесені сюди */
 .toggleButton {
-    display: flex;
+    display: inline-flex;
     align-items: center;
     gap: 10px;
+    padding: 9px 16px;
+    border-radius: var(--radius-pill);
+    border: 1px solid var(--edge);
+    background: var(--glass);
+    color: var(--fg);
+    font-size: 14px;
+    font-weight: 600;
     cursor: pointer;
-    color: #fff;
-    font-size: 18px;
-    font-weight: 400;
-    background: none;
-    border: none;
-    width: fit-content;
-    padding: 0;
-    font-family: 'Roboto', sans-serif;
 }
 
-.icon {
-    transition: transform 0.3s ease;
-    transform: rotate(0deg);
+.toggleButton:hover {
+    background: var(--glass-2);
+}
+
+.toggleButton svg path {
+    stroke: currentColor;
+}
+
+.icon,
+.rotatedIcon {
+    transition: transform 0.2s ease;
 }
 
 .rotatedIcon {
-    transition: transform 0.3s ease;
     transform: rotate(180deg);
 }
 
-/* Основний контейнер сітки */
 .filtersContainer {
-    display: flex;
-    /*grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));*/
-    gap: 40px;
-    padding: 30px;
-    background: rgba(30, 30, 50, 0.6);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 12px;
-    margin-bottom: 40px;
-    color: white;
-    font-family: 'Roboto', sans-serif;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    gap: 28px;
     width: 100%;
-    box-sizing: border-box;
-    animation: slideDown 0.3s ease-out;
+    padding: 24px;
+    border-radius: var(--radius-lg);
+    background: var(--glass-strong);
+    border: 1px solid var(--edge);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    color: var(--fg);
+    animation: slideDown 0.2s ease-out;
 }
 
 @keyframes slideDown {
-    from { opacity: 0; transform: translateY(-10px); }
+    from { opacity: 0; transform: translateY(-6px); }
     to { opacity: 1; transform: translateY(0); }
 }
 
@@ -61,12 +64,13 @@
 }
 
 .columnTitle {
-    font-family: 'Orbitron', sans-serif;
-    font-size: 1rem;
-    font-weight: 600;
-    color: rgba(255, 255, 255, 0.7);
-    margin-top: 0;
-    margin-bottom: 20px;
+    margin: 0 0 12px;
+    font-family: var(--font-body);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
 }
 
 .filterList {
@@ -75,26 +79,24 @@
     margin: 0;
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 4px;
 }
 
 .filterItem {
-    font-size: 1rem;
-    cursor: pointer;
-    transition: color 0.3s ease;
-    padding: 5px 0;
     position: relative;
+    padding: 4px 8px;
+    border-radius: 10px;
+    font-size: 15px;
+    cursor: pointer;
+    transition: background 0.15s;
 }
 
 .filterItem:hover {
-    color: #a5b4fc;
+    background: var(--glass);
 }
 
 .hasSubMenu {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-weight: bold;
+    font-weight: 600;
 }
 
 .subList {
@@ -102,20 +104,21 @@
     margin: 0;
     position: absolute;
     top: 0;
-    left: 105%;
-    width: 250px;
-    background: #0d0b1f;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 8px;
-    padding: 10px;
-    z-index: 10;
+    left: 102%;
+    width: 240px;
     max-height: 300px;
     overflow-y: auto;
+    padding: 8px;
+    border-radius: var(--radius);
+    background: var(--surface-2);
+    border: 1px solid var(--edge);
+    box-shadow: var(--shadow);
+    z-index: 10;
     visibility: hidden;
     opacity: 0;
-    transform: scaleY(0.95);
+    transform: scaleY(0.96);
     transform-origin: top;
-    transition: all 0.2s ease-in-out;
+    transition: opacity 0.15s, transform 0.15s, visibility 0.15s;
 }
 
 .subList.open {
@@ -126,38 +129,58 @@
 
 .subList.opensLeft {
     left: auto;
-    right: 105%;
-    transform-origin: top right;
+    right: 102%;
 }
 
 .subItem {
-    padding: 8px 10px;
-    font-size: 0.9rem;
+    padding: 6px 10px;
+    border-radius: 8px;
+    font-size: 14px;
     font-weight: 400;
-    border-radius: 4px;
 }
 
 .subItem:hover {
-    background: rgba(84, 84, 254, 0.3);
+    background: var(--glass-2);
 }
-/* Active option */
-.filterItem.selected {
-    color: #b991ff;
-    font-weight: 600;
+
+.filterItem.selected,
+.subItem.selected {
+    color: var(--lime);
+    font-weight: 700;
 }
 
 .subItem.selected {
-    color: #b991ff;
-    font-weight: 600;
-    background: rgba(185, 145, 255, 0.12);
+    background: rgba(198, 245, 122, 0.1);
 }
 
-/* The clickable part of an option fills its row */
 .optionButton {
     display: flex;
     justify-content: space-between;
     align-items: center;
     width: 100%;
-    min-height: 28px;
+    min-height: 32px;
     gap: 8px;
+}
+
+@media (max-width: 720px) {
+    .filtersContainer {
+        grid-template-columns: 1fr 1fr;
+        padding: 18px;
+        gap: 18px;
+    }
+
+    /* sub-options open inline under the option instead of to the side */
+    .subList {
+        position: static;
+        width: auto;
+        max-height: none;
+        margin-top: 4px;
+        display: none;
+        box-shadow: none;
+        transform: none;
+    }
+
+    .subList.open {
+        display: block;
+    }
 }

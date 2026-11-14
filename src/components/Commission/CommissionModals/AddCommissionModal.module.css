@@ -1,439 +1,119 @@
-.overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: rgba(0, 0, 0, 0.65);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
-}
+/* Live preview of the request: the same card as on the commission board */
 
-.modal {
-    background-color: rgba(52, 46, 76, 0.95);
-    border-radius: 16px;
-    padding: 65px 83px;
-    width: 985px;
-    max-width: 95vw;
-    color: white;
-    font-family: "Roboto", sans-serif;
-    font-weight: 400;
-    position: relative;
-    box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
-    max-height: 95vh;
-    overflow-y: auto;
-    font-size: 30px;
-    display: flex;
-    flex-direction: column;
-    gap: 25px;
-}
-
-.closeBtn {
-    background: none;
-    border: none;
-    color: white;
-    cursor: pointer;
-    padding: 0;
-    line-height: 1;
-}
-
-.contentWrapper {
-    display: flex;
-    gap: 99px;
-    align-items: stretch;
-}
-
-.leftColumn {
-    display: flex;
-    flex-direction: column;
-}
-
-.rightColumn {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
+.card {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 16px;
     width: 100%;
-    align-self: flex-start;
+    max-width: 440px;
+    padding: 20px;
+    border-radius: 22px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid var(--edge);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
 }
 
-.formHeader {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    width: 100%;
+.cardMain {
+    min-width: 0;
 }
 
-.imageUploadArea {
-    width: 320px;
-    flex-grow: 1;
-    border-radius: 14px;
+.tags {
     display: flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-    cursor: pointer;
-    background-image: url("../../../assets/image-placeholder.svg");
-    background-repeat: no-repeat;
-    background-size: cover;
-    background-position: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 10px;
+}
+
+.tags span {
+    padding: 3px 10px;
+    border: 1px solid var(--edge);
+    border-radius: var(--radius-pill);
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.card h3 {
+    margin: 0 0 6px;
+    font-size: 20px;
+    line-height: 1.15;
+    overflow-wrap: anywhere;
+}
+
+.desc {
+    margin: 0;
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.5;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
     overflow: hidden;
-    transition: box-shadow 0.3s ease;
 }
 
-.imageUploadArea:hover {
-    box-shadow: 0 0 15px rgba(150, 0, 255, 0.3);
+.placeholder {
+    opacity: 0.45;
 }
 
-.uploadIcon {
-    width: 92px;
-    height: 92px;
-}
-
-.fileInput {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    opacity: 0;
-    cursor: pointer;
-}
-
-.imagePreview {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
-/* --- ВИДАЛЕНО: .imageStack та .stackImagePreview --- */
-
-/* --- ДОДАНО: .previewRow (контейнер для 4-х прев'ю) --- */
-.previewRow {
-    display: flex;
-    gap: 20px;
-    margin-top: 10px;
-}
-
-/* --- ДОДАНО: .previewImg (стиль для 4-х слотів) --- */
-.previewImg {
+.thumb {
+    display: block;
     width: 64px;
     height: 64px;
-    border-radius: 18px;
+    margin-top: 12px;
+    border-radius: 12px;
+    object-fit: cover;
+    border: 1px solid var(--edge);
+}
+
+.meta {
     display: flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-    cursor: pointer;
-    overflow: hidden;
-    background-image: url("../../../assets/image-placeholder.svg");
-    background-repeat: no-repeat;
-    background-size: cover;
-    background-position: center;
+    flex-wrap: wrap;
+    gap: 4px 12px;
+    margin: 12px 0 0;
+    color: var(--muted);
+    font-size: 12px;
 }
 
-.previewImg:hover {
-    box-shadow: 0 0 10px rgba(150, 0, 255, 0.3);
-}
-
-/* --- ДОДАНО: .uploadIconPreview (іконка для порожніх слотів) --- */
-.uploadIconPreview {
-    width: 30px;
-    height: 30px;
-}
-
-
-/* --- ОНОВЛЕНО: .deleteOverlay (для обох типів) --- */
-.deleteOverlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(255, 0, 0, 0.5);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    opacity: 0;
-    transition: opacity 0.2s ease;
-    cursor: pointer;
-    border-radius: 14px; /* Для головного вікна */
-}
-
-/* Окремий стиль для оверлея прев'ю (інший border-radius) */
-.previewImg .deleteOverlay {
-    border-radius: 18px;
-}
-
-/* Показуємо оверлей при наведенні */
-.imageUploadArea:hover .deleteOverlay,
-.previewImg:hover .deleteOverlay { /* ОНОВЛЕНО */
-    opacity: 1;
-}
-
-.deleteIcon {
-    width: 30px;
-    height: 30px;
-}
-
-/* --- Решта стилів (Форма, Кнопки, Адаптація) без змін --- */
-.formGroup {
+.cardSide {
     display: flex;
     flex-direction: column;
-    position: relative;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 4px;
+    text-align: right;
 }
 
-.formGroup p,
-.formGroup > label,
-.formGroup > span:first-child,
-.formHeader label {
-    margin-bottom: 8px;
-    margin-top: 0;
+.cardSide small {
+    color: var(--muted);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
 }
 
-.formInput {
-    background-color: #7E7E7E;
-    border-radius: 7px;
-    height: 33px;
-    padding: 15px 15px;
-    color: white;
-    font-size: 30px;
-    border: none;
+.cardSide strong {
+    font-family: var(--font-display);
+    font-size: 24px;
 }
 
-.formSelect {
-    background-color: #7E7E7E;
-    border-radius: 7px;
-    height: 33px;
-    padding: 0 15px;
-    color: white;
-    font-size: 20px;
-    border: none;
+.fakeBtn {
+    margin-top: 6px;
+    padding: 7px 16px;
+    border-radius: var(--radius-pill);
+    background: var(--lime);
+    color: var(--on-accent);
+    font-size: 13px;
+    font-weight: 700;
 }
 
-.formInputName {
-    height: 60px;
-}
-
-.formInputAbout {
-    height: 235px;
-}
-
-.formSelect {
-    appearance: none;
-    background-image: url('data:image/svg+xml;utf8,<svg fill="white" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/></svg>');
-    background-repeat: no-repeat;
-    background-position: right 15px center;
-}
-
-.formInput:focus, .formSelect:focus, .priceInput:focus {
-    outline: none;
-    box-shadow: 0 0 0 2px rgba(84, 84, 254, 0.5);
-}
-
-.formInput:hover, .formSelect:hover {
-    background-color: #7E7E7E;
-}
-
-.formTextarea {
-    background-color: rgba(0, 0, 0, 0.2);
-    border: 1px solid #555;
-    border-radius: 6px;
-    padding: 15px;
-    color: white;
-    font-size: 16px;
-    min-height: 180px;
-    resize: vertical;
-    font-family: "Roboto", sans-serif;
-}
-
-.sizeInputGroup {
-    display: flex;
-    align-items: center;
-    gap: 45px;
-}
-
-.sizeInputGroup input {
-    width: 100%;
-}
-
-.actions {
-    display: flex;
-    justify-content: space-between;
-    gap: 20px;
-    align-items: flex-start;
-}
-
-.priceInputWrapper {
-    position: relative;
-    min-width: 150px;
-    width: 30%;
-    align-items: center;
-    display: flex;
-    background-color: #2E2E2E99;
-}
-
-.priceInput {
-    background: none;
-    border: 3px solid #5454FE;
-    color: white;
-    padding: 12px 30px 12px 15px;
-    border-radius: 3px;
-    font-size: 30px;
-    font-weight: 400;
-    width: 100%;
-    box-sizing: border-box;
-    text-align: center;
-}
-
-.createBtn {
-    background: #5454FE;
-    border: none;
-    color: white;
-    padding: 14px 35px;
-    border-radius: 3px;
-    font-size: 30px;
-    font-weight: 400;
-    cursor: pointer;
-    transition: background-color 0.2s;
-    width: 30%;
-}
-
-.createBtn:hover {
-    background: #4f4fe8;
-}
-
-.error {
-    color: #ff6b6b;
-    font-size: 12px;
-    margin-top: 5px;
-}
-
-.errorPrice {
-    position: absolute;
-    bottom: -18px;
-    left: 0;
-    color: #ff6b6b;
-    font-size: 12px;
-}
-
-.errorBorder {
-    border: 2px dashed #ff6b6b !important;
-}
-
-.errorBorderInput {
-    border: 1px solid #ff6b6b !important;
-}
-
-/* --- Адаптація (без змін) --- */
-@media (min-width: 1400px) {
-    .modal {
-        width: 1200px;
-        gap: 30px;
+@media (max-width: 420px) {
+    .card {
+        grid-template-columns: 1fr;
     }
 
-    .contentWrapper {
-        gap: 120px;
-    }
-}
-
-@media (max-width: 900px) {
-    .modal {
-        padding: 50px 40px;
-        width: 90vw;
-    }
-
-    .contentWrapper {
-        flex-direction: column;
-        gap: 40px;
+    .cardSide {
+        flex-direction: row;
         align-items: center;
-    }
-
-    .leftColumn {
-        width: 100%;
-        max-width: 500px;
-        align-self: center;
-    }
-
-    .rightColumn {
-        width: 100%;
-        align-self: auto;
-    }
-
-    .imageUploadArea {
-        width: 100%;
-        height: 400px;
-    }
-
-    .formInputAbout {
-        height: 200px;
-    }
-
-    .formHeader {
         justify-content: space-between;
     }
-}
-
-@media (max-width: 600px) {
-    .modal {
-        padding: 30px 15px;
-        font-size: 18px;
-        gap: 20px;
-    }
-
-    .contentWrapper {
-        gap: 25px;
-    }
-
-    .imageUploadArea {
-        height: 250px;
-    }
-
-    .uploadIcon {
-        width: 70px;
-        height: 70px;
-    }
-
-    .formInputName {
-        height: 50px;
-    }
-
-    .formInputAbout {
-        height: 150px;
-    }
-
-    .formInput, .formSelect {
-        font-size: 16px;
-    }
-
-    .formGroup p,
-.formGroup > label,
-.formGroup > span:first-child,
-.formHeader label {
-        font-size: 20px;
-    }
-
-    .sizeInputGroup {
-        gap: 20px;
-    }
-
-    .actions {
-        flex-direction: column;
-        gap: 15px;
-    }
-
-    .priceInputWrapper, .createBtn {
-        width: 100%;
-    }
-
-    .priceInput, .createBtn {
-        font-size: 18px;
-    }
-}
-/* field captions are <label> now: keep them on their own line like the old <p> */
-.formGroup > label,
-.formGroup > span:first-child,
-.formHeader label {
-    display: block;
 }

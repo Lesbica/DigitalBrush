@@ -1,34 +1,47 @@
+/* Category chips: one scrollable row on phones */
 .categoryGrid {
     display: flex;
-    justify-content: flex-start;
     flex-wrap: wrap;
-    gap: 15px;
-    margin: 0 0 20px 0;
+    gap: 8px;
+    margin: 0 0 14px;
 }
 
 .categoryButton {
-    padding: 12px 28px;
-    font-family: 'Roboto', sans-serif;
-    font-size: 19px;
-    font-weight: 400;
-    text-transform: uppercase;
-    color: #fff;
-    background: transparent;
-    border: 1px solid rgba(255, 255, 255, 0.4);
-    border-radius: 20px;
+    flex: none;
+    padding: 9px 16px;
+    border-radius: var(--radius-pill);
+    border: 1px solid var(--edge);
+    background: var(--glass);
+    color: var(--muted);
+    font-size: 14px;
+    font-weight: 500;
     cursor: pointer;
-    transition: all 0.3s ease;
-    width: 214px;
-    height: 45px;
+    transition: color 0.15s, background 0.15s, border-color 0.15s;
 }
 
 .categoryButton:hover {
-    background: rgba(84, 84, 254, 0.3);
-    border-color: #7a7aff;
+    color: var(--fg);
+    border-color: var(--edge-strong);
 }
 
 .categoryButton.active {
-    border-color: #5454FE;
-    background: linear-gradient(90deg, rgba(131, 29, 199, 0.6) 0%, rgba(174, 30, 151, 0.6) 100%);
-    font-weight: 600;
+    background: var(--fg);
+    border-color: var(--fg);
+    color: var(--on-accent);
+    font-weight: 700;
+}
+
+@media (max-width: 720px) {
+    .categoryGrid {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        scrollbar-width: none;
+        margin-left: calc(-1 * var(--gutter));
+        margin-right: calc(-1 * var(--gutter-r));
+        padding: 2px var(--gutter-r) 4px var(--gutter);
+    }
+
+    .categoryGrid::-webkit-scrollbar {
+        display: none;
+    }
 }

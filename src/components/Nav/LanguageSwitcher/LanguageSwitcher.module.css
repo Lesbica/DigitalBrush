@@ -3,32 +3,33 @@
     align-items: center;
     gap: 2px;
     padding: 3px;
-    border: 1px solid rgba(255, 255, 255, 0.35);
-    border-radius: 999px;
+    border: 1px solid var(--edge);
+    background: var(--glass);
+    border-radius: var(--radius-pill);
     flex-shrink: 0;
 }
 
 .option {
-    padding: 5px 10px;
+    padding: 6px 10px;
     border: none;
-    border-radius: 999px;
+    border-radius: var(--radius-pill);
     background: transparent;
-    color: rgba(255, 255, 255, 0.75);
-    font-size: 13px;
-    font-weight: 600;
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 700;
     letter-spacing: 0.04em;
     cursor: pointer;
 }
 
 .option:hover {
-    color: #fff;
+    color: var(--fg);
 }
 
 .active {
-    background: #fff;
-    color: #1e1b2e;
+    background: var(--fg);
+    color: var(--on-accent);
 }
 
 .active:hover {
-    color: #1e1b2e;
+    color: var(--on-accent);
 }

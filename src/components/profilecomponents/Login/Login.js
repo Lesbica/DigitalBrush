@@ -17,7 +17,7 @@ function Login({ toggleForm, handleLogin, handleInputChange, onForgotPassword })
         <AuthLayout onCreateAccount={toggleForm}>
 
             {/* 4. <form> тепер всередині */}
-            <h1 className="sr-only">{t('auth.loginTitle')}</h1>
+            <h1 className={styles.title}>{t('auth.welcomeBack')}</h1>
             <form className={styles.formContainer} onSubmit={handleSubmit}>
                 <div className={styles.field}>
                     <label htmlFor="login-email">{t('auth.email')}</label>

@@ -99,7 +99,7 @@
     margin: 0;
     font-size: 16px;
     line-height: 1.4;
-    color: #E0E0E0;
+    color: var(--muted);
     font-weight: 300;
 }
 
@@ -111,8 +111,8 @@
     align-items: center;
     justify-content: center;
 
-    background: rgba(46, 46, 46, 0.6);
-    border: 1px solid #595C64;
+    background: var(--glass);
+    border: 1px solid rgba(255, 255, 255, 0.22);
     border-radius: 4px;
 
     font-size: 24px;
@@ -146,7 +146,7 @@
 .bigDot {
     width: 48px;
     height: 48px;
-    background-color: #A020F0; /* Яскравий фіолетовий */
+    background-color: var(--violet); /* Яскравий фіолетовий */
     border-radius: 50%;
     box-shadow: 0 0 15px rgba(160, 32, 240, 0.4);
 }
@@ -156,7 +156,7 @@
     width: 48px;
     height: 48px;
     border-radius: 50%;
-    border: 2px solid #D053F5;
+    border: 2px solid var(--pink);
     background: transparent;
     box-shadow: 0 0 10px rgba(208, 83, 245, 0.2);
 }
@@ -178,15 +178,15 @@
     width: 45px;
     height: 45px;
     border-radius: 50%;
-    border: 2px solid #D053F5; /* Неоновий контур */
+    border: 2px solid var(--pink); /* Неоновий контур */
     background: transparent;
     box-shadow: 0 0 10px rgba(208, 83, 245, 0.2);
 }
 
 /* Заповнений малий круг для прогресу */
 .hollowDotFilled {
-    background-color: #A020F0;
-    border-color: #A020F0;
+    background-color: var(--violet);
+    border-color: var(--violet);
     box-shadow: 0 0 15px rgba(160, 32, 240, 0.4);
 }
 
@@ -201,8 +201,8 @@
     /* Використовуємо той самий стиль градієнтної рамки, що й у чаті */
     border: 3.16px solid transparent;
     background:
-            linear-gradient(#46464799, #46464799) padding-box,
-            linear-gradient(168.05deg, #595C64 1.51%, rgba(71, 77, 95, 0.44) 90.56%) border-box;
+            linear-gradient(var(--glass), var(--glass)) padding-box,
+            linear-gradient(168.05deg, rgba(255, 255, 255, 0.22) 1.51%, rgba(255, 255, 255, 0.06) 90.56%) border-box;
 
     display: flex;
     flex-direction: column;
@@ -228,7 +228,7 @@
 .addSketchBar {
     width: 100%;
     height: 43px;
-    background: #46464799;
+    background: var(--glass);
     backdrop-filter: blur(10px);
     border-top: 1px solid rgba(255,255,255,0.1);
     border-radius: 8px;
@@ -284,7 +284,7 @@
     border: 3.16px solid transparent;
     background:
             linear-gradient(rgba(30, 30, 35, 0.3), rgba(30, 30, 35, 0.3)) padding-box,
-            linear-gradient(168.05deg, #595C64 1.51%, rgba(71, 77, 95, 0.44) 90.56%) border-box;
+            linear-gradient(168.05deg, rgba(255, 255, 255, 0.22) 1.51%, rgba(255, 255, 255, 0.06) 90.56%) border-box;
 
     backdrop-filter: blur(10px);
     overflow: hidden;
@@ -343,15 +343,15 @@
 
     font-size: 16px; /* Трохи збільшив шрифт для читабельності */
     line-height: 1.5;
-    color: #E0E0E0; /* Світло-сірий текст */
+    color: var(--muted); /* Світло-сірий текст */
 
     /* --- СТИЛЬ БУЛЬБАШКИ (Як на макеті) --- */
     border: 3.83px solid transparent;
 
     /* Тут колір #464647 з прозорістю 60% (#99) */
     background:
-            linear-gradient(#46464799, #46464799) padding-box,
-            linear-gradient(168.05deg, #595C64 1.51%, rgba(71, 77, 95, 0.44) 90.56%) border-box;
+            linear-gradient(var(--glass), var(--glass)) padding-box,
+            linear-gradient(168.05deg, rgba(255, 255, 255, 0.22) 1.51%, rgba(255, 255, 255, 0.06) 90.56%) border-box;
 
     background-clip: padding-box, border-box;
     box-shadow: 0 4px 20px rgba(0,0,0,0.2); /* Тінь для об'єму */
@@ -361,8 +361,8 @@
 .messageRow.own .bubble {
     /* Використовуємо той самий стиль, що і для вхідних, згідно з макетом */
     background:
-            linear-gradient(#46464799, #46464799) padding-box,
-            linear-gradient(168.05deg, #595C64 1.51%, rgba(71, 77, 95, 0.44) 90.56%) border-box;
+            linear-gradient(var(--glass), var(--glass)) padding-box,
+            linear-gradient(168.05deg, rgba(255, 255, 255, 0.22) 1.51%, rgba(255, 255, 255, 0.06) 90.56%) border-box;
     border-radius: 9.57px;
     text-align: left;
 }
@@ -380,7 +380,7 @@
 .chatImageAttachment {
     width: 240px;
     border-radius: 12px;
-    border: 3px solid #595C64;
+    border: 3px solid rgba(255, 255, 255, 0.22);
     margin-top: 5px;
     display: block; /* Ensures it behaves correctly as an only-child */
 }
@@ -403,8 +403,8 @@
 
     /* Фон поля вводу такий самий, як у повідомлень */
     background:
-            linear-gradient(#46464799, #46464799) padding-box,
-            linear-gradient(168.05deg, #595C64 1.51%, rgba(71, 77, 95, 0.44) 90.56%) border-box;
+            linear-gradient(var(--glass), var(--glass)) padding-box,
+            linear-gradient(168.05deg, rgba(255, 255, 255, 0.22) 1.51%, rgba(255, 255, 255, 0.06) 90.56%) border-box;
     background-clip: padding-box, border-box;
 
     transition: transform 0.2s;
@@ -442,7 +442,7 @@
     opacity: 1;
 }
 .inputWrapper:focus-within {
-    outline: 2px solid #b991ff;
+    outline: 2px solid var(--lime);
     outline-offset: 2px;
 }
 
@@ -457,4 +457,307 @@ ol.dotsRow {
     margin-left: 12px;
     font-size: 14px;
     color: rgba(255, 255, 255, 0.75);
+}
+
+/* --- Aurora Glass theme (overrides the layout above) --- */
+
+.chatContainer {
+    display: grid;
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+    gap: 20px;
+    min-height: 0;
+    color: var(--fg);
+}
+
+.detailsColumn {
+    width: auto;
+    min-width: 0;
+    gap: 16px;
+}
+
+.headerInfo {
+    gap: 16px;
+    padding: 14px;
+    border-radius: var(--radius-lg);
+    background: var(--glass);
+    border: 1px solid var(--edge);
+}
+
+.imageWrapper {
+    width: 140px;
+    flex-shrink: 0;
+}
+
+.thumbImage {
+    width: 140px;
+    height: 170px;
+    border-radius: 16px;
+}
+
+.previewImg {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    box-shadow: none;
+}
+
+.textInfo {
+    height: auto;
+    max-width: none;
+    min-width: 0;
+    gap: 8px;
+}
+
+.categoryTitle {
+    font-family: var(--font-display);
+    font-size: 20px;
+    font-weight: 700;
+    text-transform: none;
+    letter-spacing: -0.01em;
+    overflow-wrap: anywhere;
+}
+
+.descriptionText {
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 1.55;
+}
+
+.priceTag {
+    width: auto;
+    height: auto;
+    align-self: flex-start;
+    padding: 5px 12px;
+    border: none;
+    border-radius: var(--radius-pill);
+    background: var(--lime);
+    color: var(--on-accent);
+    font-family: var(--font-display);
+    font-size: 16px;
+    font-weight: 700;
+}
+
+.statusContainer {
+    gap: 12px;
+    padding: 14px;
+    border-radius: var(--radius-lg);
+    background: var(--glass);
+    border: 1px solid var(--edge);
+}
+
+.statusTitleBlock {
+    gap: 12px;
+}
+
+.bigDot,
+.bigDotHollow {
+    width: 28px;
+    height: 28px;
+    box-shadow: none;
+}
+
+.bigDot {
+    background: var(--gradient-warm);
+}
+
+.bigDotHollow {
+    border-color: var(--peach);
+}
+
+.statusName {
+    font-family: var(--font-display);
+    font-size: 22px;
+    font-weight: 700;
+}
+
+.dotsRow {
+    gap: 6px;
+}
+
+.hollowDot {
+    width: 34px;
+    height: 6px;
+    border-radius: 3px;
+    border: none;
+    background: var(--glass-2);
+    box-shadow: none;
+}
+
+.hollowDotFilled {
+    background: var(--lime);
+    box-shadow: none;
+}
+
+.stageCount {
+    color: var(--muted);
+}
+
+.stageBox {
+    height: auto;
+    min-height: 320px;
+    border: 1px solid var(--peach);
+    border-radius: var(--radius-lg);
+    background: var(--glass);
+}
+
+.currentStageImage {
+    max-width: 92%;
+    max-height: 420px;
+    border-radius: 14px;
+}
+
+.addSketchBar {
+    height: 48px;
+    border-radius: 0;
+    border-top: 1px solid var(--edge);
+    background: var(--glass-2);
+    color: var(--fg);
+    font-size: 15px;
+    font-weight: 700;
+}
+
+.addSketchBar:hover {
+    background: rgba(198, 245, 122, 0.12);
+}
+
+.actionBtn {
+    width: 46px;
+    height: 46px;
+    border: 1px solid var(--edge);
+    background: rgba(10, 10, 18, 0.7);
+}
+
+.checkBtn svg {
+    fill: var(--lime);
+    width: 26px;
+    height: 26px;
+}
+
+.crossBtn svg {
+    fill: var(--danger);
+    width: 26px;
+    height: 26px;
+}
+
+.chatColumn {
+    width: auto;
+    min-width: 0;
+    height: min(760px, calc(100vh - var(--nav-h) - 60px));
+    border: 1px solid var(--edge);
+    border-radius: var(--radius-lg);
+    background: var(--glass);
+    backdrop-filter: blur(18px);
+}
+
+.chatHeader {
+    min-height: 64px;
+    padding: 0 18px;
+    border-bottom: 1px solid var(--edge);
+}
+
+.headerUserName {
+    font-family: var(--font-display);
+    font-size: 17px;
+    font-weight: 700;
+}
+
+.messagesList {
+    padding: 18px;
+    gap: 12px;
+}
+
+.messageRow {
+    gap: 10px;
+    max-width: 88%;
+}
+
+.userAvatar {
+    width: 34px;
+    height: 34px;
+    border: none;
+}
+
+.bubble {
+    padding: 10px 14px;
+    border: none;
+    border-radius: 18px 18px 18px 6px;
+    background: var(--glass-2);
+    background-clip: border-box;
+    color: var(--fg);
+    font-size: 14px;
+    box-shadow: none;
+    overflow-wrap: anywhere;
+}
+
+.messageRow.own .bubble {
+    border-radius: 18px 18px 6px 18px;
+    background: var(--lime);
+    color: var(--on-accent);
+}
+
+.chatImageAttachment {
+    width: min(240px, 100%);
+    border: 1px solid var(--edge);
+}
+
+.inputArea {
+    padding: 12px;
+    border-top: 1px solid var(--edge);
+}
+
+.inputWrapper {
+    height: 48px;
+    padding: 0 8px 0 16px;
+    border: 1px solid var(--edge);
+    border-radius: var(--radius-pill);
+    background: rgba(10, 10, 18, 0.45);
+    background-clip: border-box;
+}
+
+.inputWrapper:focus-within {
+    transform: none;
+    box-shadow: none;
+    outline: none;
+    border-color: var(--lime);
+}
+
+.chatInput {
+    color: var(--fg);
+    font-size: 15px;
+}
+
+.chatInput::placeholder {
+    color: var(--muted);
+}
+
+@media (max-width: 1100px) {
+    .chatContainer {
+        grid-template-columns: 1fr;
+    }
+
+    .chatColumn {
+        height: min(640px, calc(100vh - var(--nav-h) - var(--tabbar-h) - 40px));
+    }
+}
+
+@media (max-width: 560px) {
+    .headerInfo {
+        flex-direction: column;
+    }
+
+    .imageWrapper,
+    .thumbImage {
+        width: 100%;
+    }
+
+    .thumbImage {
+        height: auto;
+        aspect-ratio: 4 / 3;
+    }
+
+    .statusHeader {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
 }

@@ -1,505 +1,91 @@
-.overlay {
-    position: fixed;
-    inset: 0;
-    background-color: rgba(0, 0, 0, 0.7);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
+/* Live preview of the upload: the same tile as in the shop */
+
+.tile {
+    width: min(300px, 100%);
+    padding: 10px;
+    border-radius: 24px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid var(--edge);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
 }
 
-/* --- ВИДАЛЕНО: .modal (старий) --- */
-/* Старий .modal тепер .modalContent */
-
-.closeBtn {
-    background: none;
-    border: none;
-    color: white;
-    cursor: pointer;
-    padding: 0;
-    line-height: 1;
-}
-
-/* --- ДОДАНО: Кнопка закриття з ArtDetailsModal --- */
-.closeBtnFixed {
-    position: absolute;
-    top: 2rem;
-    right: 2rem;
-    background: none;
-    border: none;
-    cursor: pointer;
-    padding: 0;
-    z-index: 10;
-    width: 42px;
-    height: 42px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.closeBtnFixed img {
-    width: 42px;
-    height: 42px;
-}
-
-
-/* --- ОНОВЛЕНО: .contentWrapper став .modalContent (як в ArtDetailsModal) --- */
-.modalContent {
-    display: flex;
-    gap: 20px;
-    background-color: #342E4CF2; /* Колір з ArtDetailsModal */
-    border-radius: 10px;
-    padding: 111px 135px 0; /* Верхній/боковий padding як в ArtDetailsModal. Нижній 0 */
-    width: 90vw;
-    max-width: 1400px;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+.tileImage {
     position: relative;
-    color: white;
-    font-family: "Roboto", sans-serif;
-    font-weight: 400;
-    font-size: 30px;
-
-    /* Обмежуємо висоту, щоб прокрутка працювала всередині */
-    max-height: 90vh;
-}
-
-
-/* --- ОНОВЛЕНО: Ліва колонка --- */
-.leftColumn {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-
-    /* Встановлюємо max-height та overflow-y: auto для роботи scrollTop */
-    max-height: calc(90vh - 111px); /* 111px - це padding.top з .modalContent */
-    overflow-y: auto;
-
-    padding-right: 153px; /* Відступ як в ArtDetailsModal */
-    padding-bottom: 3rem; /* Відступ знизу, щоб скрол був повним */
-
-    /* Ховаємо скролбар */
-    scrollbar-width: none;
-    -ms-overflow-style: none;
-}
-
-.leftColumn::-webkit-scrollbar {
-    display: none;
-}
-
-/* --- ОНОВЛЕНО: Права колонка --- */
-.rightColumn {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    max-height: calc(90vh - 111px);
-    max-width: 548px;
-    gap: 0; /* gap тепер всередині .scrollableForm */
-}
-
-/* --- ДОДАНО: Внутрішній контейнер прокрутки для форми --- */
-.scrollableForm {
-    flex-grow: 1; /* Займає весь доступний простір */
-    overflow-y: auto; /* Дозволяє прокрутку */
-    padding-bottom: 2rem; /* Відступ знизу */
-
-    /* Внутрішні відступи */
-    display: flex;
-    flex-direction: column;
-    gap: 15px; /* gap, який раніше був у .rightColumn */
-
-    /* Ховаємо скролбар */
-    scrollbar-width: none;
-    -ms-overflow-style: none;
-    max-width: 520px;
-}
-
-.scrollableForm::-webkit-scrollbar {
-    display: none;
-}
-
-
-/* --- ОНОВЛЕНО: Заголовок форми (кнопка закриття видалена звідси) --- */
-.formHeader {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    width: 100%;
-}
-
-/* --- ОНОВЛЕНО: Головний завантажувач --- */
-.imageUploadArea {
-    width: 100%;
-    height: 95%;
-    flex-shrink: 0;
-    border-radius: 14px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-    cursor: pointer;
-    background-image: url("../../../assets/image-placeholder.svg");
-    background-repeat: no-repeat;
-    background-size: cover;
-    background-position: center;
+    display: grid;
+    place-items: center;
+    min-height: 220px;
+    border-radius: 16px;
     overflow: hidden;
-    transition: box-shadow 0.3s ease;
+    background: linear-gradient(160deg, rgba(124, 92, 250, 0.35), rgba(255, 184, 107, 0.25));
 }
 
-.imageUploadArea:hover {
-    box-shadow: 0 0 15px rgba(150, 0, 255, 0.3);
-}
-
-.uploadIcon {
-    width: 92px;
-    height: 92px;
-}
-
-.fileInput {
-    position: absolute;
-    top: 0;
-    left: 0;
+.tileImage img {
+    display: block;
     width: 100%;
-    height: 100%;
-    opacity: 0;
-    cursor: pointer;
-}
-
-.imagePreview {
-    width: 100%;
-    height: 100%;
+    max-height: 380px;
     object-fit: cover;
 }
 
-/* --- Стек зображень (без змін) --- */
-.imageStack {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-    margin-top: 15px;
-    /* .leftColumn тепер керує прокруткою */
-}
-
-.stackImagePreview {
-    width: 100%;
-    /*aspect-ratio: 4 / 3;*/
-    border-radius: 14px;
-    position: relative;
-    overflow: hidden;
-    cursor: default;
-    flex-shrink: 0;
-}
-
-.deleteOverlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(255, 0, 0, 0.5);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    opacity: 0;
-    transition: opacity 0.2s ease;
-    cursor: pointer;
-    border-radius: 14px;
-}
-
-.stackImagePreview:hover .deleteOverlay {
-    opacity: 1;
-}
-
-.deleteIcon {
-    width: 30px;
-    height: 30px;
-}
-
-/* --- Поля форми (без змін, але .formInputAbout тепер всередині .scrollableForm) --- */
-.formGroup {
-    display: flex;
-    flex-direction: column;
-    position: relative;
-}
-
-.formGroup p,
-.formGroup > label,
-.formGroup > span:first-child,
-.formHeader label {
-    margin-bottom: 8px;
-    margin-top: 0;
-}
-
-.formInput, .sizeInputGroup input {
-    background-color: #7E7E7E;
-    border-radius: 7px;
-    height: 33px;
-    padding: 0 8px;
-    color: white;
-    font-size: 20px;
-    border: none;
-    box-sizing: border-box;
-    font-family: "Roboto", sans-serif;
-}
-
-.aboutGroup {
-    margin-top: 45px;
-}
-
-.formSelect {
-    background-color: #7E7E7E;
-    border-radius: 7px;
-    height: 33px;
-    padding: 0 8px;
-    color: white;
-    font-size: 20px;
-    border: none;
-}
-
-.formInputName {
-    height: auto; /* Дозволяє 'rows' контролювати висоту */
-    min-height: 60px;
-    padding: 0 8px;
-    resize: none;
-    line-height: 1.4;
-}
-
-.charCounter {
-    font-size: 14px;
-    color: #ababab;
-    text-align: right;
-    margin-top: 4px;
-}
-
-.formInputAbout {
-    height: 235px;
-    resize: none;
-}
-
-/* Це поле тепер буде прокручуватись */
-.formSelect {
-    appearance: none;
-    background-image: url('data:image/svg+xml;utf8,<svg fill="white" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/></svg>');
-    background-repeat: no-repeat;
-    background-position: right 15px center;
-}
-
-.formInput:focus, .formSelect:focus, .priceInput:focus, .sizeInputGroup input:focus {
-    outline: none;
-    box-shadow: 0 0 0 2px rgba(84, 84, 254, 0.5);
-}
-
-.formInput:hover, .formSelect:hover {
-    background-color: #7E7E7E;
-}
-
-.sizeInputGroup {
-    display: flex;
-    align-items: center;
-    gap: 45px;
-}
-
-.sizeInputGroup input {
-    width: 100%;
-}
-
-/* --- ОНОВЛЕНО: Блок дій (копіюємо з ArtDetailsModal для узгодженості) --- */
-.actions {
-    display: flex;
-    justify-content: space-between;
-    gap: 18px;
-    flex-shrink: 0;
-    padding-top: 52px;
-    /*padding-bottom: 2rem;*/
-    max-width: 520px;
-    max-height: 66px;
-    align-items: center;
-}
-
-.priceInputWrapper {
-    position: relative;
-    min-width: 150px;
-    width: 50%;
-    align-items: center;
-    display: flex;
-    background-color: #2E2E2E99;
-}
-
-.priceInput {
-    background: none;
-    border: 3px solid #5454FE;
-    color: white;
-    padding: 12px 30px 12px 15px;
-    border-radius: 3px;
-    font-size: 30px;
-    font-weight: 400;
-    width: 100%;
-    box-sizing: border-box;
+.tileEmpty {
+    padding: 20px;
+    color: var(--muted);
+    font-size: 13px;
     text-align: center;
 }
 
-.createBtn {
-    background: #5454FE;
-    border: none;
-    color: white;
-    padding: 14px 35px;
-    border-radius: 3px;
-    font-size: 30px;
-    font-weight: 400;
-    cursor: pointer;
-    transition: background-color 0.2s;
-    width: 50%;
-    /* Додамо box-sizing для узгодженості з .priceInput */
-    box-sizing: border-box;
-    /* Вирівняємо висоту */
-    height: 66px; /* Приблизна висота priceInput з padding/border */
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.createBtn:hover {
-    background: #4f4fe8;
-}
-
-/* --- Стилі помилок (без змін) --- */
-.error {
-    color: #ff6b6b;
-    font-size: 12px;
-    margin-top: 5px;
-}
-
-.errorPrice {
+.likes {
     position: absolute;
-    bottom: -18px;
-    left: 0;
-    color: #ff6b6b;
+    top: 10px;
+    right: 10px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 9px;
+    border-radius: var(--radius-pill);
+    background: rgba(10, 10, 18, 0.65);
     font-size: 12px;
 }
 
-.errorBorder {
-    border: 2px dashed #ff6b6b !important;
+.tileInfo {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 10px;
+    padding: 12px 6px 4px;
 }
 
-.errorBorderInput {
-    border: 1px solid #ff6b6b !important;
+.tileText {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
 }
 
-
-/* --- АДАПТАЦІЯ (стара адаптація видалена, вона була для іншого макету) --- */
-
-/* Нова адаптація, що базується на макеті ArtDetailsModal */
-@media (max-width: 1200px) {
-    .modalContent {
-        padding: 80px 60px 0;
-        gap: 30px;
-    }
-
-    .leftColumn {
-        padding-right: 40px;
-        max-height: calc(90vh - 80px);
-    }
-
-    .rightColumn {
-        max-height: calc(90vh - 80px);
-    }
+.tileText strong {
+    font-family: var(--font-display);
+    font-size: 16px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
-
-@media (max-width: 900px) {
-    .modalContent {
-        /* Колонки одна під одною */
-        flex-direction: column;
-        padding: 50px 40px 0;
-        width: 90vw;
-        /* .modalContent тепер сам прокручується */
-        overflow-y: auto;
-        max-height: 90vh;
-
-        /* Вимикаємо onWheel, бо JS-прокрутка не потрібна */
-        pointer-events: auto; /* (onWheel видаляється в JS, але про всяк випадок) */
-    }
-
-    .leftColumn, .rightColumn {
-        /* Скидаємо обмеження висоти та overflow, бо прокручується батько */
-        max-height: none;
-        overflow-y: visible;
-        width: 100%;
-        max-width: none;
-        padding-right: 0; /* Скидаємо відступ */
-    }
-
-    /* Ми знову бачитимемо скролбари, тому ховаємо їх */
-    .modalContent::-webkit-scrollbar {
-        display: none;
-    }
-
-    .modalContent {
-        scrollbar-width: none;
-        -ms-overflow-style: none;
-    }
-
-    /* Повертаємо gap, який тепер між полями форми */
-    .scrollableForm {
-        overflow-y: visible;
-        gap: 20px;
-    }
-
-    .actions {
-        flex-direction: column;
-        gap: 15px;
-    }
-
-    .priceInputWrapper, .createBtn {
-        width: 100%;
-    }
+.tileText span {
+    color: var(--muted);
+    font-size: 12px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
-@media (max-width: 600px) {
-    .modalContent {
-        padding: 30px 15px 0;
-        font-size: 18px;
-    }
-
-    .imageUploadArea {
-        height: 250px;
-    }
-
-    .uploadIcon {
-        width: 70px;
-        height: 70px;
-    }
-
-    .formInputName {
-        height: 50px;
-    }
-
-    .formInputAbout {
-        height: 150px;
-    }
-
-    .formInput, .formSelect {
-        font-size: 16px;
-    }
-
-    .formGroup p,
-.formGroup > label,
-.formGroup > span:first-child,
-.formHeader label {
-        font-size: 20px;
-    }
-
-    .sizeInputGroup {
-        gap: 20px;
-    }
-
-    .priceInput, .createBtn {
-        font-size: 18px;
-    }
+.placeholder {
+    opacity: 0.45;
 }
-/* field captions are <label> now: keep them on their own line like the old <p> */
-.formGroup > label,
-.formGroup > span:first-child,
-.formHeader label {
-    display: block;
+
+.pricePill {
+    flex: none;
+    padding: 4px 10px;
+    border-radius: var(--radius-pill);
+    background: var(--lime);
+    color: var(--on-accent);
+    font-size: 12px;
+    font-weight: 700;
 }

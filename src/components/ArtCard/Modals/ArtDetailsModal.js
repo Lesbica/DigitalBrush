@@ -1,18 +1,14 @@
-import React, {useCallback, useEffect, useRef, useState} from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import axios from 'axios';
-import styles from './ArtDetailsModal.module.css';
-import closeIcon from '../../../assets/closeCross.svg';
+import styles from '../../Dialog/DetailsDialog.module.css';
+import { CloseIcon, HeartIcon } from '../../Icons/Icons';
 import ImageViewer from "../ImageViewer/ImageViewer";
 import { useCart } from '../../Cart/CartContext';
 import { useNavigate } from "react-router-dom";
 import { useToast } from '../../../context/ToastContext';
 import { useTranslation } from 'react-i18next';
-import { formatPrice } from '../../../i18n/format';
+import { formatPrice, formatDate } from '../../../i18n/format';
 import useDialog from '../../Dialog/useDialog';
-
-const lerp = (current, target, factor) => {
-    return current * (1 - factor) + target * factor;
-};
 
 const ArtDetailsModal = ({art, onClose, isLoggedIn}) => {
     const { t } = useTranslation();
@@ -26,25 +22,12 @@ const ArtDetailsModal = ({art, onClose, isLoggedIn}) => {
     const [likes, setLikes] = useState(Number(art?.likes) || 0);
     const [owned, setOwned] = useState(false);
 
-    const leftColumnRef = useRef(null);
-    const rightInfoRef = useRef(null);
-
-    const leftScroll = useRef({current: 0, target: 0});
-    const rightScroll = useRef({current: 0, target: 0});
-    const animationFrameId = useRef(null);
-    const lerpFactor = 0.1;
-
     const navigate = useNavigate();
     const { addToCart } = useCart();
 
     useEffect(() => {
         document.body.style.overflow = 'hidden';
-        return () => {
-            document.body.style.overflow = 'auto';
-            if (animationFrameId.current) {
-                cancelAnimationFrame(animationFrameId.current);
-            }
-        };
+        return () => { document.body.style.overflow = ''; };
     }, []);
 
     // Ініціалізуємо стани лайку при зміні переданого арт-об'єкта
@@ -102,68 +85,10 @@ const ArtDetailsModal = ({art, onClose, isLoggedIn}) => {
         }
     };
 
-    const smoothScrollLoop = () => {
-        let leftNeedsUpdate = false;
-        let rightNeedsUpdate = false;
-
-        if (leftColumnRef.current) {
-            const {current, target} = leftScroll.current;
-            if (Math.abs(target - current) > 0.1) {
-                leftScroll.current.current = lerp(current, target, lerpFactor);
-                leftColumnRef.current.scrollTop = leftScroll.current.current;
-                leftNeedsUpdate = true;
-            } else if (current !== target) {
-                leftScroll.current.current = target;
-                leftColumnRef.current.scrollTop = target;
-            }
-        }
-
-        if (rightInfoRef.current) {
-            const {current, target} = rightScroll.current;
-            if (Math.abs(target - current) > 0.1) {
-                rightScroll.current.current = lerp(current, target, lerpFactor);
-                rightInfoRef.current.scrollTop = rightScroll.current.current;
-                rightNeedsUpdate = true;
-            } else if (current !== target) {
-                rightScroll.current.current = target;
-                rightInfoRef.current.scrollTop = target;
-            }
-        }
-
-        if (leftNeedsUpdate || rightNeedsUpdate) {
-            animationFrameId.current = requestAnimationFrame(smoothScrollLoop);
-        } else {
-            animationFrameId.current = null;
-        }
-    };
-
-    const startScrollAnimation = () => {
-        if (!animationFrameId.current) {
-            animationFrameId.current = requestAnimationFrame(smoothScrollLoop);
-        }
-    };
-
     const handleOverlayClick = (e) => {
         if (e.target === e.currentTarget) {
             onClose();
         }
-    };
-
-    const handleWheelScroll = (e) => {
-        e.preventDefault();
-        const scrollAmount = e.deltaY;
-
-        if (leftColumnRef.current) {
-            const maxScroll = leftColumnRef.current.scrollHeight - leftColumnRef.current.clientHeight;
-            leftScroll.current.target = Math.max(0, Math.min(leftScroll.current.target + scrollAmount, maxScroll));
-        }
-
-        if (rightInfoRef.current) {
-            const maxScroll = rightInfoRef.current.scrollHeight - rightInfoRef.current.clientHeight;
-            rightScroll.current.target = Math.max(0, Math.min(rightScroll.current.target + scrollAmount, maxScroll));
-        }
-
-        startScrollAnimation();
     };
 
     const imagesToShow = art.images && art.images.length > 0 ? art.images : [art.imageUrl];
@@ -229,96 +154,71 @@ const ArtDetailsModal = ({art, onClose, isLoggedIn}) => {
         }
     };
 
+    const specs = [
+        [t('art.format'), art.fileFormat],
+        [t('art.size'), art.size],
+        [t('art.created'), art.creationDate ? formatDate(art.creationDate) : null],
+    ].filter(([, v]) => v);
+
     return (
         <div className={styles.overlay} onClick={handleOverlayClick}>
             <div className={styles.modal} ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="art-dialog-title">
+                <div className={styles.gallery}>
+                    {imagesToShow.map((imgUrl, index) => (
+                        <button key={index} type="button" className={styles.imageButton}
+                                onClick={() => openImageViewer(index)} aria-label={t('art.openImage', { n: index + 1 })}>
+                            <img src={imgUrl} alt={`${art.title} ${index + 1}`} className={styles.artImage}
+                                 onError={(e) => { e.target.src = "/images/placeholder.svg"; }} />
+                        </button>
+                    ))}
+                </div>
 
-                <div className={styles.modalContent} onWheel={handleWheelScroll}>
-                    <button type="button" className={styles.closeBtnFixed} onClick={onClose}>
-                        <img src={closeIcon} alt={t('common.close')}/>
-                    </button>
+                <div className={styles.side}>
+                    <header className={styles.head}>
+                        <div className={styles.tags}>
+                            {art.category && <span>{t(`labels.${art.category}`, { defaultValue: art.category })}</span>}
+                            {art.style && <span>{art.style}</span>}
+                            <span className={styles.original}>{t('art.original')}</span>
+                        </div>
+                        <button type="button" className={styles.close} onClick={onClose} aria-label={t('common.close')}>
+                            <CloseIcon size={18} />
+                        </button>
+                        <h2 className={styles.title} id="art-dialog-title">{art.title}</h2>
+                        <button type="button" className={styles.artist} onClick={handleArtistNameClick} title={t('art.viewArtist')}>
+                            {art.authorAvatar
+                                ? <img src={art.authorAvatar} alt="" />
+                                : <span className={styles.initial} aria-hidden="true">{String(art.artistName || '?').charAt(0)}</span>}
+                            {art.artistName}
+                        </button>
+                    </header>
 
-                    <div className={styles.leftColumn} ref={leftColumnRef}>
-                        {imagesToShow.map((imgUrl, index) => (
-                            <button
-                                key={index}
-                                type="button"
-                                className="unstyled-button"
-                                style={{ display: 'block', width: '100%' }}
-                                onClick={() => openImageViewer(index)}
-                                aria-label={t('art.openImage', { n: index + 1 })}
-                            >
-                                <img
-                                    src={imgUrl}
-                                    alt={`${art.title} ${index + 1}`}
-                                    className={styles.artImage}
-                                    onError={(e) => {
-                                        e.target.src = "/images/placeholder.svg";
-                                    }}
-                                />
-                            </button>
-                        ))}
+                    <div className={styles.body}>
+                        {art.description && <p className={styles.description}>{art.description}</p>}
+                        {specs.length > 0 && (
+                            <dl className={styles.specs}>
+                                {specs.map(([k, v]) => <div key={k}><dt>{k}</dt><dd>{v}</dd></div>)}
+                            </dl>
+                        )}
+                        <ul className={styles.perks}>
+                            <li>{t('art.perkFile')}</li>
+                            <li>{t('art.perkArtist')}</li>
+                        </ul>
                     </div>
 
-                    <div className={styles.rightColumn}>
-                        <div className={styles.scrollableInfo} ref={rightInfoRef}>
-                            <div className={styles.topSection}>
-                                <h2 className={styles.title} id="art-dialog-title">{art.title}</h2>
-                            </div>
-
-                            <button
-                                type="button"
-                                className={`unstyled-button ${styles.artistName}`}
-                                onClick={handleArtistNameClick}
-                                title={t('art.viewArtist')}
-                            >
-                                {art.artistName}
-                            </button>
-
-                            <div className={styles.detailsList}>
-                                <p className={styles.field}><span>{t('art.category')}</span> {art.category ? t(`labels.${art.category}`, { defaultValue: art.category }) : '—'}</p>
-                                <p className={styles.field}><span>{t('art.style')}</span> {art.style || '—'}</p>
-                                <p className={styles.field}><span>{t('art.format')}</span> {art.fileFormat || '—'}</p>
-                                <p className={styles.field}><span>{t('art.size')}</span> {art.size || '—'}</p>
-                            </div>
-
-                            <p className={styles.description}>
-                                {art.description}
-                            </p>
-                        </div>
-
-                        <div className={styles.actions}>
-                            <div className={styles.infoRow}>
-                                <p className={styles.priceText}>
-                                    {formatPrice(art.price)}
-                                </p>
-
-                                {/* One like control: the heart is the button, the number is its count */}
-                                <button
-                                    type="button"
-                                    className={styles.likeToggle}
-                                    onClick={handleLikeClick}
-                                    disabled={likeLoading}
-                                    aria-pressed={isLiked}
-                                    aria-label={`${isLiked ? t('art.unlike') : t('art.like')} (${likes})`}
-                                >
-                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" className={isLiked ? styles.likedHeart : styles.unlikedHeart}>
-                                        <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
-                                    </svg>
-                                    <span aria-hidden="true">{likes}</span>
-                                </button>
-                            </div>
-
-                            <div className={styles.buttonRow}>
-                                {owned ? (
-                                    <button className={styles.buyBtn} onClick={handleDownloadClick}>{t('art.download')}</button>
-                                ) : (
-                                    <button className={styles.buyBtn} onClick={handleBuyClick}>{t('art.addToBasket')}</button>
-                                )}
-
-                            </div>
-                        </div>
-                    </div>
+                    <footer className={styles.foot}>
+                        <p className={styles.priceText}>{formatPrice(art.price)}</p>
+                        {/* One like control: the heart is the button, the number is its count */}
+                        <button type="button" className={styles.likeToggle} onClick={handleLikeClick} disabled={likeLoading}
+                                aria-pressed={isLiked} aria-label={`${isLiked ? t('art.unlike') : t('art.like')} (${likes})`}>
+                            <HeartIcon size={20} className={isLiked ? styles.likedHeart : undefined} />
+                            <span aria-hidden="true">{likes}</span>
+                        </button>
+                        {owned ? (
+                            <button type="button" className={`btn btn-lime ${styles.buyBtn}`} onClick={handleDownloadClick}>{t('art.download')}</button>
+                        ) : (
+                            <button type="button" className={`btn btn-lime ${styles.buyBtn}`} onClick={handleBuyClick}>{t('art.addToBasket')}</button>
+                        )}
+                    </footer>
                 </div>
             </div>
             {isViewerOpen && (

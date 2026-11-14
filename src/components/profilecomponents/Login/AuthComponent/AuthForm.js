@@ -3,7 +3,6 @@ import { useSearchParams } from "react-router-dom";
 import axios from "axios";
 import { useTranslation } from 'react-i18next';
 import styles from "./AuthForm.module.css";
-import logo from "../../../../assets/logoWithText.svg";
 import { API_BASE } from "../../../../config";
 
 // Shown when the server has Google keys (GET /auth/providers); the sign-in itself happens on the
@@ -41,7 +40,7 @@ function AuthLayout({ children, onCreateAccount }) {
     const { t } = useTranslation();
     return (
         <div className={styles.authCard}>
-            <img src={logo} className={styles.logo} alt="DigitalBrush" />
+            <div className={styles.logo}>Digital<span>Brush</span></div>
 
             {children}
 

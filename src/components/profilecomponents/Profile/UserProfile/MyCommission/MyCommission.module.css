@@ -30,8 +30,8 @@
     display: flex;
     padding: 17px;
     position: relative;
-    background: linear-gradient(rgba(70, 70, 71, 0.6), rgba(70, 70, 71, 0.6)) padding-box,
-    linear-gradient(168deg, rgba(89, 92, 100, 1), rgba(71, 77, 95, 0.44)) border-box;
+    background: linear-gradient(var(--glass), var(--glass)) padding-box,
+    linear-gradient(168deg, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0.06)) border-box;
     border: 3px solid transparent;
     border-radius: 12px;
     height: 280px;
@@ -45,7 +45,7 @@
     display: flex;
     flex-direction: column;
     border-radius: 5px;
-    background: linear-gradient(168.05deg, #595C64 1.51%, rgba(71, 77, 95, 0.44) 90.56%);
+    background: linear-gradient(168.05deg, rgba(255, 255, 255, 0.22) 1.51%, rgba(255, 255, 255, 0.06) 90.56%);
     height: 100%;
 }
 
@@ -75,7 +75,7 @@
 }
 
 .cardPrice {
-    font-family: 'Roboto', sans-serif;
+    font-family: var(--font-body);
     font-size: 20px;
     color: white;
 }
@@ -94,7 +94,7 @@
 
 .cardTitle {
     margin: 0 0 10px 0;
-    font-family: 'Roboto', sans-serif;
+    font-family: var(--font-body);
     font-size: 16px;
     text-transform: uppercase;
     line-height: 1.2;
@@ -102,7 +102,7 @@
 }
 
 .cardDescription {
-    font-family: 'Roboto', sans-serif;
+    font-family: var(--font-body);
     font-size: 13px;
     color: rgba(255, 255, 255, 0.7);
     line-height: 1.4;
@@ -123,7 +123,7 @@
 
 .statusLabel {
     font-size: 18px;
-    color: #e0e0e0;
+    color: var(--muted);
 }
 
 .dotsContainer {
@@ -141,28 +141,28 @@
 }
 
 .dotFirst {
-    border-color: #8E40F2;
+    border-color: var(--violet);
 }
 .dotFirst.filled {
-    background: linear-gradient(180deg, #8E40F2 0%, #A242EB 100%);
+    background: linear-gradient(180deg, var(--violet) 0%, #A242EB 100%);
     border-color: transparent;
     box-shadow: 0 0 4px rgba(142, 64, 242, 0.4);
 }
 
 .dotSecond {
-    border-color: #B744E4;
+    border-color: var(--pink);
 }
 .dotSecond.filled {
-    background: linear-gradient(180deg, #B744E4 0%, #CB46DD 100%);
+    background: linear-gradient(180deg, var(--pink) 0%, #CB46DD 100%);
     border-color: transparent;
     box-shadow: 0 0 4px rgba(183, 68, 228, 0.4);
 }
 
 .dotThird {
-    border-color: #E149D5;
+    border-color: var(--pink);
 }
 .dotThird.filled {
-    background: linear-gradient(180deg, #E149D5 0%, #F64BCE 100%);
+    background: linear-gradient(180deg, var(--pink) 0%, #F64BCE 100%);
     border-color: transparent;
     box-shadow: 0 0 4px rgba(225, 73, 213, 0.4);
 }
@@ -198,4 +198,118 @@
         width: 100%;
         height: 200px;
     }
+}
+/* --- Aurora Glass theme (overrides the layout above) --- */
+
+.filtersWrapper {
+    margin-bottom: 20px;
+}
+
+.commissionGrid {
+    grid-template-columns: repeat(auto-fill, minmax(min(380px, 100%), 1fr));
+    gap: 12px;
+    padding-bottom: 32px;
+}
+
+.noResults {
+    padding: 40px;
+    border: 1px dashed var(--edge);
+    border-radius: var(--radius-lg);
+    color: var(--muted);
+}
+
+.commissionCard {
+    height: auto;
+    min-height: 170px;
+    padding: 10px;
+    gap: 14px;
+    border: 1px solid var(--edge);
+    border-radius: 24px;
+    background: var(--glass);
+    color: var(--fg);
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.commissionCard:hover {
+    background: var(--glass-2);
+}
+
+.imagePriceWrapper {
+    position: relative;
+    width: 38%;
+    border-radius: 16px;
+    overflow: hidden;
+    background: var(--glass);
+}
+
+.imageWrapper {
+    height: 100%;
+    border-radius: 0;
+}
+
+.priceOverlay {
+    position: absolute;
+    left: 8px;
+    top: 8px;
+    height: auto;
+    padding: 3px 10px;
+    border-radius: var(--radius-pill);
+    background: var(--lime);
+    backdrop-filter: none;
+}
+
+.cardPrice {
+    color: var(--on-accent);
+    font-family: var(--font-display);
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.cardContent {
+    min-width: 0;
+    padding: 4px 4px 2px 0;
+}
+
+.cardTitle {
+    font-family: var(--font-display);
+    font-size: 17px;
+    font-weight: 700;
+    text-transform: none;
+    color: var(--fg);
+    overflow-wrap: anywhere;
+}
+
+.cardDescription {
+    color: var(--muted);
+    -webkit-line-clamp: 3;
+}
+
+.statusLabel {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--peach);
+}
+
+.dotsContainer {
+    gap: 4px;
+}
+
+.dot,
+.dotFirst,
+.dotSecond,
+.dotThird {
+    width: 22px;
+    height: 5px;
+    border: none;
+    border-radius: 3px;
+    background: var(--glass-2);
+    box-shadow: none;
+}
+
+.dotFirst.filled,
+.dotSecond.filled,
+.dotThird.filled {
+    background: var(--lime);
+    box-shadow: none;
 }
