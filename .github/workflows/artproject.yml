@@ -15,8 +15,8 @@ concurrency:
 
 env:
   REGISTRY: ghcr.io
-  FRONTEND_IMAGE: diplomeproject/paintingsproject-frontend
-  BACKEND_IMAGE: diplomeproject/paintingsproject-backend
+  FRONTEND_IMAGE: lesbica/paintingsproject-frontend
+  BACKEND_IMAGE: lesbica/paintingsproject-backend
 
 jobs:
 # =====================
@@ -163,8 +163,8 @@ jobs:
             docker network create paintings-net || true
 
             echo "⬇ Pull images of this commit"
-            docker pull ghcr.io/diplomeproject/paintingsproject-frontend:${{ github.sha }}
-            docker pull ghcr.io/diplomeproject/paintingsproject-backend:${{ github.sha }}
+            docker pull ${{ env.REGISTRY }}/${{ env.FRONTEND_IMAGE }}:${{ github.sha }}
+            docker pull ${{ env.REGISTRY }}/${{ env.BACKEND_IMAGE }}:${{ github.sha }}
 
             echo "🛑 Stop old containers"
             docker stop frontend backend || true
@@ -181,7 +181,7 @@ jobs:
             docker run --rm \
               --network paintings-net \
               --env-file "$BACKEND_ENV_FILE" \
-              ghcr.io/diplomeproject/paintingsproject-backend:${{ github.sha }} \
+              ${{ env.REGISTRY }}/${{ env.BACKEND_IMAGE }}:${{ github.sha }} \
               node scripts/migrate.js
 
             echo "🚀 Start backend container"
@@ -190,7 +190,7 @@ jobs:
               --network paintings-net \
               --restart unless-stopped \
               --env-file "$BACKEND_ENV_FILE" \
-              ghcr.io/diplomeproject/paintingsproject-backend:${{ github.sha }}
+              ${{ env.REGISTRY }}/${{ env.BACKEND_IMAGE }}:${{ github.sha }}
 
             echo "🚀 Start frontend container (PUBLIC)"
             docker run -d \
@@ -198,6 +198,6 @@ jobs:
               --network paintings-net \
               --restart unless-stopped \
               -p 8080:80 \
-              ghcr.io/diplomeproject/paintingsproject-frontend:${{ github.sha }}
+              ${{ env.REGISTRY }}/${{ env.FRONTEND_IMAGE }}:${{ github.sha }}
 
             echo "✅ Application available at http://172.17.3.24:8080"
