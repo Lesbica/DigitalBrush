@@ -12,7 +12,7 @@ import { CATEGORIES } from '../../constants/categories';
 import { COMMISSION_FILTERS, filtersToParams, toggleFilter } from '../../constants/filters';
 import { useAuth } from '../../context/AuthContext';
 import { useTranslation } from 'react-i18next';
-import { formatPrice } from '../../i18n/format';
+import { formatPrice, formatDate } from '../../i18n/format';
 import { SearchIcon, PlusIcon } from '../Icons/Icons';
 
 const PAGE_SIZE = 48;
@@ -30,6 +30,8 @@ const toCard = (c) => ({
     imageUrl: c.imageUrl || null,
     imageSrc: c.imageUrl || '/images/placeholder.svg',
     about: c.Description || '',
+    customerName: c.customer_name || '',
+    deadline: c.Deadline || null,
 });
 
 function Commission() {
@@ -90,7 +92,9 @@ function Commission() {
             <div className={`container ${styles.contentWrapper}`}>
                 <header className={styles.header}>
                     <div className={styles.titleBlock}>
-                        <h1 className={styles.commissionTitle}>{t('nav.commission')}</h1>
+                        <h1 className={styles.commissionTitle}>
+                            {t('commissions.titleStart')}<span className="gradient-text">{t('commissions.titleAccent')}</span>
+                        </h1>
                         <p className={styles.subtitle}>{t('commissions.subtitle')}</p>
                     </div>
                     <div className={styles.headerActions}>
@@ -105,12 +109,6 @@ function Commission() {
                                 onChange={(e) => setSearchQuery(e.target.value)}
                             />
                         </label>
-                        {isLoggedIn && (
-                            <button type="button" className="btn btn-warm" onClick={handleOpenAddModal}>
-                                <PlusIcon size={18} />
-                                {t('commissions.add')}
-                            </button>
-                        )}
                     </div>
                 </header>
 
@@ -130,60 +128,90 @@ function Commission() {
                     </div>
                 </div>
 
-                {loading ? (
-                    <div className={styles.loadingSpinnerContainer}>
-                        <img src={logo} alt={t('common.loading')} className={styles.loadingLogo} />
-                    </div>
-                ) : (
-                    commissions.length > 0 ? (
-                        <>
-                            <div className={styles.commissionGrid}>
-                                {commissions.map(commission => (
-                                    <div key={commission.id} className={styles.commissionCard}>
-                                        <div className={styles.imagePriceWrapper}>
-                                            <div className={styles.imageWrapper}>
-                                                <img
-                                                    src={commission.imageSrc || "/images/placeholder.svg"}
-                                                    alt={commission.title || "Commission"}
-                                                    className={styles.cardImage}
-                                                    loading="lazy"
-                                                    decoding="async"
-                                                    onError={(e) => { if (!e.currentTarget.src.endsWith('/images/placeholder.svg')) e.currentTarget.src = '/images/placeholder.svg'; }}
-                                                />
-                                            </div>
-                                            <div className={styles.priceOverlay}>
-                                                <span className={styles.cardPrice}>{formatPrice(commission.price)}</span>
-                                            </div>
-                                        </div>
-                                        <div className={styles.cardContent}>
-                                            <div>
-                                                <h3 className={styles.cardTitle}>{commission.title}</h3>
-                                                <p className={styles.cardDescription}>{commission.description}</p>
-                                            </div>
-                                            <button
-                                                className={styles.takeButton}
-                                                onClick={() => handleOpenModal(commission)}
-                                            >
-                                                {t('commissions.take')}
-                                            </button>
-                                        </div>
-                                    </div>
-                                ))}
+                <div className={styles.layout}>
+                    <section className={styles.board} aria-label={t('commissions.listLabel')}>
+                        {loading ? (
+                            <div className={styles.loadingSpinnerContainer}>
+                                <img src={logo} alt={t('common.loading')} className={styles.loadingLogo} />
                             </div>
+                        ) : commissions.length > 0 ? (
+                            <>
+                                <ul className={styles.requestList}>
+                                    {commissions.map(commission => (
+                                        <li key={commission.id}>
+                                            <article className={`glass ${styles.requestCard}`} aria-labelledby={`request-${commission.id}`}>
+                                                <div className={styles.requestMain}>
+                                                    {(commission.category || commission.style) && (
+                                                        <div className={styles.tags}>
+                                                            {commission.category && <span className={styles.tag}>{t(`labels.${commission.category}`, { defaultValue: commission.category })}</span>}
+                                                            {commission.style && <span className={styles.tag}>{commission.style}</span>}
+                                                        </div>
+                                                    )}
+                                                    <h3 id={`request-${commission.id}`} className={styles.cardTitle}>{commission.title}</h3>
+                                                    <p className={styles.cardDescription}>{commission.description}</p>
+                                                    {commission.imageUrl && (
+                                                        <img
+                                                            src={commission.imageUrl}
+                                                            alt={t('commissions.referenceAlt', { title: commission.title })}
+                                                            className={styles.thumb}
+                                                            loading="lazy"
+                                                            decoding="async"
+                                                            onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                                                        />
+                                                    )}
+                                                    <p className={styles.meta}>
+                                                        {commission.customerName && <span>{t('commissions.postedBy', { name: commission.customerName })}</span>}
+                                                        {commission.deadline && <span>{t('commissions.deadline', { date: formatDate(commission.deadline) })}</span>}
+                                                        {commission.size && <span>{commission.size}</span>}
+                                                    </p>
+                                                </div>
+                                                <div className={styles.requestSide}>
+                                                    <span className={styles.budgetLabel}>{t('commissions.budget')}</span>
+                                                    <strong className={styles.cardPrice}>{formatPrice(commission.price)}</strong>
+                                                    <button type="button" className={`btn btn-lime ${styles.takeButton}`} onClick={() => handleOpenModal(commission)}>
+                                                        {t('commissions.take')}
+                                                    </button>
+                                                </div>
+                                            </article>
+                                        </li>
+                                    ))}
+                                </ul>
 
-                            <Pagination
-                                currentPage={page}
-                                totalPages={totalPages}
-                                onPageChange={handlePageChange}
-                            />
-                        </>
-                    ) : (
-                        <div className={styles.noResults}>
-                            {error ? t('commissions.loadError') : t('commissions.empty')}
-                        </div>
-                    )
-                )}
+                                <Pagination
+                                    currentPage={page}
+                                    totalPages={totalPages}
+                                    onPageChange={handlePageChange}
+                                />
+                            </>
+                        ) : (
+                            <div className={styles.noResults}>
+                                {error ? t('commissions.loadError') : t('commissions.empty')}
+                            </div>
+                        )}
+                    </section>
+
+                    <aside className={`glass ${styles.postPanel}`} aria-labelledby="post-request-title">
+                        <h2 id="post-request-title">{t('commissions.postTitle')}</h2>
+                        <p>{t('commissions.postText')}</p>
+                        <ol className={styles.postSteps}>
+                            <li>{t('commissions.postStep1')}</li>
+                            <li>{t('commissions.postStep2')}</li>
+                            <li>{t('commissions.postStep3')}</li>
+                        </ol>
+                        {isLoggedIn ? (
+                            <button type="button" className="btn btn-lime" onClick={handleOpenAddModal}>{t('commissions.add')}</button>
+                        ) : (
+                            <button type="button" className="btn btn-lime" onClick={() => navigate('/profile')}>{t('commissions.signInToPost')}</button>
+                        )}
+                    </aside>
+                </div>
             </div>
+
+            {isLoggedIn && (
+                <button type="button" className={styles.fab} onClick={handleOpenAddModal} aria-label={t('commissions.add')}>
+                    <PlusIcon size={18} /> <span aria-hidden="true">{t('commissions.postShort')}</span>
+                </button>
+            )}
 
             {isAddModalOpen && (
                 <AddCommissionModal onClose={handleCloseAddModal} />

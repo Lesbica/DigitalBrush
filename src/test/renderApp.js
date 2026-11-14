@@ -38,7 +38,7 @@ export function mockApi(user, routes = {}) {
 export function LocationProbe() {
     const location = useLocation();
     return (
-        <p data-testid="location">
+        <p data-testid="location" data-search={location.search}>
             {location.pathname}
             {location.state ? ` ${JSON.stringify(location.state)}` : ''}
         </p>
@@ -81,6 +81,7 @@ export function paintingRows(n, extra = {}) {
         Price: 100 + i,
         likes: i,
         style: i % 2 ? 'Watercolour' : 'Digital',
+        category: i % 3 ? 'POSTER' : 'GAMES',
         image: `/api/images/painting/${i + 1}`,
         ...extra,
     }));

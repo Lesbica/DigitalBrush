@@ -103,7 +103,9 @@
     "saving": "Saving…",
     "add": "Add",
     "searchLabel": "Search",
-    "skipToContent": "Skip to content"
+    "skipToContent": "Skip to content",
+    "yes": "Yes",
+    "no": "No"
   },
   "basket": {
     "title": "BASKET",
@@ -150,11 +152,36 @@
     "view": "View",
     "artistsTitle": "Artists",
     "allArtists": "All artists",
-    "freshTitle": "Fresh in the shop",
+    "freshTitle": "Fresh this week",
     "seeAll": "See all in the shop",
     "commissionTitle": "Want something made just for you?",
     "commissionText": "Post a request and artists will send you offers.",
-    "startRequest": "Start a request"
+    "startRequest": "Start a request",
+    "byStyle": "Shop by style",
+    "pickTitle": "Pick of the week",
+    "viewArtwork": "View artwork",
+    "filterLabel": "Filter fresh works",
+    "filterAll": "All",
+    "freshCount_one": "{{count}} piece",
+    "freshCount_few": "{{count}} pieces",
+    "freshCount_many": "{{count}} pieces",
+    "freshCount_other": "{{count}} pieces",
+    "trackTitle": "Watch your commission come to life",
+    "trackText": "Every order gets a live tracker and a private chat with the artist. You approve each stage before the next one starts, and the artist gets paid only after your approval.",
+    "trackExampleTitle": "Portrait of Luna (cat)",
+    "trackExampleMeta": "with Maria Orlova · example order",
+    "trackBadge": "In progress",
+    "track": {
+      "brief": "Brief accepted",
+      "sketch": "Sketch approved",
+      "color": "Colour painting",
+      "final": "Final review and payment release"
+    },
+    "trackState": {
+      "done": "done",
+      "now": "now",
+      "next": "next"
+    }
   },
   "availability": {
     "open": "available",
@@ -166,7 +193,35 @@
     "addImage": "ADD IMAGE",
     "loadError": "Could not load the paintings. Please try again later.",
     "empty": "No paintings match your search",
-    "subtitle": "Original works, each sold by the person who made it."
+    "subtitle": "Original works, each sold by the person who made it.",
+    "titleStart": "The ",
+    "titleAccent": "shop",
+    "resultsLabel": "Artworks",
+    "count_one": "{{count}} artwork",
+    "count_few": "{{count}} artworks",
+    "count_many": "{{count}} artworks",
+    "count_other": "{{count}} artworks",
+    "sortLabel": "Sort by",
+    "sort": {
+      "LATEST": "Newest first",
+      "POPULAR": "Most liked",
+      "EXPENSIVE": "Price: high to low",
+      "CHEAP": "Price: low to high"
+    },
+    "filters": {
+      "title": "Filters",
+      "category": "Category",
+      "style": "Style",
+      "anyStyle": "Any style",
+      "maxPrice": "Max price",
+      "anyPrice": "Any price",
+      "upTo": "up to {{price}}",
+      "clear": "Clear filters",
+      "show_one": "Show {{count}} artwork",
+      "show_few": "Show {{count}} artworks",
+      "show_many": "Show {{count}} artworks",
+      "show_other": "Show {{count}} artworks"
+    }
   },
   "commissions": {
     "searchPlaceholder": "Title of the commission...",
@@ -174,7 +229,21 @@
     "loadError": "Could not load the commissions. Please try again later.",
     "empty": "No commissions match your search",
     "take": "Take",
-    "subtitle": "People post what they want made. Artists pick the requests that fit their style."
+    "subtitle": "People post what they want made. Artists pick the requests that fit their style.",
+    "titleStart": "Commission ",
+    "titleAccent": "board",
+    "listLabel": "Open requests",
+    "referenceAlt": "Reference for “{{title}}”",
+    "postedBy": "Posted by {{name}}",
+    "deadline": "Deadline {{date}}",
+    "budget": "Budget",
+    "postTitle": "Post a request",
+    "postText": "Describe what you want made and set a budget. Artists who like the idea will take it.",
+    "postStep1": "Describe the idea and add references",
+    "postStep2": "An artist takes your request",
+    "postStep3": "Approve each stage in the chat",
+    "signInToPost": "Sign in to post a request",
+    "postShort": "Post request"
   },
   "art": {
     "signInToLike": "Sign in to like paintings.",
@@ -191,7 +260,11 @@
     "like": "Like",
     "unlike": "Remove like",
     "openImage": "Open image {{n}} in full size",
-    "dialog": "Painting details"
+    "dialog": "Painting details",
+    "created": "Created",
+    "original": "Original · 1 of 1",
+    "perkFile": "Full-resolution file in your purchases right after payment",
+    "perkArtist": "The money goes to the artist who made it"
   },
   "artists": {
     "title": "Artists",
@@ -216,7 +289,27 @@
     "reviewCount_other": "{{count}} reviews",
     "noReviews": "No reviews yet",
     "commission": "Commission",
-    "reviews": "Reviews"
+    "reviews": "Reviews",
+    "notFound": "Artist not found",
+    "noBio": "The artist has not written about themselves yet.",
+    "sections": "Artist page sections",
+    "tabs": {
+      "works": "Works",
+      "about": "About",
+      "reviews": "Reviews"
+    },
+    "stats": {
+      "artworks": "artworks",
+      "likes": "likes",
+      "from": "prices from"
+    },
+    "commissionWith": "Commission {{name}}",
+    "availability": {
+      "open": "Open for commissions",
+      "busy": "Busy, queue is full",
+      "vacation": "On vacation"
+    },
+    "ratingOf": "{{rating}} out of 5"
   },
   "auth": {
     "email": "Email",
@@ -241,7 +334,11 @@
     "loginFailed": "Login failed",
     "google": "Continue with Google",
     "googleFailed": "Could not sign in with Google. Try again or use your email and password.",
-    "loginTitle": "Sign in"
+    "loginTitle": "Sign in",
+    "welcomeBack": "Welcome back",
+    "modeLabel": "Sign in or create an account",
+    "quote": "“I sold my first painting here two weeks after joining.”",
+    "quoteAuthor": "Sofia Maryn, graphic designer, Lviv"
   },
   "register": {
     "done": "Registration successful! You can log in now.",
@@ -280,7 +377,34 @@
     "noPurchases": "You haven't bought any artworks yet.",
     "noOrders": "You haven't ordered any commissions yet.",
     "noTasks": "You don't have any active tasks.",
-    "notSpecified": "Not specified"
+    "notSpecified": "Not specified",
+    "purchases": "Purchases",
+    "customer": "Buyer",
+    "menu": "Profile sections",
+    "newBadge_one": "{{count}} new",
+    "newBadge_few": "{{count}} new",
+    "newBadge_many": "{{count}} new",
+    "newBadge_other": "{{count}} new",
+    "overview": {
+      "label": "Overview",
+      "available": "Wallet",
+      "availableHint": "available to withdraw",
+      "onHold": "On hold",
+      "onHoldHint": "paid out when orders are approved",
+      "active": "Active orders",
+      "toReview_one": "{{count}} stage waits for your review",
+      "toReview_few": "{{count}} stages wait for your review",
+      "toReview_many": "{{count}} stages wait for your review",
+      "toReview_other": "{{count}} stages wait for your review",
+      "awaitingCustomer_one": "{{count}} stage waits for the customer",
+      "awaitingCustomer_few": "{{count}} stages wait for customers",
+      "awaitingCustomer_many": "{{count}} stages wait for customers",
+      "awaitingCustomer_other": "{{count}} stages wait for customers",
+      "openRequests": "Open requests",
+      "openRequestsHint": "waiting for an artist",
+      "purchases": "Purchases",
+      "purchasesHint": "artworks you own"
+    }
   },
   "settings": {
     "saved": "Profile updated!",
@@ -384,7 +508,8 @@
     "about": "About",
     "accept": "Accept",
     "decline": "Decline",
-    "cancelOrder": "Cancel order"
+    "cancelOrder": "Cancel order",
+    "noReferences": "No reference images"
   },
   "upload": {
     "maxImages_one": "You can upload at most {{count}} image.",
@@ -418,7 +543,11 @@
     "addImages": "Add images",
     "width": "Width, px",
     "height": "Height, px",
-    "price": "Price, ₴"
+    "price": "Price, ₴",
+    "about": "Description",
+    "category": "Category",
+    "style": "Style",
+    "format": "File format"
   },
   "chat": {
     "fileTooLarge": "The file is too large (max 5 MB).",
@@ -478,5 +607,49 @@
     "page": "Page {{n}}",
     "prev": "Previous page",
     "next": "Next page"
+  },
+  "stepModal": {
+    "stepOf": "Step {{n}} of {{total}}",
+    "next": "Next: {{name}}",
+    "sending": "Sending…",
+    "preview": "Preview",
+    "backToForm": "Back to the form",
+    "dropTitle": "Drop images here or browse",
+    "imageHint": "JPG, PNG, GIF or WEBP up to 10 MB · up to {{count}} images",
+    "sizePx": "Size, px",
+    "commission": {
+      "idea": "Idea",
+      "ideaTitle": "What would you like to order?",
+      "details": "Details",
+      "detailsTitle": "What should it look like?",
+      "budget": "Budget",
+      "budgetTitle": "Budget and deadline",
+      "titlePlaceholder": "e.g. Our dog as a Renaissance noble",
+      "aboutPlaceholder": "Describe the idea: mood, colours, what must be in the picture",
+      "references": "References",
+      "budgetLabel": "Your budget",
+      "budgetHint": "The artist is paid only after you approve the final stage.",
+      "publish": "Publish request",
+      "sendToArtist": "Send to the artist",
+      "previewBoard": "Live preview · commission board",
+      "previewDirect": "Live preview · what the artist will see"
+    },
+    "art": {
+      "images": "Images",
+      "imagesTitle": "Show your work",
+      "details": "Details",
+      "detailsTitle": "Tell buyers about it",
+      "price": "Price",
+      "priceTitle": "File and price",
+      "cover": "Cover",
+      "coverHere": "The first image becomes the cover",
+      "titlePlaceholder": "Name of the artwork",
+      "aboutPlaceholder": "What is it about, how was it made, what is it good for",
+      "sizeHint": "Filled in from the cover; change it if the file you sell is bigger.",
+      "priceHint": "Buyers pay exactly this; the platform fee comes out of it.",
+      "publish": "Publish artwork",
+      "published": "Your artwork is in the shop!",
+      "previewTitle": "Live preview · shop card"
+    }
   }
 }

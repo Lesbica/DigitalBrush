@@ -257,6 +257,16 @@
     font-family: var(--font-display);
     font-size: 26px;
     font-weight: 800;
+    position: relative;
+    overflow: hidden;
+}
+
+.avatar img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
 }
 
 .storyName {
@@ -316,53 +326,233 @@
     margin-top: 12px;
 }
 
-/* commission prompt */
-.ctaStrip {
+/* style quick links under the hero */
+.moods {
     display: flex;
     align-items: center;
-    justify-content: space-between;
     flex-wrap: wrap;
-    gap: 20px;
-    padding: 28px 32px;
-    border-radius: 28px;
-}
-
-.ctaStrip h2 {
-    margin: 0 0 6px;
-    font-size: clamp(22px, 2.6vw, 32px);
-}
-
-.ctaStrip p {
-    margin: 0;
+    gap: 8px;
+    margin-top: 26px;
     color: var(--muted);
+    font-size: 13px;
 }
 
-/* two cards */
-.duo {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 16px;
+.moods > span {
+    margin-right: 4px;
 }
 
-.duoCard {
+.moodChip,
+.chip {
+    min-height: 34px;
+    padding: 6px 14px;
+    border: 1px solid var(--edge);
+    border-radius: var(--radius-pill);
+    background: var(--glass);
+    color: var(--fg);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.moodChip:hover,
+.chip:hover {
+    border-color: var(--lime);
+}
+
+.chip[aria-pressed="true"] {
+    background: var(--fg);
+    border-color: var(--fg);
+    color: var(--bg);
+}
+
+.chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.count {
+    margin: 6px 0 0;
+    color: var(--muted);
+    font-size: 14px;
+}
+
+/* phone-only blocks */
+.mobileSearch,
+.pickSection {
+    display: none;
+}
+
+.pick {
+    position: relative;
+    min-height: 380px;
+    border-radius: 28px;
+    overflow: hidden;
+    background-size: cover;
+    background-position: center;
+    border: 1px solid var(--edge);
+}
+
+.pickShade {
+    position: absolute;
+    inset: 0;
     display: flex;
     flex-direction: column;
+    justify-content: flex-end;
     align-items: flex-start;
-    gap: 14px;
-    padding: 30px;
-    border-radius: 28px;
+    gap: 6px;
+    padding: 22px;
+    background: linear-gradient(180deg, transparent 35%, rgba(10, 10, 18, 0.88));
 }
 
-.duoCard h2 {
-    margin: 0;
-    font-size: clamp(24px, 2.8vw, 34px);
-    line-height: 1.05;
+.pickBadge {
+    padding: 4px 10px;
+    border-radius: var(--radius-pill);
+    background: var(--lime);
+    color: var(--on-accent);
+    font-size: 12px;
+    font-weight: 700;
 }
 
-.duoCard p {
-    margin: 0 0 6px;
+.pickTitle {
+    margin: 4px 0 0;
+    font-size: 32px;
+    line-height: 1;
+}
+
+.pickMeta {
+    margin: 0 0 10px;
     color: var(--muted);
-    line-height: 1.65;
+    font-size: 14px;
+}
+
+/* commission tracker */
+.track {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+    gap: 40px;
+    align-items: center;
+    padding: 44px;
+    border-radius: 32px;
+}
+
+.trackCopy h2 {
+    margin: 0 0 14px;
+    font-size: clamp(30px, 3.8vw, 46px);
+    line-height: 1.02;
+}
+
+.trackCopy p {
+    margin: 0 0 24px;
+    max-width: 440px;
+    color: var(--muted);
+    line-height: 1.6;
+}
+
+.trackCard {
+    padding: 22px;
+    border-radius: 22px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--edge);
+}
+
+.trackHead {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.trackHead strong {
+    display: block;
+    font-family: var(--font-display);
+    font-size: 17px;
+}
+
+.trackHead small {
+    color: var(--muted);
+    font-size: 12px;
+}
+
+.trackBadge {
+    flex: none;
+    padding: 5px 11px;
+    border-radius: var(--radius-pill);
+    background: var(--peach);
+    color: var(--on-accent);
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.trackBar {
+    height: 6px;
+    margin: 16px 0 18px;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.08);
+    overflow: hidden;
+}
+
+.trackBar span {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: var(--gradient-warm);
+}
+
+.trackSteps {
+    display: grid;
+    gap: 12px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.trackSteps li {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 14px;
+}
+
+.trackDot {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: 1px solid var(--edge);
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.done .trackDot {
+    background: var(--lime);
+    border-color: var(--lime);
+    color: var(--on-accent);
+}
+
+.now .trackDot {
+    background: var(--peach);
+    border-color: var(--peach);
+}
+
+.next {
+    color: var(--muted);
+}
+
+.trackLabel {
+    flex: 1;
+    min-width: 0;
+}
+
+.now .trackLabel {
+    font-weight: 600;
+}
+
+.trackState {
+    color: var(--muted);
+    font-size: 12px;
 }
 
 /* --- Responsive --- */
@@ -378,32 +568,44 @@
         height: 440px;
     }
 
-    .duo {
+    .track {
         grid-template-columns: 1fr;
+        gap: 26px;
+        padding: 28px;
     }
 }
 
-@media (max-width: 560px) {
-    .heroText {
-        font-size: 16px;
+/* Phones: search, artists and the pick of the week instead of the big hero */
+@media (max-width: 899px) {
+    .mobileSearch {
+        display: block;
+        padding-top: 16px;
     }
 
-    .heroActions :global(.btn) {
-        flex: 1 1 100%;
+    .mobileSearch .search {
+        width: 100%;
     }
 
-    .stack {
-        height: 400px;
-    }
-
-    .stackBack {
+    .hero {
         display: none;
     }
 
-    .stackFront {
-        left: 0;
-        right: 0;
-        top: 0;
+    .pickSection {
+        display: block;
+        padding-top: 24px;
+    }
+
+    .section {
+        padding-top: 30px;
+    }
+
+    .sectionHead .chips {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        width: calc(100% + var(--gutter));
+        margin-right: calc(var(--gutter) * -1);
+        padding-right: var(--gutter);
+        scrollbar-width: none;
     }
 
     .masonry {
@@ -411,12 +613,8 @@
         column-gap: 10px;
     }
 
-    .ctaStrip,
-    .duoCard {
+    .track {
         padding: 22px;
-    }
-
-    .section {
-        padding-top: 34px;
+        border-radius: 26px;
     }
 }

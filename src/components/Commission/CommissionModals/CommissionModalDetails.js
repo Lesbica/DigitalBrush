@@ -1,13 +1,13 @@
-import React, {useCallback, useEffect, useRef, useState} from "react";
-import styles from "./CommissionModalDetails.module.css";
-import closeIcon from '../../../assets/closeCross.svg';
+import { useCallback, useEffect, useRef, useState } from "react";
+import styles from "../../Dialog/DetailsDialog.module.css";
+import { CloseIcon } from '../../Icons/Icons';
 import axios from 'axios';
 import ImageViewer from "../../ArtCard/ImageViewer/ImageViewer";
-import logo from '../../../assets/logo.svg'
 import { useToast } from '../../../context/ToastContext';
 import { useTranslation } from 'react-i18next';
 import { formatPrice, formatDate } from '../../../i18n/format';
 import useDialog from '../../Dialog/useDialog';
+import { useAuth } from '../../../context/AuthContext';
 
 // respondAsArtist: artist of a direct open commission can accept or decline it
 // canCancel: customer can cancel an unpaid commission; onStatusChange(newStatus) refreshes the caller
@@ -16,6 +16,7 @@ const CommissionModalDetails = ({ commission, onClose, disableTake = false, resp
     const dialogRef = useRef(null);
     useDialog(dialogRef, onClose);
     const toast = useToast();
+    const { user } = useAuth();
 
     const [isLoading, setIsLoading] = useState(true);
     const [details, setDetails] = useState(() => ({
@@ -41,6 +42,7 @@ const CommissionModalDetails = ({ commission, onClose, disableTake = false, resp
     const [previewImages, setPreviewImages] = useState([]);
 
     // Стан для ImageViewer
+    const [confirming, setConfirming] = useState(null);
     const [isViewerOpen, setIsViewerOpen] = useState(false);
     const [viewerInitialIndex, setViewerInitialIndex] = useState(0);
 
@@ -174,9 +176,9 @@ const CommissionModalDetails = ({ commission, onClose, disableTake = false, resp
     const hasMultipleImages = previewImages.length > 0;
 
     // Decline (artist) or cancel (customer)
+    // asked in the footer first (confirming): 'decline' | 'cancel' | null
     const changeStatus = async (action) => {
-        const question = action === 'decline' ? t('commission.confirmDecline') : t('commission.confirmCancel');
-        if (!window.confirm(question)) return;
+        setConfirming(null);
         try {
             const res = action === 'decline'
                 ? await axios.patch(`/commissions/${commission.id}/decline`)
@@ -190,98 +192,96 @@ const CommissionModalDetails = ({ commission, onClose, disableTake = false, resp
         }
     };
 
+    // guests see it (and are asked to sign in); signed-in customers and the request's author do not
+    const ownRequest = user && Number(user.id) === Number(details.Customer_ID);
+    const canAccept = respondAsArtist
+        || (!(disableTake || details.Creator_ID) && !ownRequest && (!user || user.role === 'artist'));
+    const specs = [
+        [t('art.format'), details.fileFormat],
+        [t('art.size'), details.size],
+        [t('commission.deadline'), details.deadline
+            ? `${formatDate(`${details.deadline}T00:00:00`)}${details.overdue ? ` (${t('commission.overdue')})` : ''}`
+            : null],
+    ].filter(([, v]) => v);
+
     return (
-        <div className={styles.overlay}>
-            <div className={styles.modal} onClick={(e) => e.stopPropagation()}
-                 ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="commission-dialog-title">
-                <button type="button" className={styles.closeBtn} onClick={onClose}>
-                    <img src={closeIcon} alt={t('common.close')} />
-                </button>
-
-                <div className={styles.topSection}>
-
-                    {isLoading ? (
-                        <div className={styles.loadingSpinnerContainer}>
-                            <img src={logo} alt="Loading" className={styles.loadingLogo} />
-                        </div>
+        <div className={styles.overlay} onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+            <div className={styles.modal} ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="commission-dialog-title">
+                <div className={styles.gallery}>
+                    {mainImage ? (
+                        <button type="button" className={styles.imageButton} onClick={openImageViewer} aria-label={t('art.openImage', { n: 1 })}>
+                            <img src={mainImage} alt={details.title} className={styles.artImage} onError={onImageError} />
+                        </button>
                     ) : (
-                        // Використовуємо .imageColumn, якщо є хоча б одне прев'ю
-                        // або .singleImage, якщо є ТІЛЬКИ головне зображення
-                        <div className={hasMultipleImages ? styles.imageColumn : styles.singleImageWrapper}>
-                            <img
-                                src={mainImage || "/images/placeholder.svg"}
-                                alt={commission.title}
-                                // Використовуємо різні класи для компонування
-                                className={hasMultipleImages ? styles.image : styles.singleImage}
-                                onError={onImageError}
-                                onClick={openImageViewer} // <-- ПОВЕРНУЛИ "ДРУГИЙ КЛІК"
-                            />
-
-                            {/* Рядок прев'ю показуємо ТІЛЬКИ якщо він не порожній */}
-                            {hasMultipleImages && (
-                                <div className={styles.previewRow}>
-                                    {previewImages.map((img, index) => (
-                                        <img
-                                            key={index}
-                                            src={img || "/images/placeholder.svg"}
-                                            alt={`preview ${index + 1}`}
-                                            // .activePreview більше не потрібен
-                                            className={styles.previewImg}
-                                            // Викликаємо нову функцію "SWAP"
-                                            onClick={() => handlePreviewClick(img, index)}
-                                            onError={onImageError}
-                                        />
-                                    ))}
-                                </div>
-                            )}
+                        <div className={styles.noImage}>{isLoading ? t('common.loading') : t('commission.noReferences')}</div>
+                    )}
+                    {hasMultipleImages && (
+                        <div className={styles.thumbs}>
+                            {previewImages.map((img, index) => (
+                                <button key={index} type="button" onClick={() => handlePreviewClick(img, index)}
+                                        aria-label={t('art.openImage', { n: index + 2 })}>
+                                    <img src={img || "/images/placeholder.svg"} alt="" onError={onImageError} />
+                                </button>
+                            ))}
                         </div>
                     )}
+                </div>
 
-                    {/* --- ПРАВА КОЛОНКА (Без змін) --- */}
-                    <div className={styles.info}>
+                <div className={styles.side}>
+                    <header className={styles.head}>
+                        <div className={styles.tags}>
+                            {details.category && <span>{t(`labels.${details.category}`, { defaultValue: details.category })}</span>}
+                            {details.style && <span>{details.style}</span>}
+                            <span className={styles.original}>{t(`status.${details.status}`, { defaultValue: details.status || '—' })}</span>
+                        </div>
+                        <button type="button" className={styles.close} onClick={onClose} aria-label={t('common.close')}>
+                            <CloseIcon size={18} />
+                        </button>
                         <h2 className={styles.title} id="commission-dialog-title">{details.title}</h2>
-                        <p className={styles.field}>
-                            <span>{t('art.category')}</span> {details.category ? t(`labels.${details.category}`, { defaultValue: details.category }) : '—'}
-                        </p>
-                        <p className={styles.field}>
-                            <span>{t('art.style')}</span> {details.style || '—'}
-                        </p>
-                        <p className={styles.field}>
-                            <span>{t('art.format')}</span> {details.fileFormat || '—'}
-                        </p>
-                        <p className={styles.field}>
-                            <span>{t('art.size')}</span> {details.size || '—'}
-                        </p>
-                        <p className={styles.field}>
-                            <span>{t('artists.status')}</span> {t(`status.${details.status}`, { defaultValue: details.status || '—' })}
-                        </p>
-                        {details.deadline && (
-                            <p className={styles.field} style={details.overdue ? { color: '#ff8a8a' } : undefined}>
-                                <span>{t('commission.deadline')}</span> {formatDate(`${details.deadline}T00:00:00`)}{details.overdue ? ` (${t('commission.overdue')})` : ''}
-                            </p>
+                    </header>
+
+                    <div className={styles.body}>
+                        {details.description && (
+                            <section>
+                                <h3 className={styles.sectionTitle}>{t('commission.about')}</h3>
+                                <p className={styles.description}>{details.description}</p>
+                            </section>
+                        )}
+                        {specs.length > 0 && (
+                            <dl className={`${styles.specs} ${details.overdue ? styles.overdue : ''}`}>
+                                {specs.map(([k, v]) => <div key={k}><dt>{k}</dt><dd>{v}</dd></div>)}
+                            </dl>
                         )}
                     </div>
-                </div>
 
-                {/* --- НИЖНЯ ЧАСТИНА (Без змін) --- */}
-                <div className={styles.about}>
-                    <p>{t('commission.about')}</p>
-                    <span>{details.description}</span>
+                    <footer className={styles.foot}>
+                        {confirming ? (
+                            <>
+                                <p className={styles.confirm} role="alert">
+                                    {confirming === 'decline' ? t('commission.confirmDecline') : t('commission.confirmCancel')}
+                                </p>
+                                <button type="button" className="btn btn-ghost" onClick={() => setConfirming(null)}>{t('common.no')}</button>
+                                <button type="button" className={`btn ${styles.danger}`} onClick={() => changeStatus(confirming)}>{t('common.yes')}</button>
+                            </>
+                        ) : (
+                            <>
+                                <p className={styles.priceText}>
+                                    <small>{t('commissions.budget')}</small>
+                                    {formatPrice(details.price)}
+                                </p>
+                                {respondAsArtist && (
+                                    <button type="button" className={`btn ${styles.danger}`} onClick={() => setConfirming('decline')}>{t('commission.decline')}</button>
+                                )}
+                                {canCancel && (
+                                    <button type="button" className={`btn ${styles.danger}`} onClick={() => setConfirming('cancel')}>{t('commission.cancelOrder')}</button>
+                                )}
+                                {canAccept && (
+                                    <button type="button" className={`btn btn-lime ${styles.buyBtn}`} onClick={handleAccept}>{t('commission.accept')}</button>
+                                )}
+                            </>
+                        )}
+                    </footer>
                 </div>
-
-                <div className={styles.actions}>
-                    <button className={styles.priceBtn}>{formatPrice(details.price)}</button>
-                    {(respondAsArtist || !(disableTake || details.Creator_ID)) && (
-                        <button className={styles.takeBtn} onClick={handleAccept}>{t('commission.accept')}</button>
-                    )}
-                    {respondAsArtist && (
-                        <button className={styles.takeBtn} style={{ background: '#a33' }} onClick={() => changeStatus('decline')}>{t('commission.decline')}</button>
-                    )}
-                    {canCancel && (
-                        <button className={styles.takeBtn} style={{ background: '#a33' }} onClick={() => changeStatus('cancel')}>{t('commission.cancelOrder')}</button>
-                    )}
-                </div>
-
             </div>
 
             {isViewerOpen && (

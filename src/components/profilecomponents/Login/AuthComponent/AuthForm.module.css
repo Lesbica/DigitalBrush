@@ -185,3 +185,26 @@
         border-radius: 26px;
     }
 }
+
+/* inside the two-column sign-in shell (Profile): the card blends into the right column */
+:global(.auth-shell) .authCard {
+    width: 100%;
+    padding: 0;
+    background: none;
+    border: none;
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+}
+
+:global(.auth-shell) .logo,
+:global(.auth-shell) .separator,
+:global(.auth-shell) .createAccountBtn {
+    display: none;
+}
+
+.title {
+    margin: 0 0 4px;
+    font-size: clamp(30px, 3.4vw, 40px);
+    line-height: 1.05;
+}

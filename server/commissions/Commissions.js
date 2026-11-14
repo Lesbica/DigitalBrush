@@ -201,6 +201,7 @@ router.get('/public', async (req, res) => {
             Customer_ID: c.Customer_ID,
             Creator_ID: c.Creator_ID,
             Created_At: c.Created_At,
+            Deadline: c.Deadline,
             customer_name: c.customer_name,
             imageUrl: c.hasRef ? commissionImageUrl(c.Commission_ID, 'ref', LIST_WIDTH) : null,
         }));

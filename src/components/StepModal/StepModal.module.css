@@ -1,0 +1,448 @@
+/* Creation dialog: live preview (left) + steps (right). Phones: bottom sheet, preview on demand. */
+
+.layer {
+    position: fixed;
+    inset: 0;
+    z-index: 8000;
+    display: grid;
+    place-items: center;
+    padding: 16px;
+}
+
+.backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(5, 5, 10, 0.72);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+}
+
+.modal {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.1fr);
+    width: min(1040px, 100%);
+    height: min(680px, calc(100vh - 32px));
+    border-radius: 30px;
+    overflow: hidden;
+    background: rgba(20, 19, 30, 0.97);
+    border: 1px solid var(--edge);
+    box-shadow: var(--shadow);
+    color: var(--fg);
+    font-family: var(--font-body);
+    font-size: 15px;
+}
+
+/* --- live preview --- */
+.preview {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 28px;
+    background:
+        radial-gradient(70% 60% at 25% 15%, rgba(124, 92, 250, 0.34), transparent 70%),
+        radial-gradient(60% 50% at 85% 95%, rgba(255, 184, 107, 0.22), transparent 70%),
+        #100E1C;
+    overflow-y: auto;
+}
+
+.previewTitle {
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.previewStage {
+    flex: 1;
+    display: grid;
+    align-content: center;
+    justify-items: center;
+    min-height: 0;
+}
+
+.previewBack,
+.previewToggle,
+.grab {
+    display: none;
+}
+
+/* --- form side --- */
+.form {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    padding: 24px 28px;
+    gap: 12px;
+}
+
+.head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.stepName {
+    color: var(--muted);
+    font-size: 13px;
+}
+
+.close {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    border: 1px solid var(--edge);
+    border-radius: 50%;
+    background: var(--glass);
+    color: var(--fg);
+    cursor: pointer;
+}
+
+.close:hover {
+    border-color: var(--lime);
+}
+
+.progress {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: 1fr;
+    gap: 6px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.progress li {
+    height: 4px;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.1);
+    transition: background 0.25s;
+}
+
+.progress li.done {
+    background: var(--lime);
+}
+
+.question {
+    margin: 6px 0 2px;
+    font-size: clamp(22px, 2.4vw, 28px);
+    line-height: 1.1;
+}
+
+.body {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin: 0 -6px;
+    padding: 4px 6px 8px;
+    scrollbar-width: thin;
+}
+
+.foot {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    padding-top: 14px;
+    border-top: 1px solid var(--edge);
+}
+
+.foot :global(.btn:disabled) {
+    opacity: 0.6;
+    cursor: progress;
+}
+
+/* --- fields --- */
+.field {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    border: none;
+    min-width: 0;
+}
+
+.label {
+    padding: 0;
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+.field input:not([type="file"]),
+.field textarea {
+    width: 100%;
+    min-height: 46px;
+    padding: 0 14px;
+    border: 1px solid var(--edge);
+    border-radius: 14px;
+    background: rgba(10, 10, 18, 0.5);
+    color: var(--fg);
+    font: inherit;
+}
+
+.field textarea {
+    min-height: 110px;
+    padding: 12px 14px;
+    resize: vertical;
+}
+
+.field input:focus,
+.field textarea:focus {
+    outline: none;
+    border-color: var(--lime);
+}
+
+.field input[aria-invalid="true"],
+.field textarea[aria-invalid="true"],
+.invalid {
+    border-color: #FF8A8A !important;
+}
+
+.hint {
+    margin: 0;
+    color: var(--muted);
+    font-size: 12px;
+}
+
+.error {
+    margin: 0;
+    color: #FF8A8A;
+    font-size: 13px;
+}
+
+.row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.size {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--muted);
+}
+
+.money {
+    position: relative;
+}
+
+.money input {
+    padding-left: 34px !important;
+    font-family: var(--font-display);
+    font-size: 22px !important;
+    font-weight: 700;
+}
+
+.money span {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--muted);
+    font-size: 18px;
+}
+
+.chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.chip {
+    min-height: 34px;
+    padding: 5px 13px;
+    border: 1px solid var(--edge);
+    border-radius: var(--radius-pill);
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--fg);
+    font: inherit;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.chip:hover {
+    border-color: var(--lime);
+}
+
+.chip[aria-pressed="true"] {
+    background: var(--fg);
+    border-color: var(--fg);
+    color: var(--bg);
+    font-weight: 600;
+}
+
+.drop {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 22px 16px;
+    border: 1.5px dashed rgba(198, 245, 122, 0.45);
+    border-radius: 18px;
+    background: radial-gradient(60% 70% at 50% 40%, rgba(198, 245, 122, 0.08), transparent);
+    color: var(--muted);
+    font-size: 13px;
+    text-align: center;
+    cursor: pointer;
+}
+
+.drop strong {
+    color: var(--fg);
+    font-size: 15px;
+}
+
+.drop:hover,
+.drop:focus-within {
+    border-color: var(--lime);
+}
+
+.thumbs {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(78px, 1fr));
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.thumbs li {
+    position: relative;
+    aspect-ratio: 1;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid var(--edge);
+}
+
+.thumbs img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.cover {
+    position: absolute;
+    left: 6px;
+    bottom: 6px;
+    padding: 1px 7px;
+    border-radius: 8px;
+    background: var(--lime);
+    color: var(--on-accent);
+    font-size: 10px;
+    font-weight: 700;
+}
+
+.remove {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    display: grid;
+    place-items: center;
+    width: 24px;
+    height: 24px;
+    border: none;
+    border-radius: 50%;
+    background: rgba(10, 10, 18, 0.75);
+    color: var(--fg);
+    cursor: pointer;
+}
+
+.summary {
+    display: grid;
+    gap: 6px;
+    margin: 0;
+    padding: 14px 16px;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--edge);
+    font-size: 14px;
+}
+
+.summary div {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.summary dt {
+    color: var(--muted);
+}
+
+.summary dd {
+    margin: 0;
+    text-align: right;
+}
+
+/* --- phones: bottom sheet --- */
+@media (max-width: 760px) {
+    .layer {
+        place-items: end stretch;
+        padding: 0;
+    }
+
+    .modal {
+        grid-template-columns: 1fr;
+        width: 100%;
+        height: min(92vh, 760px);
+        border-radius: 26px 26px 0 0;
+        border-bottom: none;
+    }
+
+    .preview {
+        position: absolute;
+        inset: 0;
+        z-index: 2;
+        padding: 24px 18px calc(18px + env(safe-area-inset-bottom, 0px));
+        transform: translateY(100%);
+        transition: transform 0.25s ease;
+        visibility: hidden;
+    }
+
+    .previewOpen {
+        transform: none;
+        visibility: visible;
+    }
+
+    .previewBack,
+    .previewToggle {
+        display: inline-flex;
+    }
+
+    .previewToggle {
+        min-height: 38px;
+    }
+
+    .grab {
+        display: block;
+        align-self: center;
+        width: 40px;
+        height: 4px;
+        border-radius: 4px;
+        background: var(--edge);
+    }
+
+    .form {
+        padding: 10px 18px calc(16px + env(safe-area-inset-bottom, 0px));
+    }
+
+    .row {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .preview,
+    .progress li {
+        transition: none;
+    }
+}

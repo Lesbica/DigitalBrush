@@ -14,6 +14,100 @@
     padding: 48px var(--gutter-r) 48px var(--gutter);
 }
 
+.authShell {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    width: min(1080px, 100%);
+    min-height: 600px;
+    border-radius: 32px;
+    overflow: hidden;
+    background: rgba(20, 19, 30, 0.82);
+    border: 1px solid var(--edge);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    box-shadow: var(--shadow);
+}
+
+.authArt {
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+    padding: 36px;
+    background:
+        radial-gradient(60% 50% at 70% 20%, rgba(255, 184, 107, 0.95), transparent 70%),
+        radial-gradient(70% 60% at 20% 80%, rgba(124, 92, 250, 0.95), transparent 70%),
+        radial-gradient(50% 40% at 85% 85%, rgba(255, 122, 182, 0.8), transparent 70%),
+        linear-gradient(160deg, #2A1B4A, #120E2E);
+}
+
+.authQuote {
+    margin: 0;
+}
+
+.authQuote p {
+    margin: 0 0 10px;
+    font-family: var(--font-display);
+    font-size: clamp(22px, 2.4vw, 30px);
+    font-weight: 700;
+    line-height: 1.15;
+}
+
+.authQuote footer {
+    color: rgba(255, 255, 255, 0.75);
+    font-size: 13px;
+}
+
+.authSide {
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+    padding: 40px;
+}
+
+.authTabs {
+    display: inline-flex;
+    align-self: flex-start;
+    gap: 4px;
+    padding: 4px;
+    border-radius: var(--radius-pill);
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid var(--edge);
+}
+
+.authTabs button {
+    min-height: 36px;
+    padding: 6px 16px;
+    border: none;
+    border-radius: var(--radius-pill);
+    background: none;
+    color: var(--muted);
+    font: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.authTabs button[aria-selected="true"] {
+    background: var(--fg);
+    color: var(--bg);
+}
+
+@media (max-width: 760px) {
+    .authShell {
+        grid-template-columns: 1fr;
+        min-height: 0;
+        border-radius: 28px;
+    }
+
+    .authArt {
+        display: none;
+    }
+
+    .authSide {
+        padding: 26px 20px;
+    }
+}
+
 .profileContainer {
     width: 100%;
     max-width: 1200px;

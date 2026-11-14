@@ -211,3 +211,14 @@ fieldset.field input[type="radio"] {
         grid-template-columns: 1fr;
     }
 }
+
+/* inside the two-column sign-in shell (Profile) */
+:global(.auth-shell) .authCard {
+    width: 100%;
+    padding: 0;
+    background: none;
+    border: none;
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+}

@@ -86,107 +86,182 @@
     display: flex;
 }
 
-.commissionGrid {
+.layout {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-    gap: 16px;
+    grid-template-columns: minmax(0, 1fr) 340px;
+    gap: 24px;
+    align-items: start;
 }
 
-.commissionCard {
-    display: flex;
-    flex-direction: column;
-    padding: 8px;
-    border-radius: 24px;
-    background: var(--glass);
-    border: 1px solid var(--edge);
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
-    transition: transform 0.2s, background 0.2s;
+.board {
+    min-width: 0;
 }
 
-.commissionCard:hover {
-    transform: translateY(-3px);
-    background: var(--glass-2);
-}
-
-.imagePriceWrapper {
-    position: relative;
-}
-
-.imageWrapper {
-    aspect-ratio: 4 / 3;
-    border-radius: 17px;
-    overflow: hidden;
-    background: var(--glass);
-}
-
-.cardImage {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
-}
-
-.priceOverlay {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-}
-
-.cardPrice {
-    display: inline-block;
-    padding: 5px 12px;
-    border-radius: var(--radius-pill);
-    background: var(--lime);
-    color: var(--on-accent);
-    font-family: var(--font-display);
-    font-size: 15px;
-    font-weight: 700;
-    font-variant-numeric: tabular-nums;
-}
-
-.cardContent {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
+.requestList {
+    display: grid;
     gap: 14px;
-    padding: 14px 8px 6px;
+    margin: 0 0 8px;
+    padding: 0;
+    list-style: none;
+}
+
+.requestCard {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 20px;
+    padding: 22px 24px;
+    border-radius: var(--radius-lg);
+    transition: border-color 0.2s;
+}
+
+.requestCard:hover {
+    border-color: rgba(198, 245, 122, 0.45);
+}
+
+.requestMain {
+    min-width: 0;
+}
+
+.tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 10px;
+}
+
+.tag {
+    padding: 3px 10px;
+    border: 1px solid var(--edge);
+    border-radius: var(--radius-pill);
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
 }
 
 .cardTitle {
     margin: 0 0 6px;
-    font-size: 18px;
-    line-height: 1.2;
-    overflow-wrap: anywhere;
+    font-size: 22px;
+    line-height: 1.15;
 }
 
 .cardDescription {
     margin: 0;
     color: var(--muted);
     font-size: 14px;
-    line-height: 1.5;
+    line-height: 1.55;
     display: -webkit-box;
-    -webkit-line-clamp: 3;
+    -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
 }
 
-.takeButton {
-    align-self: flex-start;
-    min-height: 42px;
-    padding: 10px 20px;
-    border: none;
-    border-radius: var(--radius-pill);
-    background: var(--lime);
-    color: var(--on-accent);
-    font-size: 14px;
-    font-weight: 700;
-    cursor: pointer;
+.thumb {
+    display: block;
+    width: 64px;
+    height: 64px;
+    margin-top: 14px;
+    border-radius: 14px;
+    object-fit: cover;
+    border: 1px solid var(--edge);
 }
 
-.takeButton:hover {
-    filter: brightness(1.06);
+.meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 14px;
+    margin: 14px 0 0;
+    color: var(--muted);
+    font-size: 12px;
+}
+
+.requestSide {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 6px;
+    min-width: 130px;
+    text-align: right;
+}
+
+.budgetLabel {
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.cardPrice {
+    font-family: var(--font-display);
+    font-size: 26px;
+    line-height: 1;
+}
+
+.takeButton {
+    margin-top: 8px;
+    min-height: 40px;
+    padding: 8px 18px;
+}
+
+/* right column: how to post a request */
+.postPanel {
+    position: sticky;
+    top: calc(var(--nav-h) + 20px);
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 24px;
+    border-radius: var(--radius-lg);
+}
+
+.postPanel h2 {
+    margin: 0;
+    font-size: 26px;
+}
+
+.postPanel p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.postSteps {
+    display: grid;
+    gap: 10px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    counter-reset: step;
+}
+
+.postSteps li {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 14px;
+    counter-increment: step;
+}
+
+.postSteps li::before {
+    content: counter(step);
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid var(--edge);
+    font-size: 12px;
+    font-weight: 700;
+}
+
+/* phones: floating "post a request" above the tab bar */
+.fab {
+    display: none;
 }
 
 .paginationContainer {
@@ -218,9 +293,51 @@
     50% { opacity: 0.35; transform: scale(0.94); }
 }
 
+@media (max-width: 1080px) {
+    .layout {
+        grid-template-columns: minmax(0, 1fr) 290px;
+    }
+}
+
+@media (max-width: 899px) {
+    .layout {
+        grid-template-columns: 1fr;
+    }
+
+    .postPanel {
+        position: static;
+        order: -1;
+    }
+
+    .fab {
+        position: fixed;
+        right: 16px;
+        bottom: calc(var(--tabbar-h) + 14px);
+        z-index: 40;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        min-height: 46px;
+        padding: 0 18px;
+        border: none;
+        border-radius: var(--radius-pill);
+        background: var(--gradient-warm);
+        color: var(--on-accent);
+        font: inherit;
+        font-size: 14px;
+        font-weight: 700;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+        cursor: pointer;
+    }
+}
+
 @media (max-width: 720px) {
     .contentWrapper {
         padding-top: 20px;
+    }
+
+    .commissionTitle {
+        font-size: clamp(30px, 8vw, 44px);
     }
 
     .headerActions {
@@ -231,58 +348,29 @@
         max-width: none;
     }
 
-    .headerActions :global(.btn) {
-        flex: 1 1 100%;
+    .postPanel {
+        display: none;
     }
 
-    .commissionGrid {
+    .requestCard {
         grid-template-columns: 1fr;
+        gap: 14px;
+        padding: 18px;
     }
 
-    .commissionCard {
+    .requestSide {
         flex-direction: row;
-        gap: 12px;
-        align-items: stretch;
+        align-items: center;
+        justify-content: space-between;
+        min-width: 0;
+        text-align: left;
     }
 
-    .imagePriceWrapper {
-        flex: 0 0 112px;
-    }
-
-    .imageWrapper {
-        aspect-ratio: auto;
-        height: 100%;
-        min-height: 112px;
-    }
-
-    .priceOverlay {
-        top: 6px;
-        right: auto;
-        left: 6px;
-    }
-
-    .cardPrice {
-        font-size: 12px;
-        padding: 3px 8px;
-    }
-
-    .cardContent {
-        padding: 6px 6px 4px 0;
-        gap: 10px;
-    }
-
-    .cardTitle {
-        font-size: 16px;
-    }
-
-    .cardDescription {
-        -webkit-line-clamp: 2;
-        font-size: 13px;
+    .budgetLabel {
+        display: none;
     }
 
     .takeButton {
-        min-height: 36px;
-        padding: 8px 16px;
-        font-size: 13px;
+        margin-top: 0;
     }
 }

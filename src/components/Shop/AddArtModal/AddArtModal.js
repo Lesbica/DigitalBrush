@@ -1,455 +1,192 @@
-import React, { useState, useEffect, useRef } from 'react';
-import styles from './AddArtModal.module.css';
+import { useState } from 'react';
 import axios from "axios";
-import closeIcon from '../../../assets/closeCross.svg';
-import addImageIcon from '../../../assets/image-placeholder-icon.svg';
-import { useToast } from '../../../context/ToastContext';
-import { PAINTING_FORMATS } from '../../../constants/filters';
 import { useTranslation } from 'react-i18next';
-import useDialog from '../../Dialog/useDialog';
+import styles from './AddArtModal.module.css';
+import StepModal, { ChipGroup, Field, ImagePicker, useImageFiles } from '../../StepModal/StepModal';
+import modal from '../../StepModal/StepModal.module.css';
+import { PAINTING_FORMATS, STYLES } from '../../../constants/filters';
+import { CATEGORIES } from '../../../constants/categories';
+import { useToast } from '../../../context/ToastContext';
+import { useAuth } from '../../../context/AuthContext';
+import { formatPrice } from '../../../i18n/format';
+import { HeartIcon } from '../../Icons/Icons';
 
-const getOptions = (config, title) => {
-  const section = config.find(f => f.title === title);
-  return section?.options[0]?.subOptions || [];
-};
+const MAX_IMAGES = 10;
+const digits = (v) => v.replace(/\D/g, '');
+const styleOptions = (config) => config?.find((f) => f.title === 'STYLE')?.options?.[0]?.subOptions || STYLES;
 
-const lerp = (current, target, factor) =>
-  current * (1 - factor) + target * factor;
-
-const AddArtModal = ({
-  onClose,
-  categories,
-  filterConfig,
-  existingPaintingId = null
-}) => {
-  const toast = useToast();
-  const dialogRef = useRef(null);
-  useDialog(dialogRef, onClose);
+// Upload of a new artwork to the shop (artists only)
+const AddArtModal = ({ onClose, categories = CATEGORIES, filterConfig }) => {
     const { t } = useTranslation();
-  const styleOptions = getOptions(filterConfig, "STYLE");
-  const formatOptions = PAINTING_FORMATS;
-
-  const [name, setName] = useState('');
-  const [category, setCategory] = useState(categories[0] || '');
-  const [style, setStyle] = useState('');
-  const [fileFormat, setFileFormat] = useState('');
-  const [sizeW, setSizeW] = useState('');
-  const [sizeH, setSizeH] = useState('');
-  const [about, setAbout] = useState('');
-  const [price, setPrice] = useState('');
-  const [images, setImages] = useState([]);
-  const [submitting, setSubmitting] = useState(false);
-  const [errors, setErrors] = useState({});
-
-  const MAX_IMAGES = 10;
-
-  const leftColumnRef = useRef(null);
-  const rightFormRef = useRef(null);
-  const leftScroll = useRef({ current: 0, target: 0 });
-  const rightScroll = useRef({ current: 0, target: 0 });
-  const animationFrameId = useRef(null);
-  const lerpFactor = 0.1;
-
-  // --- Disable scroll + start animation ---
-  // Object URLs of new files are revoked on close (the cleanup must see the latest list)
-  const imagesRef = useRef(images);
-  useEffect(() => { imagesRef.current = images; }, [images]);
-
-  useEffect(() => {
-    document.body.style.overflow = 'hidden';
-    const frame = animationFrameId;
-    return () => {
-      document.body.style.overflow = 'auto';
-      if (frame.current) cancelAnimationFrame(frame.current);
-      imagesRef.current.forEach(img => img.file && URL.revokeObjectURL(img.preview));
-    };
-  }, []);
-
-  // --- Smooth scroll animation ---
-  const smoothScrollLoop = () => {
-    let needsUpdate = false;
-
-    [[leftColumnRef, leftScroll], [rightFormRef, rightScroll]].forEach(
-      ([ref, scroll]) => {
-        if (!ref.current) return;
-        const { current, target } = scroll.current;
-
-        if (Math.abs(target - current) > 0.1) {
-          scroll.current.current = lerp(current, target, lerpFactor);
-          ref.current.scrollTop = scroll.current.current;
-          needsUpdate = true;
-        } else if (current !== target) {
-          scroll.current.current = target;
-          needsUpdate = true;
-        }
-      }
-    );
-
-    if (needsUpdate)
-      animationFrameId.current = requestAnimationFrame(smoothScrollLoop);
-    else animationFrameId.current = null;
-  };
-
-  const startScrollAnimation = () => {
-    if (!animationFrameId.current)
-      animationFrameId.current = requestAnimationFrame(smoothScrollLoop);
-  };
-
-  const handleWheelScroll = e => {
-    let didAnimate = false;
-
-    [[leftColumnRef, leftScroll], [rightFormRef, rightScroll]].forEach(
-      ([ref, scroll]) => {
-        if (!ref.current) return;
-
-        const { scrollHeight, clientHeight } = ref.current;
-        if (scrollHeight <= clientHeight) return;
-
-        const maxScroll = scrollHeight - clientHeight;
-        const newTarget = Math.max(
-          0,
-          Math.min(scroll.current.target + e.deltaY, maxScroll)
-        );
-
-        if (newTarget !== scroll.current.target) {
-          scroll.current.target = newTarget;
-          didAnimate = true;
-        }
-      }
-    );
-
-    if (didAnimate) {
-      e.preventDefault();
-      startScrollAnimation();
-    }
-  };
-
-  // --- Load existing painting for edit ---
-  useEffect(() => {
-    if (!existingPaintingId) return;
-
-    const fetchPainting = async () => {
-      try {
-        const res = await axios.get(
-          `/paintings/${existingPaintingId}`
-        );
-
-        if (res.data.success) {
-          const p = res.data.painting;
-
-          setName(p.title || '');
-          setAbout(p.description || '');
-          setPrice(p.price || '');
-          setStyle(p.style || '');
-          setCategory(p.category || categories[0]);
-
-          if (p.width && p.height) {
-            setSizeW(String(p.width));
-            setSizeH(String(p.height));
-          }
-
-          const previews = [];
-
-          if (p.mainImage)
-            previews.push({ preview: p.mainImage, isExisting: true });
-
-          if (Array.isArray(p.gallery))
-            p.gallery.forEach(img =>
-              previews.push({ preview: img, isExisting: true })
-            );
-
-          setImages(previews.slice(0, MAX_IMAGES));
-        }
-      } catch (err) {
-        console.error("Error fetching painting:", err);
-      }
-    };
-
-    fetchPainting();
-  }, [existingPaintingId, categories]);
-
-  // --- Add images ---
-  const handleFileAdd = e => {
-    if (!e.target.files.length) return;
-
-    const allowed = Array.from(e.target.files).slice(
-      0,
-      MAX_IMAGES - images.length
-    );
-
-    const newFiles = allowed.map(file => ({
-      file,
-      preview: URL.createObjectURL(file)
-    }));
-
-    setImages(prev => [...newFiles, ...prev]);
-
-    e.target.value = null;
-  };
-
-  // --- Delete image ---
-  const handleImageDelete = (e, index) => {
-    e.stopPropagation();
-
-    setImages(prev => {
-      const toRemove = prev[index];
-      if (toRemove?.file) URL.revokeObjectURL(toRemove.preview);
-      return prev.filter((_, i) => i !== index);
+    const toast = useToast();
+    const { user } = useAuth();
+    const styleList = styleOptions(filterConfig);
+    const [step, setStep] = useState(0);
+    const [form, setForm] = useState({
+        name: '', about: '', category: categories[0] || '', style: styleList[0] || '', format: PAINTING_FORMATS[0],
+        sizeW: '', sizeH: '', price: '',
     });
-  };
+    const [errors, setErrors] = useState({});
+    const [submitting, setSubmitting] = useState(false);
+    const files = useImageFiles(MAX_IMAGES, () => toast.error(t('upload.maxImages', { count: MAX_IMAGES })));
 
-  // --- Validate ---
-  const validate = () => {
-    const e = {};
-    if (!name.trim()) e.name = t('upload.required.name');
-    if (!category) e.category = t('upload.required.category');
-    if (!style) e.style = t('upload.required.style');
-    if (!fileFormat) e.fileFormat = t('upload.required.format');
-    if (!sizeW || !sizeH) e.size = t('upload.required.size');
-    if (!about.trim()) e.about = t('upload.required.about');
-    if (!price.trim()) e.price = t('upload.required.price');
-    if (!images.length) e.images = t('upload.required.image');
+    const set = (key) => (value) => {
+        setForm((f) => ({ ...f, [key]: value }));
+        if (errors[key]) setErrors((e) => ({ ...e, [key]: null }));
+    };
+    const label = (c) => t(`labels.${c}`, { defaultValue: c });
 
-    setErrors(e);
-    return Object.keys(e).length === 0;
-  };
-
-  // --- Submit ---
-  const handleAddArt = async () => {
-    if (!validate()) return;
-    setSubmitting(true);
-
-    try {
-      if (existingPaintingId) {
-        toast.info(t('upload.editUnsupported'));
-        setSubmitting(false);
-        return;
-      }
-      const formData = new FormData();
-
-      formData.append("title", name);
-      formData.append("description", about);
-      formData.append("category", category);
-      formData.append("style", style);
-      formData.append("format", fileFormat);
-      formData.append("price", price);
-
-      // width/height individually + size string
-      formData.append("width", sizeW);
-      formData.append("height", sizeH);
-      formData.append("size", `${sizeW}x${sizeH}`);
-
-      // images
-      images.forEach((img, index) => {
-        if (!img.isExisting) {
-          formData.append(index === 0 ? "image" : "images", img.file);
+    // the cover's own pixel size fills in the size fields
+    const addImages = (list) => {
+        const wasEmpty = files.images.length === 0;
+        files.add(list);
+        setErrors((e) => ({ ...e, images: null }));
+        if (wasEmpty && list[0] && !form.sizeW && typeof Image !== 'undefined') {
+            const probe = new Image();
+            const url = URL.createObjectURL(list[0]);
+            probe.onload = () => {
+                setForm((f) => (f.sizeW ? f : { ...f, sizeW: String(probe.naturalWidth), sizeH: String(probe.naturalHeight) }));
+                URL.revokeObjectURL(url);
+            };
+            probe.src = url;
         }
-      });
+    };
 
-      const endpoint = `/paintings/upload`;
+    const steps = [
+        { name: t('stepModal.art.images'), title: t('stepModal.art.imagesTitle') },
+        { name: t('stepModal.art.details'), title: t('stepModal.art.detailsTitle') },
+        { name: t('stepModal.art.price'), title: t('stepModal.art.priceTitle') },
+    ];
 
-      const res = await axios.post(endpoint, formData, {
-        headers: { "Content-Type": "multipart/form-data" }
-      });
+    const checkStep = (n) => {
+        const e = {};
+        if (n === 0 && files.images.length === 0) e.images = t('upload.required.image');
+        if (n === 1) {
+            if (!form.name.trim()) e.name = t('upload.required.name');
+            if (!form.about.trim()) e.about = t('upload.required.about');
+        }
+        if (n === 2) {
+            if (!form.sizeW || !form.sizeH) e.size = t('upload.required.size');
+            if (!form.price) e.price = t('upload.required.price');
+        }
+        setErrors(e);
+        return Object.keys(e).length === 0;
+    };
 
-      if (res.data.success) {
-        onClose();
-        window.location.reload();
-      } else {
-        toast.error(res.data.message || t('upload.saveFailed'));
-      }
-    } catch (err) {
-      console.error(err);
-      toast.error(t('upload.saveFailed'));
-    } finally {
-      setSubmitting(false);
-    }
-  };
+    const submit = async () => {
+        setSubmitting(true);
+        try {
+            const data = new FormData();
+            data.append('title', form.name.trim());
+            data.append('description', form.about.trim());
+            data.append('category', form.category);
+            data.append('style', form.style);
+            data.append('format', form.format);
+            data.append('price', form.price);
+            data.append('width', form.sizeW);
+            data.append('height', form.sizeH);
+            data.append('size', `${form.sizeW}x${form.sizeH}`);
+            files.images.forEach((img, i) => data.append(i === 0 ? 'image' : 'images', img.file));
 
-  const handleOverlayClick = e => {
-    if (e.target === e.currentTarget) onClose();
-  };
+            const res = await axios.post('/paintings/upload', data, { headers: { 'Content-Type': 'multipart/form-data' } });
+            if (res.data.success) {
+                toast.success(t('stepModal.art.published'));
+                onClose();
+            } else {
+                toast.error(res.data.message || t('upload.saveFailed'));
+            }
+        } catch (error) {
+            toast.error(error.response?.data?.message || t('upload.saveFailed'));
+        } finally {
+            setSubmitting(false);
+        }
+    };
 
-  return (
-    <div className={styles.overlay} onClick={handleOverlayClick}>
-      <div className={styles.modalContent} onClick={(e) => e.stopPropagation()} onWheel={handleWheelScroll}
-           ref={dialogRef} role="dialog" aria-modal="true" aria-label={t('shop.addImage')}>
+    const next = () => {
+        if (!checkStep(step)) return;
+        if (step < steps.length - 1) setStep(step + 1);
+        else submit();
+    };
 
-        <button type="button" className={styles.closeBtnFixed} onClick={onClose}>
-          <img src={closeIcon} alt={t('common.close')} />
-        </button>
-
-        {/* LEFT COLUMN */}
-        <div className={styles.leftColumn} ref={leftColumnRef}>
-          <div className={`${styles.imageUploadArea} ${errors.images ? styles.errorBorder : ''}`}>
-            <img src={addImageIcon} alt="" className={styles.uploadIcon} />
-            <input
-              type="file"
-              accept="image/*"
-              aria-label={t('upload.addImages')}
-              className={styles.fileInput}
-              onChange={handleFileAdd}
-              multiple
-            />
-          </div>
-
-          {errors.images && <span className={styles.error} role="alert">{errors.images}</span>}
-
-          <div className={styles.imageStack}>
-            {images.map((img, i) => (
-              <div key={i} className={styles.stackImagePreview}>
-                <img src={img.preview} className={styles.imagePreview} alt="" />
-                <button type="button" className={`unstyled-button ${styles.deleteOverlay}`} onClick={(e) => handleImageDelete(e, i)}
-                        aria-label={t('upload.removeImage', { n: i + 1 })}>
-                  <img src={closeIcon} className={styles.deleteIcon} alt="" />
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* RIGHT COLUMN */}
-        <div className={styles.rightColumn}>
-          <div className={styles.scrollableForm} ref={rightFormRef}>
-
-            {/* NAME */}
-            <div className={styles.formGroup}>
-              <label htmlFor="art-name">{t('upload.name')}</label>
-              <textarea
-                id="art-name"
-                aria-invalid={Boolean(errors.name)}
-                aria-describedby={errors.name ? 'art-name-error' : undefined}
-                className={`${styles.formInput} ${errors.name ? styles.errorBorderInput : ''}`}
-                value={name}
-                onChange={e => setName(e.target.value)}
-                maxLength={150}
-                rows={2}
-                placeholder={t('upload.namePlaceholder')}
-              />
-              <span className={styles.charCounter}>{name.length} / 150</span>
-              {errors.name && <span className={styles.error} id="art-name-error" role="alert">{errors.name}</span>}
+    const cover = files.images[0]?.preview;
+    const preview = (
+        <article className={styles.tile}>
+            <div className={styles.tileImage}>
+                {cover ? <img src={cover} alt="" /> : <span className={styles.tileEmpty}>{t('stepModal.art.coverHere')}</span>}
+                <span className={styles.likes}><HeartIcon size={13} /> 0</span>
             </div>
-
-            {/* CATEGORY */}
-            <div className={styles.formGroup}>
-              <label htmlFor="art-category">{t('art.category')}</label>
-              <select
-                id="art-category"
-                className={styles.formSelect}
-                value={category}
-                onChange={e => setCategory(e.target.value)}
-              >
-                {categories.map(c => (
-                  <option key={c}>{c}</option>
-                ))}
-              </select>
+            <div className={styles.tileInfo}>
+                <div className={styles.tileText}>
+                    <strong className={form.name ? '' : styles.placeholder}>{form.name || t('stepModal.art.titlePlaceholder')}</strong>
+                    <span>{user?.name}{form.style ? ` · ${form.style}` : ''}</span>
+                </div>
+                <span className={styles.pricePill}>{form.price ? formatPrice(form.price) : '₴—'}</span>
             </div>
+        </article>
+    );
 
-            {/* STYLE */}
-            <div className={styles.formGroup}>
-              <label htmlFor="art-style">{t('art.style')}</label>
-              <select
-                id="art-style"
-                className={styles.formSelect}
-                value={style}
-                onChange={e => setStyle(e.target.value)}
-              >
-                <option value="">{t('upload.select')}</option>
-                {styleOptions.map(s => (
-                  <option key={s}>{s}</option>
-                ))}
-              </select>
-              {errors.style && <span className={styles.error} role="alert">{errors.style}</span>}
-            </div>
+    return (
+        <StepModal
+            label={t('shop.addImage')}
+            steps={steps}
+            step={step}
+            onBack={() => { setErrors({}); setStep(step - 1); }}
+            onNext={next}
+            nextLabel={t('stepModal.art.publish')}
+            submitting={submitting}
+            previewTitle={t('stepModal.art.previewTitle')}
+            preview={preview}
+            onClose={onClose}
+        >
+            {step === 0 && (
+                <ImagePicker images={files.images} max={MAX_IMAGES} onAdd={addImages} onRemove={files.remove}
+                             label={t('upload.addImages')} hint={t('stepModal.imageHint', { count: MAX_IMAGES })}
+                             coverLabel={t('stepModal.art.cover')} error={errors.images} />
+            )}
 
-            {/* FORMAT */}
-            <div className={styles.formGroup}>
-              <label htmlFor="art-format">{t('art.format')}</label>
-              <select
-                id="art-format"
-                className={styles.formSelect}
-                value={fileFormat}
-                onChange={e => setFileFormat(e.target.value)}
-              >
-                <option value="">{t('upload.select')}</option>
-                {formatOptions.map(f => (
-                  <option key={f}>{f}</option>
-                ))}
-              </select>
-              {errors.fileFormat && <span className={styles.error} role="alert">{errors.fileFormat}</span>}
-            </div>
+            {step === 1 && (
+                <>
+                    <Field id="art-name" label={t('upload.name')} error={errors.name}>
+                        <input id="art-name" value={form.name} maxLength={255} autoComplete="off"
+                               aria-invalid={Boolean(errors.name)} aria-describedby={errors.name ? 'art-name-error' : undefined}
+                               placeholder={t('stepModal.art.titlePlaceholder')} onChange={(e) => set('name')(e.target.value)} />
+                    </Field>
+                    <Field id="art-about" label={t('upload.about')} error={errors.about}>
+                        <textarea id="art-about" value={form.about} maxLength={2000}
+                                  aria-invalid={Boolean(errors.about)} aria-describedby={errors.about ? 'art-about-error' : undefined}
+                                  placeholder={t('stepModal.art.aboutPlaceholder')} onChange={(e) => set('about')(e.target.value)} />
+                    </Field>
+                    <ChipGroup id="art-category" label={t('upload.category')} options={categories} value={form.category}
+                               onChange={set('category')} renderLabel={label} />
+                    <ChipGroup id="art-style" label={t('upload.style')} options={styleList} value={form.style} onChange={set('style')} />
+                </>
+            )}
 
-            {/* SIZE */}
-            <div className={styles.formGroup}>
-              <span id="art-size-label">{t('art.size')}</span>
-              <div className={`${styles.sizeInputGroup} ${errors.size ? styles.errorBorderInput : ''}`} role="group" aria-labelledby="art-size-label">
-                <input
-                  type="text"
-                  placeholder="W"
-                  inputMode="numeric"
-                  aria-label={t('upload.width')}
-                  value={sizeW}
-                  onChange={e => setSizeW(e.target.value.replace(/\D/g, ''))}
-                />
-                <span aria-hidden="true">X</span>
-                <input
-                  type="text"
-                  placeholder="H"
-                  inputMode="numeric"
-                  aria-label={t('upload.height')}
-                  value={sizeH}
-                  onChange={e => setSizeH(e.target.value.replace(/\D/g, ''))}
-                />
-              </div>
-              {errors.size && <span className={styles.error} role="alert">{errors.size}</span>}
-            </div>
-
-            {/* ABOUT */}
-            <div className={styles.formGroup}>
-              <label htmlFor="art-about">{t('commission.about')}</label>
-              <textarea
-                id="art-about"
-                aria-invalid={Boolean(errors.about)}
-                aria-describedby={errors.about ? 'art-about-error' : undefined}
-                className={`${styles.formInput} ${errors.about ? styles.errorBorderInput : ''}`}
-                value={about}
-                onChange={e => setAbout(e.target.value)}
-                rows={3}
-              />
-              {errors.about && <span className={styles.error} id="art-about-error" role="alert">{errors.about}</span>}
-            </div>
-
-            {/* PRICE + SUBMIT */}
-            <div className={styles.actions}>
-              <div className={styles.priceInputWrapper}>
-                <input
-                  type="text"
-                  placeholder={t('upload.pricePlaceholder')}
-                  inputMode="decimal"
-                  aria-label={t('upload.price')}
-                  aria-invalid={Boolean(errors.price)}
-                  value={price}
-                  onChange={e => setPrice(e.target.value.replace(/\D/g, ''))}
-                  className={`${styles.priceInput} ${errors.price ? styles.errorBorderInput : ''}`}
-                />
-                {errors.price && <span className={styles.errorPrice} role="alert">{errors.price}</span>}
-              </div>
-
-              <button
-                className={styles.createBtn}
-                disabled={submitting}
-                onClick={handleAddArt}
-              >
-                {submitting ? t('common.saving') : existingPaintingId ? t('upload.update') : t('common.add')}
-              </button>
-
-            </div>
-
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+            {step === 2 && (
+                <>
+                    <ChipGroup id="art-format" label={t('upload.format')} options={PAINTING_FORMATS} value={form.format} onChange={set('format')} />
+                    <div className={modal.row}>
+                        <Field id="art-w" label={t('stepModal.sizePx')} error={errors.size} hint={t('stepModal.art.sizeHint')}>
+                            <div className={modal.size}>
+                                <input id="art-w" inputMode="numeric" placeholder="W" value={form.sizeW} aria-label={t('upload.width')}
+                                       aria-invalid={Boolean(errors.size)} onChange={(e) => set('sizeW')(digits(e.target.value))} />
+                                ×
+                                <input inputMode="numeric" placeholder="H" value={form.sizeH} aria-label={t('upload.height')}
+                                       aria-invalid={Boolean(errors.size)} onChange={(e) => set('sizeH')(digits(e.target.value))} />
+                            </div>
+                        </Field>
+                        <Field id="art-price" label={t('upload.price')} error={errors.price} hint={t('stepModal.art.priceHint')}>
+                            <div className={modal.money}>
+                                <span aria-hidden="true">₴</span>
+                                <input id="art-price" inputMode="numeric" value={form.price} placeholder="1500"
+                                       aria-invalid={Boolean(errors.price)} onChange={(e) => set('price')(digits(e.target.value))} />
+                            </div>
+                        </Field>
+                    </div>
+                </>
+            )}
+        </StepModal>
+    );
 };
 
 export default AddArtModal;

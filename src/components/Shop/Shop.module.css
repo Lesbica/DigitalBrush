@@ -75,16 +75,98 @@
     color: var(--muted);
 }
 
-.filtersWrapper {
-    margin-bottom: 24px;
+.layout {
+    display: grid;
+    grid-template-columns: 270px minmax(0, 1fr);
+    gap: 26px;
+    align-items: start;
 }
 
-.filtersContainer {
+.sidebar {
+    position: sticky;
+    top: calc(var(--nav-h) + 20px);
+    max-height: calc(100vh - var(--nav-h) - 40px);
+    overflow-y: auto;
+    padding: 22px;
+    border-radius: var(--radius-lg);
+    scrollbar-width: thin;
+}
+
+.results {
+    min-width: 0;
+}
+
+.toolbar {
     display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.count {
+    margin: 0;
+    color: var(--muted);
+    font-size: 14px;
+}
+
+.toolbarActions {
+    display: flex;
+    gap: 8px;
+}
+
+.filterButton {
+    display: none;
+    align-items: center;
+    gap: 8px;
+    height: 42px;
+    padding: 0 14px;
+    border-radius: var(--radius-pill);
+    color: var(--fg);
+    font: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.badge {
+    display: grid;
+    place-items: center;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 5px;
+    border-radius: 10px;
+    background: var(--lime);
+    color: var(--on-accent);
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.sortLabel {
+    display: flex;
+    align-items: center;
+    height: 42px;
+    padding: 0 6px 0 14px;
+    border-radius: var(--radius-pill);
+}
+
+.sort {
+    height: 100%;
+    padding-right: 8px;
+    border: none;
+    background: transparent;
+    color: var(--fg);
+    font: inherit;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.sort option {
+    background: var(--surface);
 }
 
 .masonry {
-    columns: 4 230px;
+    columns: 3 220px;
     column-gap: 16px;
 }
 
@@ -110,6 +192,20 @@
 
 @keyframes pulse {
     50% { opacity: 0.35; transform: scale(0.94); }
+}
+
+@media (max-width: 899px) {
+    .layout {
+        grid-template-columns: 1fr;
+    }
+
+    .sidebar {
+        display: none;
+    }
+
+    .filterButton {
+        display: inline-flex;
+    }
 }
 
 @media (max-width: 720px) {

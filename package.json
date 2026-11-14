@@ -22,6 +22,7 @@
     "setup": "npm install && cd server && npm install",
     "lint:server": "eslint --no-eslintrc -c server/.eslintrc.json server --ext .js",
     "withdrawals": "npm --prefix server run withdrawals --",
+    "seed:demo": "npm --prefix server run seed:demo --",
     "preview": "vite preview",
     "test:watch": "vitest",
     "lint": "eslint src --ext .js,.jsx --max-warnings 0"

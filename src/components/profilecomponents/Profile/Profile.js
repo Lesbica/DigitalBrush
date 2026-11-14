@@ -77,6 +77,24 @@ function Profile() {
                 <DigitalBrushProfile user={user} onLogout={handleLogout} />
             ) : (
                 <div className={styles.authFormsContainer}>
+                    <div className={`auth-shell ${styles.authShell}`}>
+                    <div className={styles.authArt} aria-hidden="true">
+                        <blockquote className={styles.authQuote}>
+                            <p>{t('auth.quote')}</p>
+                            <footer>{t('auth.quoteAuthor')}</footer>
+                        </blockquote>
+                    </div>
+                    <div className={styles.authSide}>
+                    {view !== 'forgotPassword' && (
+                        <div className={styles.authTabs} role="tablist" aria-label={t('auth.modeLabel')}>
+                            <button type="button" role="tab" aria-selected={view === 'login'} onClick={() => setView('login')}>
+                                {t('auth.loginTitle')}
+                            </button>
+                            <button type="button" role="tab" aria-selected={view === 'register'} onClick={() => setView('register')}>
+                                {t('auth.createAccount')}
+                            </button>
+                        </div>
+                    )}
                     {view === 'login' && (
                         <Login
                             handleLogin={handleLogin}
@@ -89,6 +107,8 @@ function Profile() {
                     {view === 'forgotPassword' && (
                         <ForgotPassword onBack={() => setView('login')} toggleForm={() => setView('register')} />
                     )}
+                    </div>
+                    </div>
                 </div>
             )}
         </div>

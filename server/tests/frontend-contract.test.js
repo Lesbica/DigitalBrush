@@ -176,7 +176,7 @@ describe('commission board: GET /commissions/public', () => {
         assert.equal(ids.includes(f.commissions.paid), false);
 
         const card = r.data.commissions.find((c) => c.Commission_ID === f.commissions.openPublic);
-        for (const key of ['Commission_ID', 'Title', 'Description', 'Price', 'imageUrl']) assert.ok(key in card, key);
+        for (const key of ['Commission_ID', 'Title', 'Description', 'Price', 'Category', 'Deadline', 'customer_name', 'imageUrl']) assert.ok(key in card, key);
         assert.equal(Number(card.Price), 200);
         assert.match(card.imageUrl, /\/images\/commission\//);
         assert.equal('ReferenceImage' in card, false);

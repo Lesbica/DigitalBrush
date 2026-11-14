@@ -1,5 +1,5 @@
-/* My profile: glass profile card with the section menu on the left, the chosen section on the right.
-   On phones the card becomes a compact header and the menu a scrollable row of tabs. */
+/* My profile: a compact glass sidebar (who I am + menu), overview cards on top, the chosen section below.
+   On phones the sidebar becomes a header with a scrollable row of tabs. */
 
 .pageContainer {
     padding-bottom: 48px;
@@ -8,236 +8,228 @@
 
 .contentWrapper {
     display: grid;
-    grid-template-columns: 300px minmax(0, 1fr);
-    gap: 28px;
+    grid-template-columns: 270px minmax(0, 1fr);
+    gap: 24px;
     align-items: start;
     max-width: var(--container);
     margin: 0 auto;
-    padding: 32px var(--gutter-r) 0 var(--gutter);
+    padding: 28px var(--gutter-r) 0 var(--gutter);
 }
 
+/* --- sidebar --- */
 .sidebar {
     position: sticky;
     top: calc(var(--nav-h) + 20px);
     display: flex;
     flex-direction: column;
-    gap: 16px;
-    padding: 0 18px 18px;
-    border-radius: 30px;
-    background: var(--glass);
-    border: 1px solid var(--edge);
-    backdrop-filter: blur(18px);
-    -webkit-backdrop-filter: blur(18px);
-    overflow: hidden;
+    gap: 18px;
+    padding: 20px 14px;
+    border-radius: var(--radius-lg);
 }
 
-.sidebar::before {
-    content: "";
-    display: block;
-    height: 96px;
-    margin: 0 -18px -64px;
-    background:
-        radial-gradient(circle at 80% 20%, rgba(127, 224, 195, 0.9), transparent 45%),
-        radial-gradient(circle at 15% 90%, rgba(110, 168, 255, 0.9), transparent 55%),
-        linear-gradient(135deg, #2FB8A0, #3FA7D6 60%, #7C5CFA);
-}
-
-.avatarContainer {
-    position: relative;
-    width: 96px;
-    height: 96px;
-    border-radius: 50%;
-    overflow: hidden;
-    border: 5px solid var(--bg);
-    background: var(--surface);
+.identity {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0 6px;
 }
 
 .avatar {
-    width: 100%;
-    height: 100%;
+    flex: none;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
     object-fit: cover;
+    border: 2px solid var(--edge);
 }
 
-.artistName {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
+.identityText {
+    min-width: 0;
+}
+
+.userName {
     margin: 0;
-    font-size: 24px;
-    font-weight: 800;
-    line-height: 1.1;
+    font-size: 18px;
+    line-height: 1.2;
     overflow-wrap: anywhere;
 }
 
-.status {
-    align-self: flex-start;
-    padding: 3px 10px;
-    border-radius: var(--radius-pill);
-    background: var(--lime);
-    color: var(--on-accent);
-    font-family: var(--font-body);
-    font-size: 12px;
-    font-weight: 700;
-}
-
-.metaInfo {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-}
-
-.metaRow {
-    display: flex;
-    align-items: center;
-    gap: 8px;
+.role {
     color: var(--muted);
     font-size: 13px;
-    overflow-wrap: anywhere;
 }
 
-.socialicon {
-    width: 16px;
-    height: 16px;
-    opacity: 0.85;
-    flex-shrink: 0;
-}
-
-.bio {
-    margin: 0;
-    color: var(--muted);
-    font-size: 14px;
-    line-height: 1.6;
-    white-space: pre-line;
-}
-
-.actionButtonsContainer {
+.menu {
     display: flex;
     flex-direction: column;
     gap: 4px;
-    padding-top: 12px;
-    border-top: 1px solid var(--edge);
 }
 
-.profileSettingsBtn,
-.imagesBtn,
-.comissionBtn,
-.paymentBtn,
-.calendarBtn,
-.logoutBtn {
+.menuRow {
     display: flex;
     align-items: center;
-    gap: 10px;
-    width: 100%;
+    gap: 4px;
+}
+
+.menuItem {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
     min-height: 44px;
-    padding: 10px 12px;
+    padding: 8px 12px;
     border: none;
     border-radius: 14px;
     background: none;
     color: var(--muted);
+    font: inherit;
     font-size: 15px;
     font-weight: 500;
     text-align: left;
     cursor: pointer;
-    transition: background 0.15s, color 0.15s;
 }
 
-.profileSettingsBtn:hover,
-.imagesBtn:hover,
-.comissionBtn:hover,
-.paymentBtn:hover,
-.calendarBtn:hover {
-    background: var(--glass);
+.menuItem:hover {
     color: var(--fg);
+    background: rgba(255, 255, 255, 0.04);
 }
 
-.active,
-.profileSettingsBtn.active,
-.imagesBtn.active,
-.comissionBtn.active,
-.paymentBtn.active,
-.calendarBtn.active {
-    background: var(--glass-2);
+.menuItem.active {
     color: var(--fg);
+    background: rgba(255, 255, 255, 0.08);
+    font-weight: 600;
+}
+
+.menuItem.active svg {
+    color: var(--lime);
+}
+
+.menuLabel {
+    flex: 1;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.badge {
+    flex: none;
+    padding: 2px 8px;
+    border-radius: var(--radius-pill);
+    background: var(--gradient-warm);
+    color: var(--on-accent);
+    font-size: 11px;
     font-weight: 700;
 }
 
-.btnicon {
-    width: 18px;
-    height: 18px;
-    flex-shrink: 0;
-    opacity: 0.85;
+.count {
+    flex: none;
+    min-width: 24px;
+    padding: 1px 7px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.08);
+    font-size: 12px;
+    text-align: center;
 }
 
-.plusIcon {
-    width: 18px;
-    height: 18px;
-}
-
-.logoutBtn {
-    margin-top: 6px;
-    color: var(--danger);
-}
-
-.logoutBtn:hover {
-    background: rgba(255, 138, 138, 0.1);
-}
-
-/* Tab + its "add" action: two separate buttons, the action sits at the right edge of the tab */
-.tabWithAction {
-    position: relative;
-    width: 100%;
-}
-
-.tabWithAction > button:first-child {
-    padding-right: 52px;
-}
-
-.plusButton {
-    position: absolute;
-    top: 50%;
-    right: 6px;
-    transform: translateY(-50%);
+.menuAction {
+    flex: none;
     display: grid;
     place-items: center;
-    width: 32px;
-    height: 32px;
-    padding: 0;
-    border: none;
+    width: 34px;
+    height: 34px;
+    border: 1px solid var(--edge);
     border-radius: 50%;
-    background: var(--lime);
+    background: none;
+    color: var(--fg);
     cursor: pointer;
 }
 
-.plusButton img {
-    width: 14px;
-    height: 14px;
-    filter: brightness(0);
+.menuAction:hover {
+    border-color: var(--lime);
+    color: var(--lime);
 }
 
-.plusButton:hover {
-    filter: brightness(1.06);
+.logout {
+    margin-top: 8px;
+    border-top: 1px solid var(--edge);
+    border-radius: 0 0 14px 14px;
+    padding-top: 14px;
 }
 
+.logout:hover {
+    color: #FF8A8A;
+}
+
+/* --- overview cards --- */
+.main {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.stats {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.stat {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    padding: 18px 20px;
+    border-radius: var(--radius-lg);
+    color: var(--fg);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.stat:hover {
+    border-color: rgba(198, 245, 122, 0.45);
+}
+
+.statAccent {
+    background: linear-gradient(140deg, rgba(198, 245, 122, 0.16), rgba(255, 255, 255, 0.04));
+}
+
+.statLabel {
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.statValue {
+    font-family: var(--font-display);
+    font-size: 30px;
+    line-height: 1.1;
+}
+
+.statHint {
+    color: var(--muted);
+    font-size: 13px;
+}
+
+/* --- section --- */
 .gallerySection {
     min-width: 0;
     display: flex;
     flex-direction: column;
+    padding: 22px;
+    border-radius: var(--radius-lg);
 }
 
-.topControls {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    margin-bottom: 22px;
-}
-
-.artGrid {
-    columns: 3 220px;
-    column-gap: 16px;
-    margin-bottom: 24px;
-}
-
-.noArtworks,
 .placeholder {
     padding: 40px;
     border: 1px dashed var(--edge);
@@ -249,57 +241,80 @@
 @media (max-width: 900px) {
     .contentWrapper {
         grid-template-columns: 1fr;
-        gap: 18px;
+        gap: 16px;
         padding-top: 16px;
     }
 
     .sidebar {
         position: static;
+        padding: 16px 12px 12px;
     }
 
-    /* menu becomes a scrollable row of tabs */
-    .actionButtonsContainer {
+    .menu {
         flex-direction: row;
+        gap: 6px;
         overflow-x: auto;
         scrollbar-width: none;
-        gap: 6px;
-        margin: 0 -18px;
-        padding: 12px 18px 0;
+        margin: 0 -12px;
+        padding: 0 12px;
     }
 
-    .actionButtonsContainer::-webkit-scrollbar {
+    .menu::-webkit-scrollbar {
         display: none;
     }
 
-    .profileSettingsBtn,
-    .imagesBtn,
-    .comissionBtn,
-    .paymentBtn,
-    .calendarBtn,
-    .logoutBtn {
-        width: auto;
+    .menuRow {
         flex: none;
-        min-height: 40px;
-        padding: 8px 14px;
-        border-radius: var(--radius-pill);
+    }
+
+    .menuItem {
+        flex: none;
+        min-height: 38px;
+        padding: 6px 12px;
         border: 1px solid var(--edge);
-        white-space: nowrap;
-        margin-top: 0;
+        border-radius: var(--radius-pill);
+        font-size: 14px;
     }
 
-    .tabWithAction {
-        width: auto;
+    .menuItem.active {
+        background: var(--fg);
+        border-color: var(--fg);
+        color: var(--bg);
+    }
+
+    .menuItem.active svg {
+        color: var(--bg);
+    }
+
+    .menuAction {
+        display: none;
+    }
+
+    .logout {
         flex: none;
+        margin-top: 0;
+        padding-top: 6px;
+        border-radius: var(--radius-pill);
+        border-top: 1px solid var(--edge);
     }
 
-    .tabWithAction > button:first-child {
-        padding-right: 46px;
+    .stats {
+        grid-template-columns: repeat(3, minmax(150px, 1fr));
+        overflow-x: auto;
+        scrollbar-width: none;
+    }
+
+    .gallerySection {
+        padding: 14px;
     }
 }
 
 @media (max-width: 560px) {
-    .artGrid {
-        columns: 2;
-        column-gap: 10px;
+    .statValue {
+        font-size: 24px;
+    }
+
+    .stat {
+        padding: 14px 16px;
     }
 }

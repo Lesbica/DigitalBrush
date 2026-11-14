@@ -44,11 +44,13 @@
 }
 
 .noArtworks {
+    column-span: all; /* sits inside the multi-column grid, must not split across columns */
     padding: 40px;
     border: 1px dashed var(--edge);
     border-radius: var(--radius-lg);
     color: var(--muted);
     font-size: 15px;
+    text-align: center;
 }
 
 @media (max-width: 560px) {

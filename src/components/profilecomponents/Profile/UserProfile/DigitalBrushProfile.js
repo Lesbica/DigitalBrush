@@ -1,21 +1,11 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
+import axios from "axios";
 import styles from "./DigitalBrushProfile.module.css";
 import MyImages from "./MyImages/MyImages";
 import ProfileSettings from "./SettingsProfile/SettingsProfile";
 import CommissionChat from "./MyCommission/CommissionChat/CommissionChat";
 import Wallet from "./Wallet/Wallet";
-
-import infoIcon from '../../../../assets/infoIcon.svg';
-import globeIcon from '../../../../assets/icons/globeIcon.svg';
-import heartIcon from '../../../../assets/icons/heartIcon.svg';
-import userIcon from "../../../../assets/icons/userIcon.svg";
-import pictureIcon from "../../../../assets/icons/pictureIcon.svg";
-import calendarIcon from "../../../../assets/icons/calendarIcon.svg";
-import comissionIcon from "../../../../assets/icons/comissionIcon.svg";
-import walletIcon from "../../../../assets/icons/walletIcon.svg";
-import closeIcon from "../../../../assets/closeCross.svg";
-import plusIcon from "../../../../assets/icons/plusIcon.svg";
 import MyCommission from "./MyCommission/MyCommission";
 import AddArtModal from "../../../Shop/AddArtModal/AddArtModal";
 import AddCommissionModal from "../../../Commission/CommissionModals/AddCommissionModal";
@@ -23,23 +13,51 @@ import { CATEGORIES } from '../../../../constants/categories';
 import { SHOP_FILTERS } from '../../../../constants/filters';
 import { useTranslation } from 'react-i18next';
 import { useToast } from '../../../../context/ToastContext';
+import { formatPrice } from '../../../../i18n/format';
+import { BrushIcon, ImageIcon, BagIcon, WalletIcon, SettingsIcon, LogoutIcon, PlusIcon } from '../../../Icons/Icons';
 
+const WORK_STAGES = ['Sketch', 'Lineart', 'Color', 'Final'];
+const TABS = ['settings', 'images', 'purchases', 'commission', 'wallet'];
 
-const filterConfig = SHOP_FILTERS;
-
-const categories = CATEGORIES;
+// Numbers for the cards above the content: earnings for artists, orders for everyone
+function useOverview(user) {
+    const [overview, setOverview] = useState(null);
+    useEffect(() => {
+        let alive = true;
+        const isArtist = user.role === 'artist';
+        Promise.allSettled([
+            axios.get('/commissions/my'),
+            isArtist ? axios.get('/wallet') : axios.get('/profile/getboughtpaintings'),
+        ]).then(([orders, second]) => {
+            if (!alive) return;
+            const list = orders.status === 'fulfilled' ? orders.value.data.commissions || [] : [];
+            const mine = (c, key) => Number(c[key]) === Number(user.id);
+            const active = list.filter((c) => WORK_STAGES.includes(c.Status || c.status));
+            setOverview({
+                active: active.length,
+                // the customer has to approve a submitted stage; the artist waits for that
+                toReview: active.filter((c) => c.Review_State === 'pending' && mine(c, 'Customer_ID')).length,
+                awaitingCustomer: active.filter((c) => c.Review_State === 'pending' && mine(c, 'Creator_ID')).length,
+                newOrders: list.filter((c) => (c.Status || c.status) === 'Open' && mine(c, 'Creator_ID')).length,
+                openRequests: list.filter((c) => (c.Status || c.status) === 'Open' && mine(c, 'Customer_ID')).length,
+                balance: isArtist && second.status === 'fulfilled' ? second.value.data.balance : null,
+                purchases: !isArtist && second.status === 'fulfilled' ? (second.value.data.paintings || []).length : null,
+            });
+        });
+        return () => { alive = false; };
+    }, [user.id, user.role]);
+    return overview;
+}
 
 function DigitalBrushProfile({ user, onLogout }) {
     const { t } = useTranslation();
     const toast = useToast();
-    // Стан для відстеження поточної вкладки
-    // Можливі варіанти: 'settings', 'images', 'commission', 'payment', 'calendar'
-    const [activeTab, setActiveTab] = useState('images');
+    const isArtist = user.role === 'artist';
+    const [activeTab, setActiveTab] = useState(isArtist ? 'images' : 'commission');
     const [showAddArtModal, setShowAddArtModal] = useState(false);
     const [showAddCommissionModal, setShowAddCommissionModal] = useState(false);
     const [activeChatCommissionId, setActiveChatCommissionId] = useState(null);
-
-    const [totalLikes, setTotalLikes] = useState(0);
+    const overview = useOverview(user);
 
     // Links from notifications: /profile?commission=<id> opens that chat, /profile?tab=wallet a tab
     const [searchParams, setSearchParams] = useSearchParams();
@@ -54,7 +72,7 @@ function DigitalBrushProfile({ user, onLogout }) {
         if (commissionId) {
             setActiveChatCommissionId(Number(commissionId));
             setActiveTab('chat');
-        } else if (tab && ['settings', 'images', 'purchases', 'commission', 'wallet'].includes(tab)) {
+        } else if (tab && TABS.includes(tab)) {
             setActiveTab(tab);
         }
         if (commissionId || tab) setSearchParams({}, { replace: true });
@@ -65,181 +83,120 @@ function DigitalBrushProfile({ user, onLogout }) {
         setActiveTab('chat');
     };
 
-    const formatTags = (tags) => {
-        if (!tags || tags.length === 0) return t('profile.notSpecified');
-        if (Array.isArray(tags)) return tags.slice(0, 2).join('/'); // Беремо перші 2
-        return tags; // Якщо це просто рядок
-    };
-
-    const handleOpenAddArt = (e) => {
-        e.stopPropagation();
-        setShowAddArtModal(true);
-    };
-
-    const handleOpenAddCommission = (e) => {
-        e.stopPropagation();
-        setShowAddCommissionModal(true);
-    };
-
     const handleBackToCommissionList = () => {
         setActiveChatCommissionId(null);
         setActiveTab('commission');
     };
 
-    // Функція для рендерингу правої частини
     const renderContent = () => {
         switch (activeTab) {
             case 'settings':
                 return <ProfileSettings user={user} />;
-            case 'images':
-                return <MyImages user={user} onTotalLikesChange={setTotalLikes} />;
             case 'purchases':
                 return <MyImages user={user} initialView="bought" />;
             case 'commission':
                 return <MyCommission user={user} onOpenChat={handleOpenChat} />;
             case 'chat':
-                return (
-                    <CommissionChat
-                        commissionId={activeChatCommissionId}
-                        user={user}
-                        onBack={handleBackToCommissionList}
-                    />
-                );
+                return <CommissionChat commissionId={activeChatCommissionId} user={user} onBack={handleBackToCommissionList} />;
             case 'wallet':
                 return <Wallet />;
-            case 'calendar':
-                return <div className={styles.placeholder}>Calendar Component (Coming Soon)</div>;
+            case 'images':
             default:
                 return <MyImages user={user} />;
         }
     };
 
+    const commissionBadge = overview ? (isArtist ? overview.newOrders : overview.toReview) : 0;
+    const menu = [
+        { key: 'commission', icon: BrushIcon, label: t('profile.myCommissions'), badge: commissionBadge || null, current: ['commission', 'chat'],
+          action: { label: t('commissions.add'), onClick: () => setShowAddCommissionModal(true) } },
+        isArtist && { key: 'images', icon: ImageIcon, label: t('profile.myImages'),
+          action: { label: t('shop.addImage'), onClick: () => setShowAddArtModal(true) } },
+        { key: 'purchases', icon: BagIcon, label: t('profile.purchases'), count: overview?.purchases ?? null },
+        isArtist && { key: 'wallet', icon: WalletIcon, label: t('profile.wallet') },
+        { key: 'settings', icon: SettingsIcon, label: t('profile.settings') },
+    ].filter(Boolean);
+
+    const stats = !overview ? [] : isArtist ? [
+        { label: t('profile.overview.available'), value: formatPrice(overview.balance?.available ?? 0), hint: t('profile.overview.availableHint'), accent: true, tab: 'wallet' },
+        { label: t('profile.overview.onHold'), value: formatPrice(overview.balance?.escrow ?? 0), hint: t('profile.overview.onHoldHint'), tab: 'wallet' },
+        { label: t('profile.overview.active'), value: overview.active, hint: t('profile.overview.awaitingCustomer', { count: overview.awaitingCustomer }), tab: 'commission' },
+    ] : [
+        { label: t('profile.overview.active'), value: overview.active, hint: t('profile.overview.toReview', { count: overview.toReview }), accent: overview.toReview > 0, tab: 'commission' },
+        { label: t('profile.overview.openRequests'), value: overview.openRequests, hint: t('profile.overview.openRequestsHint'), tab: 'commission' },
+        { label: t('profile.overview.purchases'), value: overview.purchases ?? 0, hint: t('profile.overview.purchasesHint'), tab: 'purchases' },
+    ];
+
+    const availability = ['busy', 'vacation'].includes(user.availability) ? user.availability : 'open';
+
     return (
         <div className={styles.pageContainer}>
             <div className={styles.contentWrapper}>
-
-                {/* --- ЛІВА ЧАСТИНА (SIDEBAR) --- */}
-                <aside className={styles.sidebar}>
-                    <div className={styles.avatarContainer}>
-                        <img
-                            src={user.profileImage || "/images/profileImg.jpg"}
-                            alt={user.name}
-                            className={styles.avatar}
-                        />
-                    </div>
-
-                    <div>
-                        <h1 className={styles.artistName}>
-                            {user.name}
-                            {user.role === 'artist' && (
-                                <span className={styles.status}>{t(`availability.${['busy', 'vacation'].includes(user.availability) ? user.availability : 'open'}`)}</span>
-                            )}
-                        </h1>
-                    </div>
-
-                    <div className={styles.metaInfo}>
-                        <div className={styles.metaRow}>
-                            <img src={infoIcon} alt="Style" className={styles.socialicon} />
-                            {/* Відображаємо стилі з об'єкта user */}
-                            <span>{formatTags(user.styles)}</span>
-                        </div>
-                        <div className={styles.metaRow}>
-                            <img src={globeIcon} alt="Country" className={styles.socialicon} />
-                            {/* Відображаємо мови з об'єкта user */}
-                            <span>{formatTags(user.languages)}</span>
-                        </div>
-                        <div className={styles.metaRow}>
-                            <img src={heartIcon} alt={t('artists.likes')} className={styles.socialicon} />
-                            {/* Показуємо сумарні лайки, обчислені на фронті */}
-                            <span>{totalLikes}</span>
+                <aside className={`glass ${styles.sidebar}`}>
+                    <div className={styles.identity}>
+                        <img src={user.profileImage || "/images/profileImg.jpg"} alt="" className={styles.avatar} />
+                        <div className={styles.identityText}>
+                            <h1 className={styles.userName}>{user.name}</h1>
+                            <span className={styles.role}>
+                                {isArtist ? t(`author.availability.${availability}`) : t('profile.customer')}
+                            </span>
                         </div>
                     </div>
 
-                    <p className={styles.bio}>
-                        {user.bio || t('profile.noBio')}
-                    </p>
-
-                    {/* КНОПКИ З ЛОГІКОЮ АКТИВНОГО СТАНУ */}
-                    <div className={styles.actionButtonsContainer}>
-
-                        <button
-                            className={`${styles.profileSettingsBtn} ${activeTab === 'settings' ? styles.active : ''}`}
-                            onClick={() => setActiveTab('settings')}
-                        >
-                            <img src={userIcon} alt="" className={styles.btnicon} />
-                            {t('profile.settings')}
+                    <nav className={styles.menu} aria-label={t('profile.menu')}>
+                        {menu.map(({ key, icon: Icon, label, badge, count, current, action }) => {
+                            const isCurrent = (current || [key]).includes(activeTab);
+                            return (
+                                <div key={key} className={styles.menuRow}>
+                                    <button type="button" className={`${styles.menuItem} ${isCurrent ? styles.active : ''}`}
+                                            aria-current={isCurrent ? 'page' : undefined} onClick={() => setActiveTab(key)}>
+                                        <Icon size={19} />
+                                        <span className={styles.menuLabel}>{label}</span>
+                                        {badge ? <span className={styles.badge}>{t('profile.newBadge', { count: badge })}</span> : null}
+                                        {count != null && !badge ? <span className={styles.count}>{count}</span> : null}
+                                    </button>
+                                    {action && (
+                                        <button type="button" className={styles.menuAction} onClick={action.onClick} aria-label={action.label} title={action.label}>
+                                            <PlusIcon size={16} />
+                                        </button>
+                                    )}
+                                </div>
+                            );
+                        })}
+                        <button type="button" className={`${styles.menuItem} ${styles.logout}`} onClick={onLogout}>
+                            <LogoutIcon size={19} />
+                            <span className={styles.menuLabel}>{t('profile.logout')}</span>
                         </button>
-
-                        <div className={styles.tabWithAction}>
-                            <button
-                                className={`${styles.imagesBtn} ${activeTab === 'images' ? styles.active : ''}`}
-                                onClick={() => setActiveTab('images')}
-                                aria-current={activeTab === 'images' ? 'page' : undefined}
-                            >
-                                <img src={pictureIcon} alt="" className={styles.btnicon} />
-                                {t('profile.myImages')}
-                            </button>
-                            <button type="button" className={styles.plusButton} onClick={handleOpenAddArt} aria-label={t('shop.addImage')}>
-                                <img src={plusIcon} alt="" />
-                            </button>
-                        </div>
-
-                        <div className={styles.tabWithAction}>
-                            <button
-                                className={`${styles.comissionBtn} ${activeTab === 'commission' ? styles.active : ''}`}
-                                onClick={() => setActiveTab('commission')}
-                                aria-current={activeTab === 'commission' ? 'page' : undefined}
-                            >
-                                <img src={comissionIcon} alt="" className={styles.btnicon} />
-                                {t('profile.myCommissions')}
-                            </button>
-                            <button type="button" className={styles.plusButton} onClick={handleOpenAddCommission} aria-label={t('commissions.add')}>
-                                <img src={plusIcon} alt="" />
-                            </button>
-                        </div>
-
-                        <button
-                            className={`${styles.paymentBtn} ${activeTab === 'wallet' ? styles.active : ''}`}
-                            onClick={() => setActiveTab('wallet')}
-                        >
-                            <img src={walletIcon} alt="" className={styles.btnicon} />
-                            {t('profile.wallet')}
-                        </button>
-
-                        <button
-                            className={`${styles.calendarBtn} ${activeTab === 'calendar' ? styles.active : ''}`}
-                            onClick={() => setActiveTab('calendar')}
-                        >
-                            <img src={calendarIcon} alt="" className={styles.btnicon} />
-                            {t('profile.calendar')}
-                        </button>
-
-                        <button className={styles.logoutBtn} onClick={onLogout}>
-                            <img src={closeIcon} alt="" className={styles.btnicon} />
-                            {t('profile.logout')}
-                        </button>
-                    </div>
+                    </nav>
                 </aside>
 
-                {/* --- ПРАВА ЧАСТИНА (ЗМІННИЙ КОНТЕНТ) --- */}
-                <section className={styles.gallerySection}>
-                    {renderContent()}
-                </section>
+                <div className={styles.main}>
+                    {stats.length > 0 && (
+                        <ul className={styles.stats} aria-label={t('profile.overview.label')}>
+                            {stats.map((s) => (
+                                <li key={s.label}>
+                                    <button type="button" className={`glass ${styles.stat} ${s.accent ? styles.statAccent : ''}`} onClick={() => setActiveTab(s.tab)}>
+                                        <span className={styles.statLabel}>{s.label}</span>
+                                        <strong className={styles.statValue}>{s.value}</strong>
+                                        <span className={styles.statHint}>{s.hint}</span>
+                                    </button>
+                                </li>
+                            ))}
+                        </ul>
+                    )}
+
+                    <section className={`glass ${styles.gallerySection}`}>
+                        {renderContent()}
+                    </section>
+                </div>
             </div>
 
             {showAddArtModal && (
-                <AddArtModal
-                    onClose={() => setShowAddArtModal(false)}
-                    categories={categories}       // Переконайтеся, що ці дані приходять у DigitalBrushProfile
-                    filterConfig={filterConfig}   // або передайте сюди дефолтні значення
-                />
+                <AddArtModal onClose={() => setShowAddArtModal(false)} categories={CATEGORIES} filterConfig={SHOP_FILTERS} />
             )}
 
             {showAddCommissionModal && (
-                <AddCommissionModal
-                    onClose={() => setShowAddCommissionModal(false)}
-                    targetCreatorId={null}
-                />
+                <AddCommissionModal onClose={() => setShowAddCommissionModal(false)} targetCreatorId={null} />
             )}
         </div>
     );
