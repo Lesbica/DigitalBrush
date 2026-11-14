@@ -8,6 +8,11 @@ on:
   # Deploy runs only when started by hand (Actions → CI-CD-PaintingsProject → Run workflow)
   workflow_dispatch:
 
+# One run per branch/PR; a newer push cancels the older run (never the manual deploy)
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name != 'workflow_dispatch' }}
+
 env:
   REGISTRY: ghcr.io
   FRONTEND_IMAGE: diplomeproject/paintingsproject-frontend
@@ -19,6 +24,7 @@ jobs:
 # =====================
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     services:
       mysql:
         image: mysql:8.0
@@ -78,6 +84,12 @@ jobs:
       - name: Frontend build (Vite)
         run: npm run build
 
+      - name: Check that the Docker images build (pull requests, not pushed)
+        if: github.event_name == 'pull_request'
+        run: |
+          docker build -f Dockerfile -t frontend-check .
+          docker build -f server/Dockerfile -t backend-check .
+
 # =====================
 # CI — BUILD & PUSH IMAGES (master only)
 # =====================
@@ -85,6 +97,7 @@ jobs:
     needs: test
     if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     permissions:
       contents: read
       packages: write
@@ -164,10 +177,18 @@ jobs:
               exit 1
             fi
 
+            echo "🗄 Apply database migrations (new schema before the new code starts)"
+            docker run --rm \
+              --network paintings-net \
+              --env-file "$BACKEND_ENV_FILE" \
+              ghcr.io/diplomeproject/paintingsproject-backend:${{ github.sha }} \
+              node scripts/migrate.js
+
             echo "🚀 Start backend container"
             docker run -d \
               --name backend \
               --network paintings-net \
+              --restart unless-stopped \
               --env-file "$BACKEND_ENV_FILE" \
               ghcr.io/diplomeproject/paintingsproject-backend:${{ github.sha }}
 
@@ -175,6 +196,7 @@ jobs:
             docker run -d \
               --name frontend \
               --network paintings-net \
+              --restart unless-stopped \
               -p 8080:80 \
               ghcr.io/diplomeproject/paintingsproject-frontend:${{ github.sha }}
 
