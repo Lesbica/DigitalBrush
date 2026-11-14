@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/protect-secrets.js\"",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/protect-secrets.cjs\"",
             "timeout": 10
           }
         ]
@@ -18,8 +18,18 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/check-server-syntax.js\"",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/check-server-syntax.cjs\"",
             "timeout": 30
+          },
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/lint-on-edit.cjs\"",
+            "timeout": 60
+          },
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/check-i18n.cjs\"",
+            "timeout": 60
           }
         ]
       }
