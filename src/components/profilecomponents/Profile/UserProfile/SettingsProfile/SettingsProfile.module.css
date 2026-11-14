@@ -24,14 +24,14 @@
     appearance: none;
     width: 28px;
     height: 28px;
-    background-color: #D9D9D9;
+    background-color: var(--muted);
     border-radius: 2px;
     cursor: pointer;
     position: relative;
 }
 
 .checkboxInput:checked {
-    background-color: #D9D9D9;
+    background-color: var(--muted);
 }
 
 .checkboxInput:checked::after {
@@ -106,13 +106,13 @@
     overflow: hidden;
     cursor: pointer;
     position: relative;
-    border: 12px solid #46464799;
+    border: 12px solid var(--glass);
     background-color: #2a2a2a;
     transition: border-color 0.3s ease;
 }
 
 .avatarContainer:hover {
-    border-color: #7E7E7E;
+    border-color: rgba(10, 10, 18, 0.45);
 }
 
 .avatarImage {
@@ -146,7 +146,7 @@
 
 /* Інпути */
 .inputField {
-    background: #7E7E7E;
+    background: rgba(10, 10, 18, 0.45);
     border: none;
     border-radius: 7px;
     height: 33px;
@@ -183,7 +183,7 @@
 
 .selectField {
     width: 100%;
-    background: #7E7E7E;
+    background: rgba(10, 10, 18, 0.45);
     border: none;
     border-radius: 7px;
     height: 33px;
@@ -249,7 +249,7 @@
 }
 
 .textArea {
-    background: #7E7E7E;
+    background: rgba(10, 10, 18, 0.45);
     border: none;
     border-radius: 7px;
     padding: 15px;
@@ -261,7 +261,7 @@
 }
 
 .saveButton {
-    background: #5454FE;
+    background: var(--violet);
     color: white;
     border: none;
     border-radius: 3px;
@@ -280,7 +280,7 @@
 }
 
 .errorMessage {
-    color: #FF5252;
+    color: var(--danger);
     font-size: 14px;
     margin-top: -8px;
     margin-bottom: 5px;
@@ -288,7 +288,7 @@
 }
 
 .inputError {
-    border: 1px solid #FF5252 !important;
+    border: 1px solid var(--danger) !important;
 }
 
 @media (max-width: 900px) {
@@ -306,6 +306,73 @@
 .inputField:focus-visible,
 .selectField:focus-visible,
 .textArea:focus-visible {
-    outline: 2px solid #b991ff;
+    outline: 2px solid var(--lime);
     outline-offset: 2px;
+}
+
+/* --- Aurora Glass theme (overrides the layout above) --- */
+
+.settingsContainer {
+    color: var(--fg);
+    padding: 22px;
+    border-radius: var(--radius-lg);
+    background: var(--glass);
+    border: 1px solid var(--edge);
+}
+
+.checkboxInput {
+    accent-color: var(--lime);
+}
+
+.formGroup label,
+.groupLabel {
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.avatarContainer {
+    border-color: var(--edge);
+    background-color: var(--surface);
+}
+
+.inputField,
+.selectField,
+.textArea {
+    min-height: 46px;
+    border: 1px solid var(--edge);
+    border-radius: 14px;
+    background: rgba(10, 10, 18, 0.45);
+    color: var(--fg);
+    font-size: 15px;
+}
+
+.inputField:focus,
+.selectField:focus,
+.textArea:focus {
+    outline: none;
+    border-color: var(--lime);
+}
+
+.selectField option {
+    background: var(--surface);
+}
+
+.addTagButton {
+    color: var(--lime);
+}
+
+.saveButton {
+    min-height: 50px;
+    padding: 12px 28px;
+    border-radius: var(--radius-pill);
+    background: var(--lime);
+    color: var(--on-accent);
+    font-size: 16px;
+    font-weight: 700;
+}
+
+.saveButton:hover {
+    background: var(--lime);
+    filter: brightness(1.06);
 }

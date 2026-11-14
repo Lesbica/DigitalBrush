@@ -47,7 +47,7 @@
 .modalContent {
     display: flex;
     gap: 20px;
-    background-color: #342E4CF2; /* Колір з ArtDetailsModal */
+    background-color: var(--surface); /* Колір з ArtDetailsModal */
     border-radius: 10px;
     padding: 111px 135px 0; /* Верхній/боковий padding як в ArtDetailsModal. Нижній 0 */
     width: 90vw;
@@ -55,7 +55,7 @@
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
     position: relative;
     color: white;
-    font-family: "Roboto", sans-serif;
+    font-family: var(--font-body);
     font-weight: 400;
     font-size: 30px;
 
@@ -231,7 +231,7 @@
 }
 
 .formInput, .sizeInputGroup input {
-    background-color: #7E7E7E;
+    background-color: rgba(10, 10, 18, 0.45);
     border-radius: 7px;
     height: 33px;
     padding: 0 8px;
@@ -239,7 +239,7 @@
     font-size: 20px;
     border: none;
     box-sizing: border-box;
-    font-family: "Roboto", sans-serif;
+    font-family: var(--font-body);
 }
 
 .aboutGroup {
@@ -247,7 +247,7 @@
 }
 
 .formSelect {
-    background-color: #7E7E7E;
+    background-color: rgba(10, 10, 18, 0.45);
     border-radius: 7px;
     height: 33px;
     padding: 0 8px;
@@ -266,7 +266,7 @@
 
 .charCounter {
     font-size: 14px;
-    color: #ababab;
+    color: var(--muted);
     text-align: right;
     margin-top: 4px;
 }
@@ -290,7 +290,7 @@
 }
 
 .formInput:hover, .formSelect:hover {
-    background-color: #7E7E7E;
+    background-color: rgba(10, 10, 18, 0.45);
 }
 
 .sizeInputGroup {
@@ -322,12 +322,12 @@
     width: 50%;
     align-items: center;
     display: flex;
-    background-color: #2E2E2E99;
+    background-color: var(--glass);
 }
 
 .priceInput {
     background: none;
-    border: 3px solid #5454FE;
+    border: 3px solid var(--violet);
     color: white;
     padding: 12px 30px 12px 15px;
     border-radius: 3px;
@@ -339,7 +339,7 @@
 }
 
 .createBtn {
-    background: #5454FE;
+    background: var(--violet);
     border: none;
     color: white;
     padding: 14px 35px;
@@ -359,12 +359,12 @@
 }
 
 .createBtn:hover {
-    background: #4f4fe8;
+    background: var(--violet);
 }
 
 /* --- Стилі помилок (без змін) --- */
 .error {
-    color: #ff6b6b;
+    color: var(--danger);
     font-size: 12px;
     margin-top: 5px;
 }
@@ -373,16 +373,16 @@
     position: absolute;
     bottom: -18px;
     left: 0;
-    color: #ff6b6b;
+    color: var(--danger);
     font-size: 12px;
 }
 
 .errorBorder {
-    border: 2px dashed #ff6b6b !important;
+    border: 2px dashed var(--danger) !important;
 }
 
 .errorBorderInput {
-    border: 1px solid #ff6b6b !important;
+    border: 1px solid var(--danger) !important;
 }
 
 
@@ -502,4 +502,201 @@
 .formGroup > span:first-child,
 .formHeader label {
     display: block;
+}
+
+/* --- Aurora Glass theme (overrides the layout above) --- */
+
+.overlay {
+    background: rgba(5, 5, 10, 0.72);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    padding: 16px;
+    z-index: 8000;
+}
+
+.modal,
+.modalContent {
+    width: min(980px, 100%);
+    max-width: 100%;
+    max-height: calc(100vh - 32px);
+    padding: 36px;
+    gap: 20px;
+    border-radius: 30px;
+    background: rgba(20, 19, 30, 0.95);
+    border: 1px solid var(--edge);
+    box-shadow: var(--shadow);
+    color: var(--fg);
+    font-family: var(--font-body);
+    font-size: 15px;
+}
+
+.closeBtn,
+.closeBtnFixed {
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 1px solid var(--edge);
+    background: var(--glass);
+    color: var(--fg);
+}
+
+.closeBtn img,
+.closeBtnFixed img {
+    width: 18px;
+    height: 18px;
+}
+
+.contentWrapper {
+    gap: 32px;
+}
+
+.formHeader label,
+.formGroup > label,
+.formGroup p {
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.formInput,
+.formSelect,
+.formTextarea,
+.sizeInputGroup input {
+    height: auto;
+    min-height: 46px;
+    padding: 12px 14px;
+    border-radius: 14px;
+    border: 1px solid var(--edge);
+    background-color: rgba(10, 10, 18, 0.45);
+    color: var(--fg);
+    font-family: var(--font-body);
+    font-size: 15px;
+}
+
+.formInput:hover,
+.formSelect:hover,
+.formTextarea:hover {
+    background-color: rgba(10, 10, 18, 0.6);
+    border-color: var(--edge-strong);
+}
+
+.formInput:focus,
+.formSelect:focus,
+.formTextarea:focus,
+.priceInput:focus,
+.sizeInputGroup input:focus {
+    outline: none;
+    border-color: var(--lime);
+    box-shadow: none;
+}
+
+.formSelect {
+    padding-right: 40px;
+}
+
+.formSelect option {
+    background: var(--surface);
+}
+
+.formInputAbout,
+.formTextarea {
+    min-height: 140px;
+}
+
+.sizeInputGroup {
+    gap: 12px;
+}
+
+.imageUploadArea {
+    border-radius: 20px;
+    border: 1.5px dashed var(--edge-strong);
+    background: var(--glass);
+    color: var(--muted);
+}
+
+.imageUploadArea:hover {
+    border-color: var(--lime);
+    background: var(--glass-2);
+}
+
+.actions {
+    align-items: center;
+}
+
+.priceInputWrapper {
+    border-radius: var(--radius-pill);
+    background: var(--glass);
+    border: 1px solid var(--edge);
+}
+
+.priceInput {
+    border: none;
+    border-radius: var(--radius-pill);
+    color: var(--fg);
+    font-family: var(--font-display);
+    font-size: 20px;
+    font-weight: 700;
+    padding: 10px 18px;
+}
+
+.createBtn {
+    min-height: 50px;
+    padding: 12px 28px;
+    border-radius: var(--radius-pill);
+    background: var(--lime);
+    color: var(--on-accent);
+    font-size: 16px;
+    font-weight: 700;
+}
+
+.createBtn:hover {
+    background: var(--lime);
+    filter: brightness(1.06);
+}
+
+.createBtn:disabled {
+    opacity: 0.5;
+}
+
+.error,
+.errorPrice {
+    color: var(--danger);
+    font-size: 13px;
+}
+
+@media (max-width: 760px) {
+    .overlay {
+        padding: 0;
+        align-items: stretch;
+    }
+
+    .modal,
+    .modalContent {
+        width: 100%;
+        max-height: none;
+        height: 100%;
+        padding: calc(20px + env(safe-area-inset-top, 0px)) max(18px, env(safe-area-inset-right, 0px)) calc(24px + env(safe-area-inset-bottom, 0px)) max(18px, env(safe-area-inset-left, 0px));
+        border-radius: 0;
+        border: none;
+        overflow-y: auto;
+    }
+
+    .contentWrapper {
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .priceInputWrapper,
+    .createBtn {
+        width: 100%;
+    }
 }

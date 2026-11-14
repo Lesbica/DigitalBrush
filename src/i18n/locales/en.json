@@ -50,12 +50,12 @@
     "optionsOf": "{{name}}: options"
   },
   "nav": {
-    "main": "MAIN",
-    "shop": "SHOP",
-    "artists": "ARTISTS",
-    "commission": "COMMISSION",
-    "profile": "PROFILE",
-    "signIn": "SIGN IN",
+    "main": "Home",
+    "shop": "Shop",
+    "artists": "Artists",
+    "commission": "Commissions",
+    "profile": "Profile",
+    "signIn": "Sign in",
     "basket": "Basket",
     "menu": "Menu",
     "language": "Language",
@@ -65,7 +65,14 @@
     "basketCount_other": "Basket, {{count}} items",
     "basketCount_zero": "Basket is empty",
     "openMenu": "Open menu",
-    "closeMenu": "Close menu"
+    "closeMenu": "Close menu",
+    "mobileMenu": "Main navigation",
+    "createTitle": "What do you want to do?",
+    "sellArt": "Sell an artwork",
+    "sellArtHint": "Upload a file or photo and set a price",
+    "postRequest": "Post a commission request",
+    "postRequestHint": "Describe what you want made, artists send offers",
+    "logoHome": "DigitalBrush, home page"
   },
   "notifications": {
     "title": "Notifications",
@@ -135,7 +142,19 @@
     "title": "DigitalBrush — digital art marketplace",
     "heroText": "Buy finished digital art or order a piece made for you — straight from the artists.",
     "toShop": "Browse the shop",
-    "toCommission": "Order a commission"
+    "toCommission": "Order a commission",
+    "eyebrow": "Original art from independent artists",
+    "heroTitleStart": "Original art, straight from the",
+    "heroTitleAccent": "artist.",
+    "featured": "New in the shop",
+    "view": "View",
+    "artistsTitle": "Artists",
+    "allArtists": "All artists",
+    "freshTitle": "Fresh in the shop",
+    "seeAll": "See all in the shop",
+    "commissionTitle": "Want something made just for you?",
+    "commissionText": "Post a request and artists will send you offers.",
+    "startRequest": "Start a request"
   },
   "availability": {
     "open": "available",
@@ -146,14 +165,16 @@
     "searchPlaceholder": "Title, artist or style...",
     "addImage": "ADD IMAGE",
     "loadError": "Could not load the paintings. Please try again later.",
-    "empty": "No paintings match your search"
+    "empty": "No paintings match your search",
+    "subtitle": "Original works, each sold by the person who made it."
   },
   "commissions": {
     "searchPlaceholder": "Title of the commission...",
     "add": "ADD COMMISSION",
     "loadError": "Could not load the commissions. Please try again later.",
     "empty": "No commissions match your search",
-    "take": "Take"
+    "take": "Take",
+    "subtitle": "People post what they want made. Artists pick the requests that fit their style."
   },
   "art": {
     "signInToLike": "Sign in to like paintings.",

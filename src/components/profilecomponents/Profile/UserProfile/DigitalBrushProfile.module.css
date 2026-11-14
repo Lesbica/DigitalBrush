@@ -1,34 +1,55 @@
+/* My profile: glass profile card with the section menu on the left, the chosen section on the right.
+   On phones the card becomes a compact header and the menu a scrollable row of tabs. */
+
 .pageContainer {
-    min-height: 100vh;
-    color: #ffffff;
-    padding-bottom: 4rem;
-    font-family: 'Roboto', sans-serif;
-    font-weight: 400;
-    box-sizing: border-box;
+    padding-bottom: 48px;
+    color: var(--fg);
 }
 
 .contentWrapper {
-    display: flex;
-    flex-direction: row;
-    padding: 66px 47px;
-    gap: 132px;
+    display: grid;
+    grid-template-columns: 300px minmax(0, 1fr);
+    gap: 28px;
+    align-items: start;
+    max-width: var(--container);
+    margin: 0 auto;
+    padding: 32px var(--gutter-r) 0 var(--gutter);
 }
 
-/* --- Sidebar (Left Column) --- */
 .sidebar {
-    flex: 0 0 330px;
+    position: sticky;
+    top: calc(var(--nav-h) + 20px);
     display: flex;
     flex-direction: column;
-    gap: 30px;
+    gap: 16px;
+    padding: 0 18px 18px;
+    border-radius: 30px;
+    background: var(--glass);
+    border: 1px solid var(--edge);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    overflow: hidden;
+}
+
+.sidebar::before {
+    content: "";
+    display: block;
+    height: 96px;
+    margin: 0 -18px -64px;
+    background:
+        radial-gradient(circle at 80% 20%, rgba(127, 224, 195, 0.9), transparent 45%),
+        radial-gradient(circle at 15% 90%, rgba(110, 168, 255, 0.9), transparent 55%),
+        linear-gradient(135deg, #2FB8A0, #3FA7D6 60%, #7C5CFA);
 }
 
 .avatarContainer {
-    width: 304px;
-    height: 304px;
+    position: relative;
+    width: 96px;
+    height: 96px;
     border-radius: 50%;
     overflow: hidden;
-    border: 13px solid #46464799; /* Стиль рамки як на AuthorPage */
-    align-self: flex-start;
+    border: 5px solid var(--bg);
+    background: var(--surface);
 }
 
 .avatar {
@@ -39,212 +60,128 @@
 
 .artistName {
     display: flex;
-    font-size: 30px;
-    font-weight: 400;
+    flex-direction: column;
+    gap: 8px;
     margin: 0;
-    line-height: 1.2;
-    align-items: center;
-    gap: 5px;
+    font-size: 24px;
+    font-weight: 800;
+    line-height: 1.1;
+    overflow-wrap: anywhere;
 }
 
 .status {
-    font-size: 0.6em;
-    color: #4caf50; /* Зелений колір "available" */
-    font-weight: 300;
+    align-self: flex-start;
+    padding: 3px 10px;
+    border-radius: var(--radius-pill);
+    background: var(--lime);
+    color: var(--on-accent);
+    font-family: var(--font-body);
+    font-size: 12px;
+    font-weight: 700;
 }
 
 .metaInfo {
     display: flex;
     flex-direction: column;
-    gap: 19px;
-    font-size: 22px;
-    color: #e0e0e0;
+    gap: 6px;
 }
 
 .metaRow {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
+    gap: 8px;
+    color: var(--muted);
+    font-size: 13px;
+    overflow-wrap: anywhere;
 }
 
 .socialicon {
-    width: 24px;
-    height: 24px;
+    width: 16px;
+    height: 16px;
+    opacity: 0.85;
+    flex-shrink: 0;
 }
 
 .bio {
-    font-family: 'Roboto', sans-serif;
-    font-weight: 300;
-    font-style: normal;
-    font-size: 22px;
-    letter-spacing: 0;
-    color: #C6C4C4;
     margin: 0;
-    white-space: pre-wrap;
+    color: var(--muted);
+    font-size: 14px;
+    line-height: 1.6;
+    white-space: pre-line;
 }
 
 .actionButtonsContainer {
     display: flex;
     flex-direction: column;
-    gap: 21px;
-    margin-top: 10px;
-    width: 100%;
+    gap: 4px;
+    padding-top: 12px;
+    border-top: 1px solid var(--edge);
 }
 
-.actionButtonsContainer > button,
-.tabWithAction > button:first-child {
-    font-size: 20px;
-    height: 44px;
-    padding: 6px 0 6px 14px;
-    color: white;
-    text-align: center;
-    cursor: pointer;
-    width: 100%;
-    transition: all 0.2s ease;
-    border-radius: 3.26px;
-    border: 2px solid transparent;
-    background:
-            linear-gradient(#46464799, #46464799) padding-box,
-            linear-gradient(168.05deg, #595C64 1.51%, rgba(71, 77, 95, 0.44) 90.56%) border-box;
-}
-
-.actionButtonsContainer > button:hover,
-.tabWithAction > button:first-child:hover {
-    opacity: 0.9;
-    transform: translateY(-2px);
-}
-
-.profileSettingsBtn, .imagesBtn, .comissionBtn, .paymentBtn, .calendarBtn, .logoutBtn{
+.profileSettingsBtn,
+.imagesBtn,
+.comissionBtn,
+.paymentBtn,
+.calendarBtn,
+.logoutBtn {
     display: flex;
-    gap: 6px;
     align-items: center;
+    gap: 10px;
+    width: 100%;
+    min-height: 44px;
+    padding: 10px 12px;
+    border: none;
+    border-radius: 14px;
+    background: none;
+    color: var(--muted);
+    font-size: 15px;
+    font-weight: 500;
+    text-align: left;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
 }
 
-.actionButtonsContainer > button.active,
-.tabWithAction > button.active {
-    background: linear-gradient(rgba(89, 92, 100, 0.8), rgba(89, 92, 100, 0.8)) padding-box,
-    linear-gradient(168.05deg, #595C64 1.51%, rgba(71, 77, 95, 0.44) 90.56%) border-box;
-    transform: translateX(5px);
-}
-
-.profileSettingsBtn.active {
-    border-color: #F75252;
-}
-
-.imagesBtn.active {
-    border-color: #FD4CCC;
-}
-
-.comissionBtn.active {
-    border-color: #853FF6;
-}
-
-.paymentBtn.active {
-    border-color: #5050EB;
-}
-
-.calendarBtn.active {
-    border-color: #2090FF;
-}
-
-.imagesBtn:hover {
-    border-color: #FD4CCC;
-}
-
-.comissionBtn:hover {
-    border-color: #853FF6;
-}
-
-.paymentBtn:hover {
-    border-color: #5050EB;
-}
-
+.profileSettingsBtn:hover,
+.imagesBtn:hover,
+.comissionBtn:hover,
+.paymentBtn:hover,
 .calendarBtn:hover {
-    border-color: #2090FF;
+    background: var(--glass);
+    color: var(--fg);
 }
 
-.profileSettingsBtn:hover {
-    border-color: #F75252;
+.active,
+.profileSettingsBtn.active,
+.imagesBtn.active,
+.comissionBtn.active,
+.paymentBtn.active,
+.calendarBtn.active {
+    background: var(--glass-2);
+    color: var(--fg);
+    font-weight: 700;
 }
 
 .btnicon {
-    width: 32px;
-    height: 32px;
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+    opacity: 0.85;
 }
 
 .plusIcon {
-    margin-left: auto;
-    margin-right: 9px;
-}
-
-.plusIcon:hover {
-    opacity: 0.9;
+    width: 18px;
+    height: 18px;
 }
 
 .logoutBtn {
-    cursor: pointer;
-    margin-top: 30px;
+    margin-top: 6px;
+    color: var(--danger);
 }
 
 .logoutBtn:hover {
-    background: rgba(255, 68, 68, 0.1);
+    background: rgba(255, 138, 138, 0.1);
 }
 
-/* --- Right Column (Gallery) --- */
-.gallerySection {
-    flex: 1;
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-}
-
-.topControls {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-    margin-bottom: 30px;
-}
-
-.artGrid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(212px, 1fr));
-    gap: 17px;
-    margin-bottom: 40px;
-}
-
-.noArtworks {
-    grid-column: 1 / -1;
-    text-align: center;
-    padding: 3rem;
-    color: #888;
-    font-size: 1.2rem;
-}
-
-/* --- Responsive --- */
-@media (max-width: 768px) {
-    .contentWrapper {
-        flex-direction: column;
-        padding: 1rem;
-        gap: 40px;
-    }
-    .avatarContainer {
-        margin: 0 auto;
-        width: 200px;
-        height: 200px;
-    }
-    .sidebar {
-        flex: auto;
-        width: 100%;
-        align-items: center;
-        text-align: center;
-    }
-    .metaInfo {
-        align-items: center;
-    }
-    .artGrid {
-        grid-template-columns: repeat(auto-fill, minmax(100%, 1fr));
-    }
-}
 /* Tab + its "add" action: two separate buttons, the action sits at the right edge of the tab */
 .tabWithAction {
     position: relative;
@@ -260,18 +197,109 @@
     top: 50%;
     right: 6px;
     transform: translateY(-50%);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 36px;
-    height: 36px;
+    display: grid;
+    place-items: center;
+    width: 32px;
+    height: 32px;
     padding: 0;
     border: none;
     border-radius: 50%;
-    background: none;
+    background: var(--lime);
     cursor: pointer;
 }
 
+.plusButton img {
+    width: 14px;
+    height: 14px;
+    filter: brightness(0);
+}
+
 .plusButton:hover {
-    background: rgba(255, 255, 255, 0.12);
+    filter: brightness(1.06);
+}
+
+.gallerySection {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.topControls {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 22px;
+}
+
+.artGrid {
+    columns: 3 220px;
+    column-gap: 16px;
+    margin-bottom: 24px;
+}
+
+.noArtworks,
+.placeholder {
+    padding: 40px;
+    border: 1px dashed var(--edge);
+    border-radius: var(--radius-lg);
+    color: var(--muted);
+    text-align: center;
+}
+
+@media (max-width: 900px) {
+    .contentWrapper {
+        grid-template-columns: 1fr;
+        gap: 18px;
+        padding-top: 16px;
+    }
+
+    .sidebar {
+        position: static;
+    }
+
+    /* menu becomes a scrollable row of tabs */
+    .actionButtonsContainer {
+        flex-direction: row;
+        overflow-x: auto;
+        scrollbar-width: none;
+        gap: 6px;
+        margin: 0 -18px;
+        padding: 12px 18px 0;
+    }
+
+    .actionButtonsContainer::-webkit-scrollbar {
+        display: none;
+    }
+
+    .profileSettingsBtn,
+    .imagesBtn,
+    .comissionBtn,
+    .paymentBtn,
+    .calendarBtn,
+    .logoutBtn {
+        width: auto;
+        flex: none;
+        min-height: 40px;
+        padding: 8px 14px;
+        border-radius: var(--radius-pill);
+        border: 1px solid var(--edge);
+        white-space: nowrap;
+        margin-top: 0;
+    }
+
+    .tabWithAction {
+        width: auto;
+        flex: none;
+    }
+
+    .tabWithAction > button:first-child {
+        padding-right: 46px;
+    }
+}
+
+@media (max-width: 560px) {
+    .artGrid {
+        columns: 2;
+        column-gap: 10px;
+    }
 }

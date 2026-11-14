@@ -31,3 +31,29 @@
         grid-template-columns: repeat(auto-fill, minmax(100%, 1fr));
     }
 }
+/* --- Aurora Glass theme --- */
+.topControls {
+    gap: 6px;
+    margin-bottom: 22px;
+}
+
+.artGrid {
+    display: block;
+    columns: 3 220px;
+    column-gap: 16px;
+}
+
+.noArtworks {
+    padding: 40px;
+    border: 1px dashed var(--edge);
+    border-radius: var(--radius-lg);
+    color: var(--muted);
+    font-size: 15px;
+}
+
+@media (max-width: 560px) {
+    .artGrid {
+        columns: 2;
+        column-gap: 10px;
+    }
+}

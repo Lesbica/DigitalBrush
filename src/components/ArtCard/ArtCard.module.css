@@ -1,107 +1,140 @@
+/* Glass card for one artwork. The picture keeps its own proportions, so grids of cards
+   are laid out as masonry columns (see .masonry in the pages that use it). */
+
 .artCard {
-    background: linear-gradient(rgba(70, 70, 71, 0.6), rgba(70, 70, 71, 0.6)) padding-box,
-    linear-gradient(168deg, rgba(89, 92, 100, 1), rgba(71, 77, 95, 0.44)) border-box;
-    background-clip: padding-box, border-box;
-    border: 3px solid transparent;
-    border-radius: 12px;
-    /*display: flex;*/
-    /*flex-direction: column;*/
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    display: block;
+    break-inside: avoid;
+    margin-bottom: 16px;
+    padding: 8px;
+    border-radius: 22px;
+    background: var(--glass);
+    border: 1px solid var(--edge);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    color: var(--fg);
+    text-align: left;
     cursor: pointer;
-    overflow: hidden;
-    aspect-ratio: 212 / 329;
+    transition: transform 0.2s ease, background 0.2s ease;
 }
 
 .artCard:hover {
-    transform: translateY(-8px);
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+    transform: translateY(-3px);
+    background: var(--glass-2);
+}
+
+.imageWrap {
+    position: relative;
 }
 
 .artCardImage {
     display: block;
-    width: calc(100% - 32px);
-    height: 65%;
+    width: 100%;
+    height: auto;
+    min-height: 120px;
+    max-height: 520px;
     object-fit: cover;
-    object-position: center;
-    margin: 16px 16px 0 16px;
-    border-radius: 8px;
-    background: rgba(255, 255, 255, 0.05);
+    border-radius: 15px;
+    background: var(--glass);
+}
+
+.artCardLikes {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 10px;
+    border-radius: var(--radius-pill);
+    background: rgba(10, 10, 18, 0.5);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.artCardLikes svg {
+    color: var(--pink);
 }
 
 .artCardInfo {
-    color: white;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    flex-grow: 1;
-    padding: 16px;
-}
-
-.cardRow {
     display: flex;
     justify-content: space-between;
-    /* ОНОВЛЕНО: Вирівнювання по верхньому краю для кращої відповідності дизайну */
     align-items: flex-start;
-}
-
-/* ОНОВЛЕНО: Стилі для тайтлу */
-/* ОНОВЛЕНО: Стилі для тайтлу */
-.artCardTitle {
-    font-family: 'Roboto', sans-serif;
-    font-weight: 400;
-    font-size: 16px;
-    line-height: 1;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 165px;
-    display: block;
+    gap: 10px;
+    padding: 12px 6px 4px;
 }
 
 .artistInfo {
-    /*display: flex;*/
-    /*flex-direction: column;*/
-    /*align-items: flex-start;*/
+    min-width: 0;
 }
 
-/* ОНОВЛЕНО: Стилі для імені художника */
-.artistName {
-    font-family: 'Roboto', sans-serif;
-    font-weight: 400;
-    font-size: 14px;
-    line-height: 1.2;
+.artCardTitle {
     display: block;
-    max-width: 130px;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 16px;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    color: rgba(255, 255, 255, 0.85);
+}
+
+.artistName {
+    display: block;
+    margin-top: 2px;
+    color: var(--muted);
+    font-size: 13px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .artistStyle {
-    font-size: 0.8rem;
-    color: rgba(255, 255, 255, 0.7);
     display: none;
 }
 
-/* ОНОВЛЕНО: Стилі для кількості вподобань */
-.artCardLikes {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-family: 'Roboto', sans-serif;
-    font-weight: 400;
-    font-size: 14px;
-    line-height: 1;
+.artCardPrice {
+    flex-shrink: 0;
+    padding: 4px 10px;
+    border-radius: var(--radius-pill);
+    background: var(--lime);
+    color: var(--on-accent);
+    font-weight: 700;
+    font-size: 13px;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
 }
 
-/* ОНОВЛЕНО: Стилі для ціни */
-.artCardPrice {
-    display: flex;
-    align-items: center;
-    gap: 6px; /* Відступ для іконки */
-    font-family: 'Roboto', sans-serif;
-    font-weight: 700;
-    font-size: 17px;
-    line-height: 1;
+@media (max-width: 560px) {
+    .artCard {
+        margin-bottom: 10px;
+        padding: 6px;
+        border-radius: 18px;
+    }
+
+    .artCardImage {
+        border-radius: 13px;
+    }
+
+    .artCardInfo {
+        flex-direction: column;
+        gap: 6px;
+        padding: 8px 4px 3px;
+    }
+
+    .artCardTitle {
+        font-size: 14px;
+    }
+
+    .artistName {
+        font-size: 12px;
+    }
+
+    .artCardPrice {
+        font-size: 12px;
+        padding: 3px 8px;
+    }
 }

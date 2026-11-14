@@ -7,7 +7,7 @@
     padding: 51px 62px 39px 61px;
     /*margin: 104px 0 245px 0;*/
     border-radius: 20px;
-    font-family: 'Roboto', sans-serif;
+    font-family: var(--font-body);
     overflow: hidden;
     opacity: 1;
     box-sizing: border-box;
@@ -18,10 +18,10 @@
     /*text-align: center;*/
     margin-bottom: 28px;
     /*margin-top: 0;*/
-    /*font-family: 'Orbitron', Arial, sans-serif;*/
+    /*font-family: var(--font-display);*/
     /*font-weight: 700;*/
     /*font-size: 42px;*/
-    /*background: linear-gradient(110.32deg, #2090FF 11.04%, #5454FE 25.37%, #853FF6 38.57%, #FD4CCC 58.79%, #F75252 84.36%);*/
+    /*background: linear-gradient(110.32deg, #2090FF 11.04%, var(--violet) 25.37%, #853FF6 38.57%, #FD4CCC 58.79%, #F75252 84.36%);*/
     /*-webkit-background-clip: text;*/
     /*-webkit-text-fill-color: transparent;*/
     /*background-clip: text;*/
@@ -100,11 +100,11 @@
     border-radius: 10px;
     border: none;
     cursor: pointer;
-    background: #5454FE;
+    background: var(--violet);
     color: white;
     white-space: nowrap;
     border-bottom: 1px solid;
-    font-family: 'Roboto', sans-serif;
+    font-family: var(--font-body);
     font-weight: 400;
     font-size: 16px;
     line-height: 100%;
@@ -117,7 +117,7 @@
     cursor: pointer;
     white-space: nowrap;
     text-align: right;
-    font-family: 'Montserrat Alternates', sans-serif;
+    font-family: var(--font-display);
     font-weight: 600;
     font-size: 16px;
     line-height: 100%;
@@ -139,7 +139,7 @@
     border-radius: 8px;
     width: 100%;
     padding-top: 6px;
-    font-family: 'Montserrat Alternates', sans-serif;
+    font-family: var(--font-display);
     font-weight: 600;
     font-size: 16px;
     line-height: 100%;

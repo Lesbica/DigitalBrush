@@ -161,7 +161,7 @@ const AuthorPage = () => {
                     <div>
                         <h1 className={styles.artistName}>
                             {artistName}
-                            <span className={styles.status}>({t(`availability.${['busy', 'vacation'].includes(artist.availability) ? artist.availability : 'open'}`)})</span>
+                            <span className={styles.status}>{t(`availability.${['busy', 'vacation'].includes(artist.availability) ? artist.availability : 'open'}`)}</span>
                         </h1>
                     </div>
 

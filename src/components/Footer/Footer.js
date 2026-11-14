@@ -39,9 +39,9 @@ function Footer() {
     return (
         <footer className={styles.footer}>
             <div className={styles.footerTop}>
-                <div className={styles.footerContainer}>
+                <div className={`container ${styles.footerContainer}`}>
                     <div className={styles.footerLeft}>
-                        <div className={styles.footerLogo}>Digital Brush</div>
+                        <div className={styles.footerLogo}>Digital<span>Brush</span></div>
                         <p className={styles.footerText}>{t('footer.about')}</p>
                     </div>
                     <div className={styles.footerRight}>
@@ -61,8 +61,8 @@ function Footer() {
                 </div>
             </div>
 
-            <div className={styles.footerBottom}>
-                <p>2025</p>
+            <div className={`container ${styles.footerBottom}`}>
+                <p>© {new Date().getFullYear()} DigitalBrush</p>
             </div>
         </footer>
     );

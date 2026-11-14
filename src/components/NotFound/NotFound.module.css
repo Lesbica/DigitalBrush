@@ -1,39 +1,47 @@
 .page {
     min-height: 60vh;
-    padding: 140px 16px 80px;
+    padding: 96px var(--gutter-r) 80px var(--gutter);
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     gap: 16px;
-    color: #fff;
+    color: var(--fg);
     text-align: center;
 }
 
 .code {
-    font-size: clamp(64px, 14vw, 140px);
-    font-weight: 700;
-    line-height: 1;
     margin: 0;
-    opacity: 0.85;
+    font-family: var(--font-display);
+    font-size: clamp(80px, 16vw, 160px);
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: -0.04em;
+    background: var(--gradient-warm);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
 }
 
 .text {
     margin: 0;
     max-width: 420px;
-    opacity: 0.75;
+    color: var(--muted);
 }
 
 .link {
     margin-top: 8px;
+    min-height: 48px;
+    display: inline-flex;
+    align-items: center;
     padding: 12px 28px;
-    border-radius: 999px;
-    background: #7b5cff;
-    color: #fff;
+    border-radius: var(--radius-pill);
+    background: var(--lime);
+    color: var(--on-accent);
     text-decoration: none;
-    font-weight: 600;
+    font-weight: 700;
 }
 
 .link:hover {
-    background: #6a49f5;
+    filter: brightness(1.06);
 }

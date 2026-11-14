@@ -23,7 +23,7 @@
     font-size: 22px;
     font-weight: 700;
     margin: 0;
-    color: #EDEBFF;
+    color: var(--fg);
 }
 
 .headerActions {
@@ -116,12 +116,12 @@
 .categoryLine {
     display: flex;
     justify-content: space-between;
-    color: #EDEBFF;
+    color: var(--fg);
     font-size: 14px;
 }
 
-.categoryPercent { color: #EDEBFF; }
-.categoryName { color: #EDEBFF; }
+.categoryPercent { color: var(--fg); }
+.categoryName { color: var(--fg); }
 
 /* Таблиця транзакцій */
 .transactionsSection { background: transparent; }
@@ -137,7 +137,7 @@
 .transactionTableDark th {
     text-align: left;
     padding: 0 16px 0 16px;
-    color: #C9C5FF;
+    color: var(--lime);
     font-size: 12px;
     font-weight: 600;
     text-transform: uppercase;
@@ -148,7 +148,7 @@
     /* Підігнано під висоту рядка ~43px */
     padding: 10px 16px;
     font-size: 14px;
-    color: #EDEBFF;
+    color: var(--fg);
     vertical-align: middle;
 }
 
@@ -157,7 +157,7 @@
     background: rgba(70, 70, 71, 0.60);
     border: 3px solid transparent;
     /* градієнтний бордер */
-    border-image: linear-gradient(180deg, #595C64 0%, #474D5F 44%) 1;
+    border-image: linear-gradient(180deg, rgba(255, 255, 255, 0.22) 0%, #474D5F 44%) 1;
     border-radius: 8px;
     height: 43px;
     box-sizing: border-box;
@@ -173,8 +173,8 @@
     text-transform: uppercase;
 }
 
-.income { color: #35E59A; font-weight: 700; }
-.expense { color: #EDEBFF; }
+.income { color: var(--success); font-weight: 700; }
+.expense { color: var(--fg); }
 
 /* Хайлайт як на скріні: яскравий синій інсет-підсвіт */
 .rowDark:hover,
@@ -186,7 +186,7 @@
 .noData {
     text-align: center;
     padding: 30px;
-    color: #C9C5FF;
+    color: var(--lime);
     font-style: italic;
 }
 
@@ -216,8 +216,8 @@
     padding: 16px 20px;
     border: 1px solid rgba(185, 123, 255, 0.35);
     border-radius: 12px;
-    background: rgba(30, 30, 50, 0.6);
-    color: #EDEBFF;
+    background: var(--glass);
+    color: var(--fg);
     min-width: 180px;
 }
 
@@ -234,7 +234,7 @@
 .balanceValue {
     font-size: 26px;
     font-weight: 700;
-    color: #35E59A;
+    color: var(--success);
 }
 
 .balanceValueMuted {
@@ -271,7 +271,7 @@
     cursor: not-allowed;
 }
 
-.formOk { color: #35E59A; font-size: 13px; }
+.formOk { color: var(--success); font-size: 13px; }
 .formError { color: #ff8a8a; font-size: 13px; }
 
 .cardRow {
@@ -314,4 +314,87 @@
 @media (max-width: 900px) {
     .topGrid { grid-template-columns: 1fr; }
     .monthsPanel { width: 100%; }
+}
+
+/* --- Aurora Glass theme (overrides the layout above) --- */
+
+.title {
+    font-family: var(--font-display);
+    font-weight: 800;
+}
+
+.barTrack {
+    border: 1px solid var(--edge);
+    background: var(--glass);
+}
+
+.barFill {
+    background: linear-gradient(90deg, var(--blue), var(--pink) 60%, var(--peach));
+}
+
+.monthActive .barTrack {
+    border-color: var(--lime);
+}
+
+.categoryCard,
+.balanceRow,
+.withdrawForm {
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--edge);
+    background: var(--glass);
+}
+
+.categoryHeader {
+    color: var(--muted);
+}
+
+.rowDark td {
+    background: var(--glass);
+    border-color: var(--edge);
+}
+
+.balanceLabel,
+.balanceHint,
+.balanceValueMuted {
+    color: var(--muted);
+}
+
+.balanceValue {
+    font-family: var(--font-display);
+    color: var(--fg);
+}
+
+.withdrawInput {
+    min-height: 46px;
+    border-radius: 14px;
+    border: 1px solid var(--edge);
+    background: rgba(10, 10, 18, 0.45);
+    color: var(--fg);
+}
+
+.withdrawInput:focus {
+    outline: none;
+    border-color: var(--lime);
+}
+
+.withdrawBtn {
+    min-height: 46px;
+    border-radius: var(--radius-pill);
+    background: var(--lime);
+    color: var(--on-accent);
+    font-weight: 700;
+}
+
+.formError {
+    color: var(--danger);
+}
+
+.linkBtn {
+    border-color: var(--edge);
+    background: var(--glass);
+    color: var(--fg);
+}
+
+.linkBtn:hover {
+    background: var(--glass-2);
 }

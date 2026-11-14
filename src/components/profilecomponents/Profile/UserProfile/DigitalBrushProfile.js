@@ -132,7 +132,7 @@ function DigitalBrushProfile({ user, onLogout }) {
                         <h1 className={styles.artistName}>
                             {user.name}
                             {user.role === 'artist' && (
-                                <span className={styles.status}>({t(`availability.${['busy', 'vacation'].includes(user.availability) ? user.availability : 'open'}`)})</span>
+                                <span className={styles.status}>{t(`availability.${['busy', 'vacation'].includes(user.availability) ? user.availability : 'open'}`)}</span>
                             )}
                         </h1>
                     </div>

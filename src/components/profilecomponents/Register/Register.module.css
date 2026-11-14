@@ -1,88 +1,119 @@
-/* Register.module.css */
+/* Registration and email confirmation: same glass card as sign-in */
+
 .authCard {
     display: flex;
     flex-direction: column;
-    max-width: 443px;
-    /*height: 527px;*/
-    background-color: #f9f9f9;
-    padding: 44px 62px;
-    border-radius: 20px;
-    font-family: 'Roboto', sans-serif;
-    font-weight: 400;
-    font-size: 14px;
+    gap: 14px;
+    width: min(460px, 100%);
     margin: 0;
-    overflow: hidden;
-    opacity: 1;
-    box-sizing: border-box;
-    /*align-items: center;*/
+    padding: 32px;
+    border-radius: 30px;
+    background: rgba(20, 19, 30, 0.82);
+    border: 1px solid var(--edge);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    box-shadow: var(--shadow);
+    color: var(--fg);
+    font-family: var(--font-body);
 }
 
 .mainTitle {
-    font-size: 22px;
-    color: #333;
-    text-align: left;
-    margin-bottom: 33px;
-    margin-top: 0;
-    font-weight: 500;
-    line-height: 100%;
-    letter-spacing: 0;
-    /*width: 216px;*/
-    /*height: 26px;*/
+    margin: 0 0 4px;
+    font-family: var(--font-display);
+    font-size: 28px;
+    font-weight: 800;
+    line-height: 1.1;
 }
 
 .emailTitle {
-    font-size: 14px;
-    color: #000000;
-    text-align: left;
-    margin-bottom: 25px;
-    margin-top: 0;
+    margin: 0;
+    color: var(--muted);
+    font-size: 15px;
+    line-height: 1.6;
 }
 
 .field {
     display: flex;
     flex-direction: column;
-    margin-bottom: 17px;
+    gap: 6px;
 }
 
-.field label {
-    color: #000000;
-    margin-bottom: 8px;
-    font-weight: 400;
+.field label,
+.field legend {
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 600;
 }
 
 .field input {
     width: 100%;
-    height: 39px;
-    padding: 0 10px;
-    border: none;
-    border-radius: 10px;
-    font-size: 14px;
-    background-color: #361950;
-    color: white;
-    box-sizing: border-box;
+    min-height: 48px;
+    padding: 0 14px;
+    border-radius: 14px;
+    border: 1px solid var(--edge);
+    background: rgba(10, 10, 18, 0.45);
+    color: var(--fg);
+    font-size: 15px;
+}
+
+.field input:focus {
+    outline: none;
+    border-color: var(--lime);
 }
 
 .field input[type="date"]:invalid {
-    color: transparent;
+    color: var(--muted);
 }
 
 .field input[type="date"]:valid {
-    color: white;
+    color: var(--fg);
 }
 
 .field input[type="date"] {
-    position: relative;
-    cursor: pointer;
+    color-scheme: dark;
 }
 
 .field input[type="date"]::-webkit-calendar-picker-indicator {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    opacity: 0;
+    filter: invert(0.8);
     cursor: pointer;
+}
+
+/* role choice: two pill options */
+fieldset.field {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+fieldset.field legend {
+    grid-column: 1 / -1;
+    margin-bottom: 6px;
+    padding: 0;
+}
+
+fieldset.field label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 48px;
+    padding: 0 14px;
+    border-radius: 14px;
+    border: 1px solid var(--edge);
+    background: var(--glass);
+    color: var(--fg);
+    font-size: 14px;
+    cursor: pointer;
+}
+
+fieldset.field label:has(input:checked) {
+    border-color: var(--lime);
+    background: rgba(198, 245, 122, 0.08);
+}
+
+fieldset.field input[type="radio"] {
+    width: auto;
+    min-height: 0;
+    accent-color: var(--lime);
 }
 
 .passwordWrapper {
@@ -90,95 +121,93 @@
 }
 
 .passwordWrapper input {
-    padding-right: 40px;
+    padding-right: 48px;
 }
 
 .eyeBtn {
     position: absolute;
     top: 50%;
-    right: 8px;
+    right: 6px;
     transform: translateY(-50%);
-    background: none;
+    display: grid;
+    place-items: center;
+    width: 38px;
+    height: 38px;
     border: none;
+    border-radius: 50%;
+    background: none;
+    color: var(--muted);
     cursor: pointer;
-    color: white;
-    padding: 5px;
 }
 
 .buttonsRow {
     display: flex;
-    /*justify-content: space-between;*/
-    align-items: center;
-    gap: 145px;
-    margin-top: 22px;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 6px;
 }
 
 .submitBtn {
-    /*width: 70px;*/
-    height: 39px;
-    padding: 15px;
-    border-radius: 10px;
+    min-height: 50px;
     border: none;
-    cursor: pointer;
-    background: #5454FE;
-    color: white;
-    white-space: nowrap;
-    border-bottom: 1px solid;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.5s ease-out;
-
-    font-family: 'Roboto', sans-serif;
-    font-weight: 400;
+    border-radius: var(--radius-pill);
+    background: var(--lime);
+    color: var(--on-accent);
     font-size: 16px;
-    line-height: 100%;
-    letter-spacing: 0;
+    font-weight: 700;
+    cursor: pointer;
 }
 
-.submitBtn:active {
-    transform: scale(0.95);
+.submitBtn:hover {
+    filter: brightness(1.06);
+}
+
+.submitBtn:active,
+.backBtn:active {
+    transform: scale(0.99);
+}
+
+.submitBtn:disabled,
+.backBtn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
 }
 
 .backBtn {
-    width: 104px;
-    height: 39px;
-    padding: 10px 0;
-    border-radius: 10px;
-    border: none;
+    min-height: 46px;
+    border-radius: var(--radius-pill);
+    border: 1px solid var(--edge);
+    background: none;
+    color: var(--fg);
+    font-size: 15px;
+    font-weight: 600;
     cursor: pointer;
-    background: #5454FE;
-    color: white;
-    white-space: nowrap;
-    border-bottom: 1px solid;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.5s ease-out;
-
-    font-family: 'Roboto', sans-serif;
-    font-weight: 400;
-    font-size: 16px;
-    line-height: 100%;
-    letter-spacing: 0;
 }
 
-.backBtn:active {
-    transform: scale(0.95);
+.backBtn:hover {
+    background: var(--glass);
 }
 
-/* Стили для второго шага */
 .codeInput {
     width: 100%;
-    height: 39px;
-    padding: 0 10px;
-    border: none;
-    border-radius: 10px;
-    background-color: #361950;
-    color: white;
-    box-sizing: border-box;
-    font-size: 18px;
+    min-height: 56px;
+    border-radius: 16px;
+    border: 1px solid var(--edge);
+    background: rgba(10, 10, 18, 0.45);
+    color: var(--fg);
+    font-family: var(--font-display);
+    font-size: 26px;
+    letter-spacing: 0.4em;
     text-align: center;
-    letter-spacing: 3px;
-    font-weight: bold;
+}
+
+@media (max-width: 480px) {
+    .authCard {
+        padding: 24px 20px;
+        border-radius: 26px;
+    }
+
+    fieldset.field {
+        grid-template-columns: 1fr;
+    }
 }

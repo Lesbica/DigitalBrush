@@ -12,13 +12,13 @@
 }
 
 .modal {
-    background-color: rgba(52, 46, 76, 0.95);
+    background-color: var(--surface);
     border-radius: 16px;
     padding: 65px 83px;
     width: 985px;
     max-width: 95vw;
     color: white;
-    font-family: "Roboto", sans-serif;
+    font-family: var(--font-body);
     font-weight: 400;
     position: relative;
     box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
@@ -72,7 +72,7 @@
 
 .field {
     font-size: 30px;
-    color: rgba(171, 171, 171, 1);
+    color: var(--muted);
     margin: 0;
 }
 
@@ -109,7 +109,7 @@
 }
 
 .activePreview {
-    border-color: #5454FE;
+    border-color: var(--violet);
 }
 
 .singleImage {
@@ -130,7 +130,7 @@
 
 .about {
     font-size: 30px;
-    color: rgba(171, 171, 171, 1);
+    color: var(--muted);
     line-height: 100%;
 }
 
@@ -156,17 +156,17 @@
 }
 
 .priceBtn {
-    background: #2E2E2E99;
+    background: var(--glass);
     color: white;
     padding: 10px 25px;
     border-radius: 3px;
     font-size: 30px;
-    border: 3px solid #5454FE;
+    border: 3px solid var(--violet);
     width: 30%;
 }
 
 .takeBtn {
-    background: #5454FE;
+    background: var(--violet);
     border: none;
     color: white;
     padding: 10px 30px;
@@ -284,5 +284,181 @@
         width: 50px;
         height: 50px;
         border-radius: 10px;
+    }
+}
+/* --- Aurora Glass theme (overrides the layout above) --- */
+
+.overlay {
+    background: rgba(5, 5, 10, 0.72);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    padding: 16px;
+    z-index: 8000;
+}
+
+.modal {
+    width: min(980px, 100%);
+    max-width: 100%;
+    max-height: calc(100vh - 32px);
+    padding: 32px;
+    border-radius: 30px;
+    background: rgba(20, 19, 30, 0.95);
+    border: 1px solid var(--edge);
+    box-shadow: var(--shadow);
+    color: var(--fg);
+    font-size: 15px;
+}
+
+.closeBtn {
+    top: 18px;
+    right: 18px;
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 1px solid var(--edge);
+    background: var(--glass);
+    color: var(--fg);
+    font-size: 18px;
+}
+
+.topSection {
+    gap: 32px;
+}
+
+.image,
+.singleImage {
+    border-radius: 20px;
+}
+
+.previewImg {
+    border-radius: 12px;
+}
+
+.activePreview {
+    border-color: var(--lime);
+}
+
+.title {
+    margin-bottom: 16px;
+    padding-right: 52px;
+    font-size: clamp(26px, 3vw, 38px);
+    font-weight: 800;
+    line-height: 1.05;
+    text-transform: none;
+}
+
+.info {
+    gap: 10px;
+}
+
+.field {
+    padding: 10px 14px;
+    border-radius: var(--radius-sm);
+    background: var(--glass);
+    border: 1px solid var(--edge);
+    color: var(--fg);
+    font-size: 15px;
+}
+
+.field span {
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.about,
+.about p {
+    color: var(--muted);
+    font-size: 15px;
+    line-height: 1.65;
+}
+
+.about p {
+    color: var(--fg);
+    margin-bottom: 10px;
+}
+
+.feelings {
+    color: var(--muted);
+}
+
+.feelings b {
+    color: var(--fg);
+}
+
+.actions {
+    align-items: center;
+    gap: 12px;
+    padding: 14px;
+    border-radius: 22px;
+    background: var(--glass);
+    border: 1px solid var(--edge);
+}
+
+.priceBtn {
+    width: auto;
+    padding: 0;
+    border: none;
+    background: none;
+    color: var(--fg);
+    font-family: var(--font-display);
+    font-size: 26px;
+    font-weight: 700;
+}
+
+.takeBtn {
+    width: auto;
+    min-height: 50px;
+    padding: 12px 28px;
+    border-radius: var(--radius-pill);
+    background: var(--lime);
+    color: var(--on-accent);
+    font-size: 16px;
+    font-weight: 700;
+}
+
+.takeBtn:hover {
+    background: var(--lime);
+    filter: brightness(1.06);
+}
+
+@media (max-width: 760px) {
+    .overlay {
+        padding: 0;
+        align-items: stretch;
+    }
+
+    .modal {
+        width: 100%;
+        max-height: none;
+        height: 100%;
+        padding: calc(20px + env(safe-area-inset-top, 0px)) max(18px, env(safe-area-inset-right, 0px)) calc(24px + env(safe-area-inset-bottom, 0px)) max(18px, env(safe-area-inset-left, 0px));
+        border-radius: 0;
+        border: none;
+    }
+
+    .topSection {
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .image,
+    .singleImage {
+        width: 100%;
+        height: auto;
+        aspect-ratio: 4 / 3;
+    }
+
+    .previewRow {
+        width: 100%;
+    }
+
+    .actions {
+        position: sticky;
+        bottom: 0;
     }
 }

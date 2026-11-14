@@ -1,838 +1,422 @@
-/* --- ЗАГАЛЬНІ СТИЛІ --- */
-.container {
-    min-height: 100vh;
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    position: relative;
-    font-family: "Segoe UI", sans-serif;
-    overflow-x: hidden;
+/* Home page: split hero with a stack of real artworks, artists row, masonry of fresh works,
+   commission prompt and two "who is it for" cards. */
+
+.page {
+    padding-bottom: 72px;
 }
 
-.gallery {
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-}
+/* --- Hero --- */
 
-.ScrollContainer {
-    position: relative;
-    overflow: hidden;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    background: none;
-    height: 92vh;
-    padding: 0 50px;
-}
-
-.scrollingGrid {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    overflow: hidden;
-    z-index: 0;
-    opacity: 0.5;
-}
-
-.gridTrack {
-    display: flex;
-    width: 200%;
-    height: 100%;
-    animation: scrollLeft 45s linear infinite;
-}
-
-.imageGrid {
+.hero {
     display: grid;
-    grid-template-columns: repeat(8, 1fr);
-    grid-template-rows: repeat(3, 1fr);
-    gap: 20px;
-    flex: 0 0 50%;
-    height: 100%;
-    padding-right: 20px;
-    opacity: 50%;
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+    gap: 48px;
+    align-items: center;
+    padding-top: 56px;
+    padding-bottom: 40px;
 }
 
-/* ОНОВЛЕНО: Додано ефект світіння до картинок у сітці */
-.gridImage {
-    background-size: cover;
-    background-position: center;
-    border-radius: 12px;
-    filter: brightness(0.7);
-    aspect-ratio: 1 / 1;
-    transition: transform 0.4s ease, box-shadow 0.4s ease;
-    box-shadow: 0 0 10px rgba(84, 84, 254, 0.2), 0 0 2px rgba(255, 255, 255, 0.1) inset;
-}
-
-.gridImage:hover {
-    transform: scale(1.08);
-    box-shadow: 0 0 15px rgba(84, 84, 254, 0.4), 0 0 3px rgba(255, 255, 255, 0.2) inset;
-}
-
-@keyframes scrollLeft {
-    0% {
-        transform: translateX(0);
-    }
-    100% {
-        transform: translateX(-50%);
-    }
-}
-
-.main-image {
-    position: relative;
-    width: 100%;
-    height: 92vh;
-    background-image: url("/MainImg.webp");
-    background-size: contain;
-    background-repeat: no-repeat;
-    background-position: top center;
-    z-index: 2;
-}
-
-.textContentWrapper {
+.heroCopy {
     display: flex;
     flex-direction: column;
-    padding: 51px;
-    gap: 250px;
-    width: auto;
-    box-sizing: border-box;
+    align-items: flex-start;
+    gap: 22px;
 }
 
-.contentSection {
-    display: flex;
-    /*justify-content: space-between;*/
-    /*align-items: center;*/
-    gap: 5%;
-    position: relative;
-}
-
-.textContainer {
-    width: 40%;
-    /*max-width: 580px;*/
-    padding-top: 30px;
-}
-
-.textHeader1 {
-    font-family: 'Orbitron', sans-serif;
-    font-weight: 600;
-    font-size: 47px;
-    line-height: 1.2;
-    text-transform: uppercase;
-    color: #FFFFFF;
-}
-
-.text1 {
-    margin-top: 20px;
-    width: 100%;
-    max-width: 100%;
-    font-family: 'Roboto', sans-serif;
-    font-weight: 400;
-    font-size: 41px;
-    line-height: 1.6;
-    color: #FFFFFF;
-}
-
-.button1 {
-    max-width: 100%;
-    box-sizing: border-box;
-    margin-top: 30px;
-    padding: 18px 0;
-    width: 390px;
-    background: #5454FE;
-    border-radius: 26.4516px;
-    border: none;
-    color: white;
-    font-size: 41px;
-    cursor: pointer;
-    display: flex;
+.eyebrow {
+    display: inline-flex;
     align-items: center;
-    justify-content: center;
-    transition: background-color 0.3s ease;
+    gap: 8px;
+    padding: 7px 14px;
+    border-radius: var(--radius-pill);
+    font-size: 13px;
+    color: var(--fg);
 }
 
-.button1:hover {
-    background: #4141d8;
-}
-
-.imageCardsContainer {
-    position: relative;
-    width: 55%; /* Ширина блоку з картками */
-    height: 650px; /* Висота контейнера для позиціонування */
-}
-
-.cardBack, .cardMiddle, .cardFront {
-    position: absolute;
-    transition: transform 0.4s ease, width 0.4s ease, height 0.4s ease;
-    /*background: linear-gradient(rgba(70, 70, 71, 0.6), rgba(70, 70, 71, 0.6)) padding-box, linear-gradient(168deg, rgba(89, 92, 100, 1), rgba(71, 77, 95, 0)) border-box;*/
-    /*border: 2px solid transparent;*/
-    background-clip: padding-box;
-    width: 25vw;
-    height: 38vw;
-}
-
-.cardContentWrapper {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    border-radius: 6px;
-    background: linear-gradient(rgba(70, 70, 71, 0.6), rgba(70, 70, 71, 0.6)) padding-box, linear-gradient(168deg, rgba(89, 92, 100, 1), rgba(71, 77, 95, 1)) border-box;
-    border: 2px solid transparent;
-}
-
-.cardImage {
-    flex-grow: 1;
-    margin-top: 14px;
-    margin-right: 14px;
-    margin-left: 14px;
-    background-size: cover;
-    background-repeat: no-repeat;
-    background-position: center;
-
-}
-
-.cardInfo {
-    padding: 10px 15px;
-    color: #fff;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 14px;
-    border-radius: 0 0 6px 6px;
-}
-
-.cardTitle {
-    font-weight: 400;
-    font-family: 'Roboto';
-    font-size: 23px;
-}
-
-.cardLikes {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    opacity: 0.8;
-}
-
-
-/* ОНОВЛЕНО: Нове позиціонування з опущеними бічними картками */
-.cardBack {
-    width: 300px;
-    height: 460px;
-    border-radius: 8.8px;
-    border-width: 3.52px;
-    transform: rotate(-16deg);
-    top: 1%;
-    left: 35%;
-    z-index: 1;
-}
-
-/* Права середня картка */
-.cardMiddle {
-    width: 300px;
-    height: 460px;
-    border-radius: 10.36px;
-    border-width: 4.14px;
-    transform: rotate(18deg);
-    top: 20%;
-    right: 14%;
-    z-index: 2;
-}
-
-/* Центральна передня картка */
-.cardFront {
-    width: 340px;
-    height: 520px;
-    border-radius: 8.71px;
-    border-width: 3.49px;
-    transform: translateX(-50%) rotate(-31deg);
-    top: 29%;
-    left: 37%;
-    z-index: 3;
-}
-
-.ImagesContainer {
-    position: relative;
-    width: 60%;
-    height: 600px;
-}
-
-/* ОНОВЛЕНО: Нове позиціонування для розкиданих зображень */
-.image1, .image2, .image3, .image4, .image5 {
-    position: absolute;
-    background-size: cover;
-    background-position: center;
-    border-radius: 10px;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-    box-shadow: 0 0 15px rgba(84, 84, 254, 0.3);
-}
-
-.image1:hover, .image2:hover, .image3:hover, .image4:hover, .image5:hover {
-    transform: scale(1.08);
-    box-shadow: 0 0 25px rgba(84, 84, 254, 0.5);
-}
-
-/* Портрет жінки  */
-.image1 {
-    width: 14vw;
-    height: 14vw;
-    max-width: 180px;
-    max-height: 180px;
-    transform: rotate(18.08deg);
-    top: -56%;
-    left: 56%;
-    z-index: 2;
-}
-
-/* Астронавт */
-.image2 {
-    width: 15vw;
-    height: 15vw;
-    max-width: 214px;
-    max-height: 214px;
-    transform: rotate(-24.55deg);
-    top: -20%;
-    left: 8%;
-    z-index: 3;
-}
-
-/* Прибулець */
-.image3 {
-    width: 13vw;
-    height: 13vw;
-    max-width: 295px;
-    max-height: 295px;
-    transform: rotate(15.22deg);
-    top: 6%;
-    left: 44%;
-    z-index: 2;
-}
-
-/* Абстракція-вихор */
-.image4 {
-    width: 13vw;
-    height: 13vw;
-    max-width: 294px;
-    max-height: 294px;
-    transform: rotate(9.6deg);
-    top: 64%;
-    left: 45%;
-    z-index: 2;
-}
-
-/* Неонова абстракція*/
-.image5 {
-    width: 10vw;
-    height: 10vw;
-    max-width: 240px;
-    max-height: 240px;
-    transform: rotate(-25.88deg);
-    top: 40%;
-    left: 8%;
-    z-index: 1;
-}
-
-.trendsContentWrapper {
-    padding: 51px;
-    margin-top: 50px;
-}
-
-.TrendsContainer {
-    display: flex;
-    align-items: center;
-    margin-bottom: 40px;
-}
-
-.TrendsHeader {
-    font-family: "Orbitron", sans-serif;
-    font-weight: 800;
-    font-size: clamp(2rem, 4vw, 3.8rem);
-    text-transform: uppercase;
-    color: #ffffff;
-    margin-right: 25px;
-}
-
-.searchBarContainer {
-    width: 100%;
-    max-width: 68%;
-    height: 55px;
-    background: rgb(255, 255, 255);
-    border-radius: 18px;
-    display: flex;
-    align-items: center;
-    padding: 0 15px;
-}
-
-.searchInput {
-    flex-grow: 1;
-    background: transparent;
-    border: none;
-    outline: none;
-    color: #000000;
-    font-size: 16px;
-    min-width: 0;
-}
-
-.searchButton {
-    background: none;
-    border: none;
-    cursor: pointer;
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 5px;
-    margin-left: 5px;
-}
-
-.searchButton svg {
-    width: 24px;
-    height: 24px;
-    color: #333;
-}
-
-.artGridSection {
-    width: 100%;
-    overflow: hidden;
-}
-
-.artGridCarouselWrapper {
-    overflow: hidden;
-}
-
-.artGridCarousel {
-    display: flex;
-    transition: transform 0.8s ease-in-out;
-}
-
-.artGridSlide {
-    display: grid;
-    grid-template-columns: repeat(8, minmax(212px, 1fr));
-    gap: 17px;
-    flex: 0 0 100%;
-}
-
-/*.artCard {*/
-/*    border-radius: 5px;*/
-/*    background: linear-gradient(rgba(70, 70, 71, 0.6), rgba(70, 70, 71, 0.6)) padding-box,*/
-/*    linear-gradient(168deg, rgba(89, 92, 100, 0), rgba(71, 77, 95, 0)) border-box;*/
-/*    border: 2px solid transparent;*/
-/*    background-clip: padding-box;*/
-/*    position: relative;*/
-/*    display: flex;*/
-/*    flex-direction: column;*/
-/*    padding: 10px;*/
-/*    gap: 16px;*/
-/*    transition: transform 0.3s ease, box-shadow 0.3s ease;*/
-/*    cursor: pointer;*/
-/*}*/
-
-/*.artCard:hover {*/
-/*    transform: translateY(-8px);*/
-/*    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);*/
-/*}*/
-
-/*.artCardImage {*/
-/*    height: 220px;*/
-/*    background-size: cover;*/
-/*    background-position: center;*/
-/*    border-radius: 3px;*/
-/*}*/
-
-/*.artCardInfo {*/
-/*    color: white;*/
-/*    display: flex;*/
-/*    flex-direction: column;*/
-/*    gap: 12px;*/
-/*    flex-grow: 1;*/
-/*    padding: 15px 16px;*/
-/*}*/
-/*.cardRow {*/
-/*    display: flex;*/
-/*    justify-content: space-between;*/
-/*    align-items: flex-start;*/
-/*}*/
-
-/*.artCardTitle {*/
-/*    font-family: 'Roboto', sans-serif;*/
-/*    font-weight: 400;*/
-/*    font-size: 16px;*/
-/*    line-height: 1;*/
-/*}*/
-
-/*.artistInfo {*/
-/*    display: flex;*/
-/*    flex-direction: column;*/
-/*    align-items: flex-start;*/
-/*    gap: 8px;*/
-/*}*/
-/*.artistName {*/
-/*    font-family: 'Roboto', sans-serif;*/
-/*    font-weight: 400;*/
-/*    font-size: 11px;*/
-/*    line-height: 1;*/
-/*}*/
-/*.artistStyle {*/
-/*    font-family: 'Roboto', sans-serif;*/
-/*    font-weight: 400;*/
-/*    font-size: 11px;*/
-/*    line-height: 1;*/
-/*    color: rgba(255, 255, 255, 0.7);*/
-/*}*/
-
-/*.artCardLikes {*/
-/*    display: flex;*/
-/*    align-items: center;*/
-/*    gap: 6px;*/
-/*    font-size: 0.9rem;*/
-/*}*/
-/*.artCardPrice {*/
-/*    display: flex;*/
-/*    align-items: center;*/
-/*    gap: 6px;*/
-/*    font-size: 1rem;*/
-/*    font-weight: 700;*/
-/*}*/
-
-.carouselDots {
-    display: flex;
-    justify-content: center;
-    gap: 12px;
-    margin-top: 40px;
-}
-
-.dot {
-    width: 12px;
-    height: 12px;
+.eyebrow::before {
+    content: "";
+    width: 7px;
+    height: 7px;
     border-radius: 50%;
-    background: rgba(255, 255, 255, 0.3);
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
-
-.dot:hover {
-    background: rgba(255, 255, 255, 0.5);
-}
-
-.dot.active {
-    background: white;
-}
-
-.noResults {
-    text-align: center;
-    padding: 80px 20px;
-    font-size: 1.2rem;
-    color: rgba(255, 255, 255, 0.7);
-    grid-column: 1 / -1;
-}
-
-
-/* --- АДАПТИВНІСТЬ --- */
-@media (max-width: 2560px) {
-    .cardMiddle {
-        right: 25%;
-    }
-}
-
-@media (max-width: 1920px) {
-    .cardMiddle {
-        right: 14%;
-    }
-}
-
-@media (max-width: 1440px) {
-    .textContentWrapper {
-        padding: 51px 10vw;
-    }
-}
-
-@media (max-width: 1024px) {
-    .textContentWrapper {
-        padding: 51px;
-        gap: 80px;
-    }
-
-    .contentSection {
-        flex-direction: column;
-        /*gap: 80px;*/
-        min-height: auto;
-    }
-
-    .button1 {
-        display: initial;
-    }
-
-    .text1 {
-        display: initial;
-    }
-
-    .image1 {
-        top: -8%;
-        left: 71%;
-    }
-
-    .contentSection:nth-child(2) {
-        flex-direction: column-reverse;
-        padding-top: 100px;
-    }
-
-    .textContainer {
-        width: 100%;
-        max-width: 600px;
-        text-align: center;
-        padding-top: 0;
-        margin-left: 20%;
-    }
-
-    .textHeader1 {
-        font-size: 34px;
-    }
-
-    .text1 {
-        font-size: 18px;
-    }
-
-    .imageCardsContainer, .ImagesContainer {
-        width: 100%;
-        height: 500px;
-        position: relative;
-    }
-
-    .artGridSlide {
-        grid-template-columns: repeat(4, 1fr);
-    }
-
-    .imageGrid {
-        grid-template-columns: repeat(6, 1fr);
-    }
-
-    .cardBack, .cardMiddle, .cardFront {
-        width: 280px;
-        height: 420px;
-    }
-
-    .cardBack {
-        display: none;
-    }
-
-    .cardFront {
-        top: 28%;
-        left: 50%;
-        transform: translateX(-50%) rotate(-20deg);
-    }
-
-    .image1, .image2, .image3, .image4, .image5 {
-        top: auto;
-        left: auto;
-        right: auto;
-        bottom: auto;
-    }
-
-    .image1 {
-        top: 0;
-        left: 5%;
-        transform: rotate(-15deg);
-    }
-
-    .image2 {
-        top: 10%;
-        right: 5%;
-        transform: rotate(15deg);
-    }
-
-    .image3 {
-        bottom: 10%;
-        left: 20%;
-        transform: rotate(5deg);
-    }
-
-    .image4 {
-        bottom: 5%;
-        right: 25%;
-        transform: rotate(-5deg);
-    }
-
-    .image5 {
-        top: 30%;
-        left: 50%;
-        transform: translateX(-50%) rotate(2deg);
-    }
-}
-
-@media (max-width: 768px) {
-    .textContentWrapper {
-        padding: 25px;
-        gap: 60px;
-        width: 100%;
-    }
-
-    .contentSection {
-        gap: inherit;
-    }
-
-    .textContainer {
-        margin-left: 15%;
-    }
-
-    .textContainer:nth-child(2) {
-        max-width: 65vw;
-    }
-
-    .textHeader1 {
-        font-size: 32px;
-    }
-
-    .text1 {
-        font-size: 16px;
-    }
-
-    .button1 {
-        margin-left: auto;
-        margin-right: auto;
-    }
-
-    .TrendsContainer {
-        flex-direction: column;
-        gap: 20px;
-    }
-
-    .searchBarContainer {
-        max-width: 100%;
-    }
-
-    .main-image{
-        height: 71vh;
-        bottom: -114px;
-    }
-
-    .artGridSlide {
-        grid-template-columns: repeat(2, 1fr);
-    }
-
-    .imageGrid {
-        grid-template-columns: repeat(4, 1fr);
-    }
-
-    .cardBack, .cardMiddle, .cardFront {
-        width: 45vw;
-        height: 68vw;
-    }
-
-    .cardMiddle {
-        display: none;
-    }
-
-    .cardBack {
-        width: 220px;
-        height: 330px;
-        top: 13%;
-        left: 21%;
-        transform: rotate(-10deg);
-        display: flex;
-    }
-
-    .cardFront {
-        width: 220px;
-        height: 330px;
-        top: 10%;
-        left: auto;
-        right: 5%;
-        transform: rotate(10deg);
-    }
-
-    .image3, .image5 {
-        display: none;
-    }
-
-    .image1 {
-        top: 0;
-        left: 5%;
-        transform: rotate(-10deg);
-    }
-
-    .image2 {
-        top: 5%;
-        right: 5%;
-        transform: rotate(10deg);
-    }
-
-    .image4 {
-        bottom: 10%;
-        left: 50%;
-        transform: rotate(5deg);
-    }
-}
-/* keyboard focus: the whole search bar gets the ring (the input itself has no outline) */
-.searchBarContainer:focus-within {
-    outline: 2px solid #b991ff;
-    outline-offset: 2px;
-}
-
-/* Headings that used to be <div>: no browser default margins/weight */
-h2.textHeader1,
-h2.TrendsHeader {
-    margin-bottom: 0;
-}
-
-h2.textHeader1 {
-    margin-top: 0;
-}
-
-/* First screen: what the site is and where to go */
-.heroIntro {
-    max-width: 1100px;
-    margin: 0 auto;
-    padding: 40px 16px 24px;
-    text-align: center;
+    background: var(--lime);
+    box-shadow: 0 0 10px var(--lime);
 }
 
 .heroTitle {
-    margin: 0 0 12px;
-    font-family: 'Orbitron', sans-serif;
-    font-size: clamp(26px, 4vw, 48px);
-    line-height: 1.15;
+    margin: 0;
+    font-size: clamp(40px, 5.4vw, 76px);
+    font-weight: 800;
+    line-height: 0.95;
+    letter-spacing: -0.035em;
 }
 
 .heroText {
-    margin: 0 auto 24px;
-    max-width: 640px;
-    font-size: clamp(16px, 1.6vw, 20px);
-    line-height: 1.5;
-    color: rgba(255, 255, 255, 0.85);
+    margin: 0;
+    max-width: 520px;
+    color: var(--muted);
+    font-size: 18px;
+    line-height: 1.6;
 }
 
 .heroActions {
     display: flex;
     flex-wrap: wrap;
-    justify-content: center;
     gap: 12px;
 }
 
-.heroPrimary,
-.heroSecondary {
-    min-height: 48px;
-    padding: 12px 28px;
-    border-radius: 12px;
-    font-size: 18px;
+.heroActions :global(.btn) {
+    min-height: 52px;
+    padding: 14px 26px;
+}
+
+/* stack of three artworks */
+.stack {
+    position: relative;
+    width: 100%;
+    max-width: 440px;
+    height: 540px;
+    justify-self: center;
+}
+
+.stackBack {
+    position: absolute;
+    top: 4%;
+    width: 72%;
+    height: 72%;
+    object-fit: cover;
+    border-radius: 26px;
+    opacity: 0.6;
+}
+
+.stackLeft {
+    left: 0;
+    transform: rotate(-7deg);
+}
+
+.stackRight {
+    right: 0;
+    transform: rotate(6deg);
+    opacity: 0.75;
+}
+
+.stackFront {
+    position: absolute;
+    left: 9%;
+    right: 9%;
+    top: 9%;
+    bottom: 0;
+    padding: 0;
+    border: none;
+    border-radius: 28px;
+    overflow: hidden;
+    background: var(--surface);
+    box-shadow: 0 30px 70px rgba(0, 0, 0, 0.5);
+    cursor: pointer;
+}
+
+.stackFront img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.stackLabel {
+    position: absolute;
+    left: 12px;
+    right: 12px;
+    bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    border-radius: 18px;
+    background: rgba(10, 10, 18, 0.55);
+    color: var(--fg);
+    text-align: left;
+}
+
+.stackMeta {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.stackMeta small {
+    color: var(--lime);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.stackMeta strong {
+    font-family: var(--font-display);
+    font-size: 17px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.stackMeta span {
+    color: var(--muted);
+    font-size: 13px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.stackView {
+    margin-left: auto;
+    min-height: 36px;
+    padding: 8px 14px;
+    font-size: 13px;
+}
+
+/* --- Sections --- */
+
+.section {
+    padding-top: 44px;
+}
+
+.sectionHead {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 22px;
+}
+
+.sectionHead h2 {
+    margin: 0;
+    font-size: clamp(28px, 3.6vw, 42px);
+    line-height: 1;
+}
+
+.textLink {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: none;
+    border: none;
+    padding: 6px 0;
+    color: var(--lime);
+    font-size: 15px;
     font-weight: 600;
     cursor: pointer;
 }
 
-.heroPrimary {
+/* artists row */
+.stories {
+    display: flex;
+    gap: 18px;
+    margin: 0;
+    padding: 4px 2px 10px;
+    list-style: none;
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+
+.stories::-webkit-scrollbar {
+    display: none;
+}
+
+.story {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    width: 84px;
+    padding: 0;
+    background: none;
     border: none;
-    background: #5050EB;
-    color: #ffffff;
+    color: var(--muted);
+    font-size: 13px;
+    cursor: pointer;
 }
 
-.heroPrimary:hover { background: #3f3fd6; }
-
-.heroSecondary {
-    border: 2px solid rgba(255, 255, 255, 0.8);
-    background: transparent;
-    color: #ffffff;
+.story:hover {
+    color: var(--fg);
 }
 
-.heroSecondary:hover { background: rgba(255, 255, 255, 0.1); }
+.ring {
+    padding: 3px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--lime), var(--blue));
+}
+
+.avatar {
+    display: grid;
+    place-items: center;
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    border: 3px solid var(--bg);
+    color: var(--on-accent);
+    font-family: var(--font-display);
+    font-size: 26px;
+    font-weight: 800;
+}
+
+.storyName {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* search */
+.search {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: min(380px, 100%);
+    padding: 0 16px;
+    height: 46px;
+    border-radius: var(--radius-pill);
+    color: var(--muted);
+}
+
+.search:focus-within {
+    border-color: var(--lime);
+}
+
+.search input {
+    flex: 1;
+    min-width: 0;
+    background: none;
+    border: none;
+    outline: none;
+    color: var(--fg);
+    font-size: 15px;
+}
+
+.search input::placeholder {
+    color: var(--muted);
+}
+
+/* masonry */
+.masonry {
+    columns: 4 240px;
+    column-gap: 16px;
+}
+
+.note {
+    padding: 40px;
+    border: 1px dashed var(--edge);
+    border-radius: var(--radius-lg);
+    color: var(--muted);
+    text-align: center;
+}
+
+.more {
+    display: flex;
+    justify-content: center;
+    margin-top: 12px;
+}
+
+/* commission prompt */
+.ctaStrip {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 20px;
+    padding: 28px 32px;
+    border-radius: 28px;
+}
+
+.ctaStrip h2 {
+    margin: 0 0 6px;
+    font-size: clamp(22px, 2.6vw, 32px);
+}
+
+.ctaStrip p {
+    margin: 0;
+    color: var(--muted);
+}
+
+/* two cards */
+.duo {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.duoCard {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 30px;
+    border-radius: 28px;
+}
+
+.duoCard h2 {
+    margin: 0;
+    font-size: clamp(24px, 2.8vw, 34px);
+    line-height: 1.05;
+}
+
+.duoCard p {
+    margin: 0 0 6px;
+    color: var(--muted);
+    line-height: 1.65;
+}
+
+/* --- Responsive --- */
+
+@media (max-width: 980px) {
+    .hero {
+        grid-template-columns: 1fr;
+        gap: 32px;
+        padding-top: 32px;
+    }
+
+    .stack {
+        height: 440px;
+    }
+
+    .duo {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 560px) {
+    .heroText {
+        font-size: 16px;
+    }
+
+    .heroActions :global(.btn) {
+        flex: 1 1 100%;
+    }
+
+    .stack {
+        height: 400px;
+    }
+
+    .stackBack {
+        display: none;
+    }
+
+    .stackFront {
+        left: 0;
+        right: 0;
+        top: 0;
+    }
+
+    .masonry {
+        columns: 2;
+        column-gap: 10px;
+    }
+
+    .ctaStrip,
+    .duoCard {
+        padding: 22px;
+    }
+
+    .section {
+        padding-top: 34px;
+    }
+}

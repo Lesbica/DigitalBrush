@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import styles from './Commission.module.css';
 import CategoryFilters from "../CategoryFilters/CategoryFilters";
 import AdvancedFilters from '../AdvancedFilters/AdvancedFilters';
@@ -12,6 +13,7 @@ import { COMMISSION_FILTERS, filtersToParams, toggleFilter } from '../../constan
 import { useAuth } from '../../context/AuthContext';
 import { useTranslation } from 'react-i18next';
 import { formatPrice } from '../../i18n/format';
+import { SearchIcon, PlusIcon } from '../Icons/Icons';
 
 const PAGE_SIZE = 48;
 
@@ -32,7 +34,7 @@ const toCard = (c) => ({
 
 function Commission() {
     const { t } = useTranslation();
-    const { isLoggedIn } = useAuth();
+    const { isLoggedIn, loading: authLoading } = useAuth();
     const [activeCategory, setActiveCategory] = useState(null);
     const [searchQuery, setSearchQuery] = useState('');
     const [advanced, setAdvanced] = useState({});
@@ -53,6 +55,15 @@ function Commission() {
         document.body.style.overflow = 'hidden';
         return () => { document.body.style.overflow = 'auto'; };
     }, [isModalOpen, isAddModalOpen]);
+
+    // The "+" menu on phones opens the request form here (state set by the navigation)
+    const location = useLocation();
+    const navigate = useNavigate();
+    useEffect(() => {
+        if (authLoading || !location.state?.openAddCommission) return;
+        if (isLoggedIn) setIsAddModalOpen(true);
+        navigate(location.pathname, { replace: true, state: null });
+    }, [authLoading, location.state, location.pathname, isLoggedIn, navigate]);
 
     const handleCategoryClick = (category) => setActiveCategory(activeCategory === category ? null : category);
     const handlePageChange = (next) => {
@@ -76,11 +87,15 @@ function Commission() {
 
     return (
         <div className={styles.commissionPage}>
-            <div className={styles.contentWrapper}>
+            <div className={`container ${styles.contentWrapper}`}>
                 <header className={styles.header}>
-                    <div className={styles.headerLeft}>
+                    <div className={styles.titleBlock}>
                         <h1 className={styles.commissionTitle}>{t('nav.commission')}</h1>
-                        <div className={styles.searchBarContainer}>
+                        <p className={styles.subtitle}>{t('commissions.subtitle')}</p>
+                    </div>
+                    <div className={styles.headerActions}>
+                        <label className={`glass ${styles.searchBarContainer}`}>
+                            <SearchIcon size={18} />
                             <input
                                 type="search"
                                 className={styles.searchInput}
@@ -89,21 +104,14 @@ function Commission() {
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                             />
-                            <button type="button" className={styles.searchButton} tabIndex={-1} aria-hidden="true">
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20">
-                                    <path d="M21 21l-4.35-4.35M10 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16z" stroke="black" strokeWidth="2" fill="none" />
-                                </svg>
+                        </label>
+                        {isLoggedIn && (
+                            <button type="button" className="btn btn-warm" onClick={handleOpenAddModal}>
+                                <PlusIcon size={18} />
+                                {t('commissions.add')}
                             </button>
-                        </div>
+                        )}
                     </div>
-                    {isLoggedIn && (
-                        <button className={styles.addCommissionButton} onClick={handleOpenAddModal}>
-                            <svg width="25" height="25" viewBox="0 0 25 25" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M12.4158 0C5.56994 0 0 5.56994 0 12.4158C0 19.2617 5.56994 24.8317 12.4158 24.8317C19.2617 24.8317 24.8317 19.2617 24.8317 12.4158C24.8317 5.56994 19.2617 0 12.4158 0ZM12.4158 1.91013C18.2293 1.91013 22.9216 6.60236 22.9216 12.4158C22.9216 18.2293 18.2293 22.9216 12.4158 22.9216C6.60236 22.9216 1.91013 18.2293 1.91013 12.4158C1.91013 6.60236 6.60236 1.91013 12.4158 1.91013ZM11.4608 6.68545V11.4608H6.68545V13.3709H11.4608V18.1462H13.3709V13.3709H18.1462V11.4608H13.3709V6.68545H11.4608Z" fill="white"/>
-                            </svg>
-                            {t('commissions.add')}
-                        </button>
-                    )}
                 </header>
 
                 <div className={styles.filtersWrapper}>

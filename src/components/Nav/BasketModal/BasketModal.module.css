@@ -1,275 +1,245 @@
+/* Basket popover under the cart icon; a bottom sheet on phones */
+
 .overlay {
     position: fixed;
     inset: 0;
-    background-color: rgba(0, 0, 0, 0.75);
     z-index: 9000;
-}
-
-@keyframes slideUpFadeOut {
-    from {
-        opacity: 1;
-        transform: translateY(0);
-    }
-    to {
-        opacity: 0;
-        transform: translateY(-10px);
-    }
-}
-
-.modal.closing {
-    animation: slideUpFadeOut 0.3s ease forwards;
+    background: rgba(5, 5, 10, 0.6);
 }
 
 .modal {
     position: absolute;
-    /*top: calc(100% + 15px);*/
-    /*right: 0;*/
-    /*z-index: 100;*/
-    background-color: #3B2F58;
-    border-radius: 12px;
-    padding: 59px 20px 41px;
-    width: 600px;
-    max-width: 600px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
     display: flex;
     flex-direction: column;
-    max-height: 921px;
-    animation: slideDownFadeIn 0.3s ease forwards;
+    width: min(440px, calc(100vw - 24px));
+    max-height: min(680px, calc(100vh - 110px));
+    padding: 20px;
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+    border: 1px solid var(--edge);
+    box-shadow: var(--shadow);
+    color: var(--fg);
+    animation: slideDownFadeIn 0.2s ease forwards;
+}
+
+.modal.closing {
+    animation: slideUpFadeOut 0.2s ease forwards;
 }
 
 @keyframes slideDownFadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(-10px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideUpFadeOut {
+    from { opacity: 1; transform: translateY(0); }
+    to { opacity: 0; transform: translateY(-8px); }
 }
 
 .header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding-bottom: 1rem;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--edge);
 }
 
 .header h2 {
-    color: white;
     margin: 0;
-    font-size: 30px;
-    font-weight: 400;
+    font-size: 22px;
 }
 
 .closeBtn {
-    background: none;
-    border: none;
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 1px solid var(--edge);
+    background: var(--glass);
     cursor: pointer;
 }
+
 .closeBtn img {
-    width: 32px;
-    height: 32px;
+    width: 16px;
+    height: 16px;
 }
 
 .itemList {
-    overflow-y: auto;
-    max-height: 60vh;
-    padding-top: 1rem;
     display: flex;
     flex-direction: column;
-    gap: 2.5rem;
+    gap: 4px;
+    padding: 8px 0;
+    overflow-y: auto;
     scrollbar-width: thin;
-    scrollbar-color: #5454FE #3B2F58;
-}
-.itemList::-webkit-scrollbar {
-    width: 8px;
-}
-.itemList::-webkit-scrollbar-track {
-    background: #3B2F58;
-}
-.itemList::-webkit-scrollbar-thumb {
-    background-color: #5454FE;
-    border-radius: 4px;
+    scrollbar-color: var(--edge) transparent;
 }
 
 .emptyMessage {
-    color: #ccc;
+    padding: 32px 0;
+    color: var(--muted);
     text-align: center;
-    padding: 2rem 0;
 }
 
 .item {
-    display: flex;
-    gap: 26px;
-    color: white;
-    /*width: 478px;*/
+    display: grid;
+    grid-template-columns: 72px minmax(0, 1fr);
+    gap: 14px;
+    padding: 10px;
+    border-radius: var(--radius);
+    color: var(--fg);
     cursor: pointer;
-    border-radius: 8px;
-    padding: 1rem;
-    transition: background-color 0.2s ease;
+    transition: background 0.15s;
 }
 
 .item:hover {
-    background-color: rgba(255, 255, 255, 0.05);
+    background: var(--glass);
 }
 
 .itemImage {
-    width: 223px;
-    height: 280px;
+    width: 72px;
+    height: 72px;
     object-fit: cover;
-    border-radius: 8px;
-    flex-shrink: 0;
+    border-radius: 14px;
+    background: var(--glass);
 }
 
 .itemInfo {
-    flex-grow: 1;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
+    gap: 6px;
+    min-width: 0;
 }
 
 .infoText {
     display: flex;
     flex-direction: column;
-
+    min-width: 0;
 }
 
 .itemTitle {
-    font-size: 19px;
-    font-weight: 400;
-    text-transform: uppercase;
+    font-family: var(--font-display);
+    font-size: 16px;
+    font-weight: 700;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .itemArtist {
-    font-size: 16px;
-    color: #9E9E9E;
-    margin-bottom: 32px;
-    font-weight: 400;
+    color: var(--muted);
+    font-size: 13px;
 }
 
 .itemDesc {
-    font-size: 16px;
-    color: #aaa;
-    margin: 0;
-    line-height: 1.5;
-    font-weight: 400;
+    display: none;
 }
 
 .itemActions {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    flex-shrink: 0;
-    margin-top: 1rem;
-    gap: 56px;
+    gap: 10px;
 }
 
 .itemPrice {
-    font-size: 18px;
-    font-weight: 400;
-    border: 1.79px solid #5454FE;
-    padding: 0.5rem 1rem;
-    border-radius: 4px;
-    width: 140px;
-    text-align: center;
-    background-color: #2E2E2E99;
+    padding: 3px 10px;
+    border-radius: var(--radius-pill);
+    background: var(--lime);
+    color: var(--on-accent);
+    font-size: 13px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
 }
 
 .removeBtn {
-    background: none;
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
     border: none;
+    background: none;
+    color: var(--muted);
     cursor: pointer;
-    color: #aaa;
 }
+
 .removeBtn svg {
-    width: 32px;
-    height: 32px;
+    width: 20px;
+    height: 20px;
 }
+
+.removeBtn:hover {
+    background: var(--glass);
+}
+
 .removeBtn:hover svg {
-    stroke: #ff6b6b;
+    stroke: var(--danger);
 }
 
 .footer {
-    padding-top: 15px;
-    margin-top: 15px;
+    padding-top: 14px;
+    border-top: 1px solid var(--edge);
 }
 
 .subtotal {
     display: flex;
     justify-content: space-between;
-    font-size: 16px;
-    font-weight: 400;
-    color: white;
-    margin: 0 210px 33px 160px;
+    align-items: baseline;
+    margin-bottom: 14px;
+    color: var(--muted);
+    font-size: 14px;
 }
 
-.price{
-    font-size: 24px;
+.price {
+    color: var(--fg);
+    font-family: var(--font-display);
+    font-size: 22px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
 }
 
 .buyBtn {
-    background: #5454FE;
-    border: none;
-    color: white;
-    padding: 1rem;
-    border-radius: 6px;
-    font-size: 1.8rem;
-    font-weight: 500;
-    cursor: pointer;
-    width: 100%;
-    transition: background-color 0.2s;
-    height: 55px;
     display: flex;
     align-items: center;
     justify-content: center;
+    width: 100%;
+    min-height: 50px;
+    border: none;
+    border-radius: var(--radius-pill);
+    background: var(--lime);
+    color: var(--on-accent);
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
 }
 
 .buyBtn:hover {
-    background: #4f4fe8;
+    filter: brightness(1.06);
 }
 
 .buyBtn:disabled {
-    background: #7E7E7E;
+    opacity: 0.45;
     cursor: not-allowed;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 899px) {
     .modal {
-        width: 95vw;
-        right: 2.5vw;
-        left: 2.5vw;
-        top: 10vh;
-        transform: none;
-        animation-name: slideDownFadeInMobile;
-    }
-
-    @keyframes slideDownFadeInMobile {
-        from { opacity: 0; transform: translateY(-10px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-
-    .modal.closing {
-        animation-name: slideUpFadeOutMobile;
-    }
-
-    @keyframes slideUpFadeOutMobile {
-        from { opacity: 1; transform: translateY(0); }
-        to { opacity: 0; transform: translateY(-10px); }
-    }
-
-
-    .item {
-        flex-direction: column;
-        gap: 1rem;
+        position: fixed;
+        top: auto !important;
+        right: 0 !important;
+        left: 0;
+        bottom: 0;
         width: 100%;
-        padding: 0.5rem;
+        max-height: 80vh;
+        padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+        border-radius: 28px 28px 0 0;
+        animation-name: sheetUp;
     }
-    .itemImage {
-        width: 100%;
-        height: 250px;
-    }
-    .subtotal {
-        margin: 0 0 1.5rem 0;
+
+    @keyframes sheetUp {
+        from { transform: translateY(24px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
     }
 }

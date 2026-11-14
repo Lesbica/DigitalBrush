@@ -1,66 +1,62 @@
-/* --- Стилі для контейнера пагінації --- */
 .paginationContainer {
     display: flex;
     justify-content: center;
-    /* Відступ зверху та знизу */
-    margin: 60px 0;
+    margin: 40px 0;
 }
 
-/* --- Оболонка для самих кнопок --- */
 .pagination {
     display: inline-flex;
     align-items: center;
-    gap: 8px;
-    /* Напівпрозорий фон */
-    background: rgba(30, 30, 50, 0.8);
-    padding: 8px;
-    border-radius: 12px;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 4px;
+    padding: 6px;
+    border-radius: var(--radius-pill);
+    background: var(--glass);
+    border: 1px solid var(--edge);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
 }
 
-/* --- Стилі для кнопок (Стрілки < > та Номери) --- */
 .pageBtn,
 .pageNumber {
-    background: none;
-    border: none;
-    color: white;
-    font-size: 16px;
-    width: 40px;
-    height: 40px;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: all 0.2s ease;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-family: 'Roboto', sans-serif; /* Додамо шрифт для консистентності */
+    width: 40px;
+    height: 40px;
+    border: none;
+    border-radius: 50%;
+    background: none;
+    color: var(--fg);
+    font-size: 15px;
+    font-variant-numeric: tabular-nums;
+    cursor: pointer;
+    transition: background 0.15s;
 }
 
-/* --- Ефект при наведенні --- */
 .pageBtn:hover,
 .pageNumber:hover {
-    background: rgba(255, 255, 255, 0.1);
+    background: var(--glass-2);
 }
 
-/* --- Активна сторінка (виділена градієнтом) --- */
 .pageNumber.active {
-    background: linear-gradient(90deg, rgba(131, 29, 199, 0.6) 0%, rgba(174, 30, 151, 0.6) 100%);
+    background: var(--lime);
+    color: var(--on-accent);
     font-weight: 700;
 }
 
-/* --- Неактивні стрілки (коли на 1-й або останній сторінці) --- */
 .pageBtn:disabled {
-    opacity: 0.4;
+    opacity: 0.35;
     cursor: default;
-    background: none; /* Забираємо :hover ефект */
+    background: none;
 }
 
-/* --- Три крапки (...) --- */
 .paginationDots {
-    color: white;
-    font-size: 16px;
-    width: 40px;
-    height: 40px;
     display: flex;
     align-items: center;
     justify-content: center;
+    width: 32px;
+    height: 40px;
+    color: var(--muted);
 }

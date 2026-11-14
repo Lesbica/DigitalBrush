@@ -1,262 +1,239 @@
-import React, { useState, useMemo, useEffect } from "react";
-import styles from "./Gallery.module.css";
-import { useNavigate } from "react-router-dom";
-import ArtCard from '../ArtCard/ArtCard';
+import { useState, useMemo, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useTranslation } from 'react-i18next';
+import styles from './Gallery.module.css';
+import ArtCard from '../ArtCard/ArtCard';
+import { useModal } from '../../context/ModalContext';
+import { formatPrice } from '../../i18n/format';
+import { SearchIcon, ArrowRightIcon } from '../Icons/Icons';
 
-const placeholderFeaturedCards = [
-    { id: 'card-back', imageUrl: '/images/card-center.webp', className: styles.cardBack, title: "DigitalBrush", likes: "253.5k" },
-    { id: 'card-middle', imageUrl: '/images/card-right.webp', className: styles.cardMiddle, title: "DigitalBrush", likes: "253.5k" },
-    { id: 'card-front', imageUrl: '/images/card-left.webp', className: styles.cardFront, title: "DigitalBrush", likes: "253.5k" }
-];
+const FRESH_LIMIT = 12;
 
-const placeholderScatteredImages = [
-    { id: 'scatter-1', imageUrl: '/images/image1.webp', className: styles.image1 },
-    { id: 'scatter-2', imageUrl: '/images/image5.webp', className: styles.image2 },
-    { id: 'scatter-3', imageUrl: '/images/image4.webp', className: styles.image3 },
-    { id: 'scatter-4', imageUrl: '/images/image2.webp', className: styles.image4 },
-    { id: 'scatter-5', imageUrl: '/images/image3.webp', className: styles.image5 }
+// Older API rows may still carry the picture as base64 or a Buffer
+const normalizeImage = (img) => {
+    if (!img) return null;
+    if (typeof img === 'string') {
+        if (img.startsWith('data:') || img.startsWith('http') || img.startsWith('/')) return img;
+        const cleaned = img.replace(/[\r\n\s]+/g, '');
+        if (/^[A-Za-z0-9+/=]+$/.test(cleaned) && cleaned.length > 50) return `data:image/png;base64,${cleaned}`;
+        return img;
+    }
+    if (typeof img === 'object' && Array.isArray(img.data)) {
+        try {
+            const bytes = Uint8Array.from(img.data);
+            let binary = '';
+            for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+            return `data:image/png;base64,${btoa(binary)}`;
+        } catch {
+            return null;
+        }
+    }
+    return null;
+};
+
+const toPainting = (p) => ({
+    id: p.Painting_ID || p.id || Math.random().toString(36).slice(2, 9),
+    title: p.Title || p.title || '',
+    artistName: p.author_name || p.creatorName || 'Artist',
+    artistId: p.Creator_ID || p.creator_id || p.artistId || null,
+    description: p.Description || p.description || '',
+    imageUrl: p.imageUrl || p.image_url || normalizeImage(p.Image || p.image) || '/images/placeholder.svg',
+    likes: p.likes ?? p.Likes ?? 0,
+    price: p.Price ?? p.price ?? '',
+    style: p.Style ?? p.style ?? '',
+});
+
+// A stable, pleasant colour per artist for the initial avatars
+const AVATAR_GRADIENTS = [
+    ['#FF7AB6', '#FFB86B'], ['#6EA8FF', '#7C5CFA'], ['#7FE0C3', '#2FB8A0'],
+    ['#FFB86B', '#FF5A5A'], ['#C6F57A', '#3FA7D6'], ['#B06AF0', '#FF7AB6'],
 ];
+const gradientFor = (seed) => {
+    const s = String(seed);
+    let h = 0;
+    for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+    const [a, b] = AVATAR_GRADIENTS[h % AVATAR_GRADIENTS.length];
+    return `linear-gradient(135deg, ${a}, ${b})`;
+};
 
 const Gallery = () => {
     const { t } = useTranslation();
+    const navigate = useNavigate();
+    const { openModal } = useModal();
     const [paintings, setPaintings] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [currentSlide, setCurrentSlide] = useState(0);
     const [searchQuery, setSearchQuery] = useState('');
-    const navigate = useNavigate();
 
-    // Mapping helper from Shop.js
-    const normalizeImage = (img) => {
-        if (!img) return null;
-        if (typeof img === 'string') {
-            if (img.startsWith('data:') || img.startsWith('http')) return img;
-            const cleaned = img.replace(/[\r\n\s]+/g, '');
-            if (/^[A-Za-z0-9+/=]+$/.test(cleaned) && cleaned.length > 50) return `data:image/png;base64,${cleaned}`;
-            return img;
-        }
-        if (typeof img === 'object' && Array.isArray(img.data)) {
-            try {
-                const bytes = Uint8Array.from(img.data);
-                let binary = '';
-                for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
-                return `data:image/png;base64,${btoa(binary)}`;
-            } catch (e) { return null; }
-        }
-        return null;
-    };
-
-    // Fetch paintings using Shop logic
     useEffect(() => {
         let mounted = true;
-        setLoading(true);
-        axios.get(`/paintings`)
-            .then(res => {
+        axios.get('/paintings')
+            .then((res) => {
                 const payload = res.data;
                 const list = Array.isArray(payload) ? payload : (payload.paintings || []);
-                const mapped = list.map(p => {
-                    const imageSrc = p.imageUrl || p.Image || p.image || p.image_url || normalizeImage(p.Image);
-                    return {
-                        id: p.Painting_ID || p.id || Math.random().toString(36).slice(2, 9),
-                        title: p.Title || p.title || '',
-                        artistName: p.author_name || p.creatorName || 'Artist',
-                        artistId: p.Creator_ID || p.creator_id || p.artistId || null,
-                        description: p.Description || p.description || '',
-                        imageUrl: imageSrc || '/images/placeholder.svg',
-                        likes: p.likes ?? p.Likes ?? 0,
-                        price: p.Price ?? p.price ?? '',
-                        style: p.Style ?? p.style ?? '',
-                    };
-                });
-                if (mounted) {
-                    setPaintings(mapped);
-                    setLoading(false);
-                }
+                if (mounted) setPaintings(list.map(toPainting));
             })
-            .catch(err => {
+            .catch((err) => {
                 console.error('Failed to fetch paintings:', err);
-                if (mounted) {
-                    setPaintings([]);
-                    setLoading(false);
-                }
+                if (mounted) setPaintings([]);
+            })
+            .finally(() => {
+                if (mounted) setLoading(false);
             });
         return () => { mounted = false; };
     }, []);
 
-    const gridImages = useMemo(() => {
-        if (paintings.length === 0) return [];
+    const featured = paintings.slice(0, 3);
 
-        const ROWS = 4;
-        const COLS = 8;
-        const TOTAL_SLOTS = ROWS * COLS;
-
-        let result = [...paintings];
-
-        if (result.length < TOTAL_SLOTS) {
-            while (result.length < TOTAL_SLOTS) {
-                result = [...result, ...paintings];
-            }
-            result = result.sort(() => 0.5 - Math.random());
+    const artists = useMemo(() => {
+        const seen = new Map();
+        for (const p of paintings) {
+            if (p.artistId != null && !seen.has(p.artistId)) seen.set(p.artistId, { id: p.artistId, name: p.artistName });
         }
-
-        return result.slice(0, TOTAL_SLOTS);
+        return [...seen.values()].slice(0, 12);
     }, [paintings]);
 
-    const slides = useMemo(() => {
-        const itemsPerSlide = 16;
-        const filtered = paintings.filter(card =>
-            card.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            card.artistName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            card.style.toLowerCase().includes(searchQuery.toLowerCase())
-        );
-
-        const newSlides = [];
-        for (let i = 0; i < filtered.length; i += itemsPerSlide) {
-            newSlides.push(filtered.slice(i, i + itemsPerSlide));
-        }
-        return newSlides;
+    const fresh = useMemo(() => {
+        const q = searchQuery.trim().toLowerCase();
+        if (!q) return paintings.slice(0, FRESH_LIMIT);
+        return paintings.filter((card) =>
+            card.title.toLowerCase().includes(q)
+            || card.artistName.toLowerCase().includes(q)
+            || String(card.style).toLowerCase().includes(q));
     }, [searchQuery, paintings]);
 
-    const handleNavigation = (path) => navigate(path);
-
-    const handleSearchChange = (e) => {
-        setSearchQuery(e.target.value);
-        setCurrentSlide(0);
-    };
-
     return (
-        <div id="mainContent" className={styles.container}>
-            <div className={styles.gallery}>
-                <section className={styles.heroIntro} aria-labelledby="home-title">
-                    <h1 id="home-title" className={styles.heroTitle}>{t('home.title')}</h1>
+        <div id="mainContent" className={styles.page}>
+            {/* --- Hero --- */}
+            <section className={`container ${styles.hero}`} aria-labelledby="home-title">
+                <div className={styles.heroCopy}>
+                    <span className={`glass ${styles.eyebrow}`}>{t('home.eyebrow')}</span>
+                    <h1 id="home-title" className={styles.heroTitle}>
+                        {t('home.heroTitleStart')} <span className="gradient-text">{t('home.heroTitleAccent')}</span>
+                    </h1>
                     <p className={styles.heroText}>{t('home.heroText')}</p>
                     <div className={styles.heroActions}>
-                        <button type="button" className={styles.heroPrimary} onClick={() => handleNavigation('/shop')}>{t('home.toShop')}</button>
-                        <button type="button" className={styles.heroSecondary} onClick={() => handleNavigation('/commission')}>{t('home.toCommission')}</button>
-                    </div>
-                </section>
-                {/* --- TOP SCROLLING GRID (Real Images) --- */}
-                <div className={styles.ScrollContainer}>
-                    <div className={styles.scrollingGrid}>
-                        <div className={styles.gridTrack}>
-                            {[...Array(2)].map((_, trackIndex) => (
-                                <div key={trackIndex} className={styles.imageGrid}>
-                                    {gridImages.map((painting, i) => (
-                                        <div
-                                            key={`${trackIndex}-${painting.id}-${i}`}
-                                            className={styles.gridImage}
-                                            style={{ backgroundImage: `url(${painting.imageUrl})` }}
-                                        />
-                                    ))}
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                    <div className={styles['main-image']} />
-                </div>
-
-                <div className={styles.textContentWrapper}>
-                    {/* RESTORED: Artist registration section */}
-                    <div className={styles.contentSection}>
-                        <div className={styles.textContainer}>
-                            <h2 className={styles.textHeader1}>{t('home.artistTitle1')} <br /> {t('home.artistTitle2')}</h2>
-                            <div className={styles.text1}>
-                                {t('home.artistText')}
-                            </div>
-                            <button className={styles.button1} onClick={() => handleNavigation('/profile')}>{t('common.registration')}</button>
-                        </div>
-                        <div className={styles.imageCardsContainer}>
-                            {placeholderFeaturedCards.map(card => (
-                                <div key={card.id} className={card.className}>
-                                    <div className={styles.cardContentWrapper}>
-                                        <div className={styles.cardImage} style={{ backgroundImage: `url(${card.imageUrl})` }}></div>
-                                        <div className={styles.cardInfo}>
-                                            <p className={styles.cardTitle}>{card.title}</p>
-                                            <span className={styles.cardLikes}>{card.likes}</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-
-                    {/* RESTORED: Non-artist registration section */}
-                    <div className={styles.contentSection}>
-                        <div className={styles.ImagesContainer}>
-                            {placeholderScatteredImages.map(image => (
-                                <div
-                                    key={image.id}
-                                    className={image.className}
-                                    style={{ backgroundImage: `url(${image.imageUrl})` }}
-                                />
-                            ))}
-                        </div>
-                        <div className={styles.textContainer}>
-                            <h2 className={styles.textHeader1}>{t('home.buyerTitle1')} <br /> {t('home.buyerTitle2')}</h2>
-                            <div className={styles.text1}>
-                                {t('home.buyerText')}
-                            </div>
-                            <button className={styles.button1} onClick={() => handleNavigation('/profile')}>{t('common.registration')}</button>
-                        </div>
+                        <button type="button" className="btn btn-lime" onClick={() => navigate('/shop')}>
+                            {t('home.toShop')} <ArrowRightIcon size={18} />
+                        </button>
+                        <button type="button" className="btn btn-ghost" onClick={() => navigate('/commission')}>
+                            {t('home.toCommission')}
+                        </button>
                     </div>
                 </div>
 
-                {/* --- TRENDS SECTION (Real Images) --- */}
-                <div className={styles.trendsContentWrapper}>
-                    <div className={styles.TrendsContainer}>
-                        <h2 className={styles.TrendsHeader}>{t('home.trends')}</h2>
-                        <div className={styles.searchBarContainer}>
-                            <input
-                                type="search"
-                                className={styles.searchInput}
-                                aria-label={t('common.searchLabel')}
-                                placeholder={t('home.searchPlaceholder')}
-                                value={searchQuery}
-                                onChange={handleSearchChange}
+                {featured.length > 0 && (
+                    <div className={styles.stack}>
+                        {featured.slice(1).map((p, i) => (
+                            <img
+                                key={p.id}
+                                src={p.imageUrl}
+                                alt=""
+                                className={`${styles.stackBack} ${i === 0 ? styles.stackLeft : styles.stackRight}`}
+                                aria-hidden="true"
                             />
-                            <button type="button" className={styles.searchButton} tabIndex={-1} aria-hidden="true">
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20">
-                                    <path d="M21 21l-4.35-4.35M10 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16z" stroke="black" strokeWidth="2" fill="none" />
-                                </svg>
-                            </button>
-                        </div>
+                        ))}
+                        <button type="button" className={styles.stackFront} onClick={() => openModal(featured[0])}
+                                aria-label={t('art.openCard', { title: featured[0].title, artist: featured[0].artistName, price: formatPrice(featured[0].price), likes: featured[0].likes })}>
+                            <img src={featured[0].imageUrl} alt="" />
+                            <span className={`glass ${styles.stackLabel}`}>
+                                <span className={styles.stackMeta}>
+                                    <small>{t('home.featured')}</small>
+                                    <strong>{featured[0].title}</strong>
+                                    <span>{featured[0].artistName} · {formatPrice(featured[0].price)}</span>
+                                </span>
+                                <span className={`btn btn-lime ${styles.stackView}`} aria-hidden="true">{t('home.view')}</span>
+                            </span>
+                        </button>
                     </div>
+                )}
+            </section>
 
-                    {loading ? (
-                        <div className={styles.noResults}>{t('home.loading')}</div>
-                    ) : slides.length > 0 ? (
-                        <div className={styles.artGridSection}>
-                            <div className={styles.artGridCarouselWrapper}>
-                                <div className={styles.artGridCarousel} style={{ transform: `translateX(-${currentSlide * 100}%)` }}>
-                                    {slides.map((slide, index) => (
-                                        <div key={index} className={styles.artGridSlide}>
-                                            {slide.map((card) => (
-                                                <ArtCard key={card.id} art={card} />
-                                            ))}
-                                        </div>
-                                    ))}
-                                </div>
-                                {slides.length > 1 && (
-                                    <div className={styles.carouselDots}>
-                                        {slides.map((_, i) => (
-                                            <span 
-                                                key={i} 
-                                                className={`${styles.dot} ${currentSlide === i ? styles.active : ""}`} 
-                                                onClick={() => setCurrentSlide(i)} 
-                                            />
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    ) : (
-                        <div className={styles.noResults}>{t('home.noResults')}</div>
-                    )}
+            {/* --- Artists --- */}
+            {artists.length > 0 && (
+                <section className={`container ${styles.section}`} aria-labelledby="home-artists">
+                    <div className={styles.sectionHead}>
+                        <h2 id="home-artists">{t('home.artistsTitle')}</h2>
+                        <button type="button" className={styles.textLink} onClick={() => navigate('/artists')}>
+                            {t('home.allArtists')} <ArrowRightIcon size={16} />
+                        </button>
+                    </div>
+                    <ul className={styles.stories}>
+                        {artists.map((a) => (
+                            <li key={a.id}>
+                                <button type="button" className={styles.story} onClick={() => navigate(`/author/${a.id}`)}>
+                                    <span className={styles.ring}>
+                                        <span className={styles.avatar} style={{ background: gradientFor(a.id) }} aria-hidden="true">
+                                            {a.name.trim().charAt(0).toUpperCase()}
+                                        </span>
+                                    </span>
+                                    <span className={styles.storyName}>{a.name}</span>
+                                </button>
+                            </li>
+                        ))}
+                    </ul>
+                </section>
+            )}
+
+            {/* --- Fresh works --- */}
+            <section className={`container ${styles.section}`} aria-labelledby="home-fresh">
+                <div className={styles.sectionHead}>
+                    <h2 id="home-fresh">{t('home.freshTitle')}</h2>
+                    <label className={`glass ${styles.search}`}>
+                        <SearchIcon size={18} />
+                        <input
+                            type="search"
+                            aria-label={t('common.searchLabel')}
+                            placeholder={t('home.searchPlaceholder')}
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                        />
+                    </label>
                 </div>
-            </div>
+
+                {loading ? (
+                    <p className={styles.note}>{t('home.loading')}</p>
+                ) : fresh.length > 0 ? (
+                    <div className={styles.masonry}>
+                        {fresh.map((card) => <ArtCard key={card.id} art={card} />)}
+                    </div>
+                ) : (
+                    <p className={styles.note}>{t('home.noResults')}</p>
+                )}
+
+                {!searchQuery && paintings.length > FRESH_LIMIT && (
+                    <div className={styles.more}>
+                        <button type="button" className="btn btn-ghost" onClick={() => navigate('/shop')}>{t('home.seeAll')}</button>
+                    </div>
+                )}
+            </section>
+
+            {/* --- Commission prompt --- */}
+            <section className={`container ${styles.section}`}>
+                <div className={`glass ${styles.ctaStrip}`}>
+                    <div>
+                        <h2>{t('home.commissionTitle')}</h2>
+                        <p>{t('home.commissionText')}</p>
+                    </div>
+                    <button type="button" className="btn btn-lime" onClick={() => navigate('/commission')}>{t('home.startRequest')}</button>
+                </div>
+            </section>
+
+            {/* --- For artists / for buyers --- */}
+            <section className={`container ${styles.section} ${styles.duo}`}>
+                <div className={`glass ${styles.duoCard}`}>
+                    <h2>{t('home.artistTitle1')} <span className="gradient-text">{t('home.artistTitle2')}</span></h2>
+                    <p>{t('home.artistText')}</p>
+                    <button type="button" className="btn btn-lime" onClick={() => navigate('/profile')}>{t('common.registration')}</button>
+                </div>
+                <div className={`glass ${styles.duoCard}`}>
+                    <h2>{t('home.buyerTitle1')} <span className="gradient-text">{t('home.buyerTitle2')}</span></h2>
+                    <p>{t('home.buyerText')}</p>
+                    <button type="button" className="btn btn-ghost" onClick={() => navigate('/shop')}>{t('home.toShop')}</button>
+                </div>
+            </section>
         </div>
     );
 };
 
-export default Gallery; 
+export default Gallery;
