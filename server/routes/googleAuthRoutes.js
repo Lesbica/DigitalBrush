@@ -69,8 +69,16 @@ async function findOrCreateUser(claims, lang) {
     const [[byEmail]] = await db.query('SELECT * FROM creators WHERE Email = ?', [email]);
     if (byEmail) {
         if (byEmail.Google_ID && byEmail.Google_ID !== claims.sub) return null; // linked to another Google account
-        await db.query('UPDATE creators SET Google_ID = ?, Email_Verified = 1 WHERE Creator_ID = ?', [claims.sub, byEmail.Creator_ID]);
-        return { ...byEmail, Google_ID: claims.sub, Email_Verified: 1 };
+        if (!byEmail.Email_Verified) {
+            // The row was created by somebody who never proved they own this mailbox (registration without
+            // confirmation). Its password is not trusted: replace it, so it cannot be used after Google
+            // marks the account verified. The owner can set their own with "Forgot password".
+            const unusable = await bcrypt.hash(crypto.randomBytes(32).toString('hex'), 10);
+            await db.query('UPDATE creators SET Google_ID = ?, Email_Verified = 1, Password = ? WHERE Creator_ID = ?', [claims.sub, unusable, byEmail.Creator_ID]);
+            return { ...byEmail, Google_ID: claims.sub, Email_Verified: 1, Password: unusable };
+        }
+        await db.query('UPDATE creators SET Google_ID = ? WHERE Creator_ID = ?', [claims.sub, byEmail.Creator_ID]);
+        return { ...byEmail, Google_ID: claims.sub };
     }
 
     // No password is known: a random one; the user can set their own with "Forgot password"

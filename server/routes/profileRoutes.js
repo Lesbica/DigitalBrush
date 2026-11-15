@@ -95,7 +95,12 @@ router.post('/update-profile', auth, withImageUpload(imageUpload.single('profile
 
         // Підготовка даних для запису
         const finalName = username && username.trim() !== '' ? username : currentUser.Name;
-        const finalEmail = email && email.trim() !== '' ? email : currentUser.Email;
+        const requestedEmail = email && String(email).trim() !== '' ? String(email).trim().toLowerCase() : currentUser.Email;
+        const emailChanged = String(requestedEmail || '').toLowerCase() !== String(currentUser.Email || '').toLowerCase();
+        // A changed address is not written until its owner confirms it (see /auth/verify-email);
+        // only when verification is turned off (e.g. a demo) does it apply at once.
+        const emailNeedsConfirmation = emailChanged && process.env.REQUIRE_EMAIL_VERIFICATION !== 'false';
+        const finalEmail = emailNeedsConfirmation ? currentUser.Email : requestedEmail;
         const finalBio = description !== undefined ? description : currentUser.Other_Details;
 
         const finalInsta = instagram !== undefined ? instagram : currentUser.Instagram;
@@ -128,11 +133,9 @@ router.post('/update-profile', auth, withImageUpload(imageUpload.single('profile
             ]
         );
 
-        // Changed email must be confirmed again (unless verification is turned off)
-        if (finalEmail.toLowerCase() !== String(currentUser.Email || '').toLowerCase()
-            && process.env.REQUIRE_EMAIL_VERIFICATION !== 'false') {
-            await db.query('UPDATE creators SET Email_Verified = 0 WHERE Creator_ID = ?', [userId]);
-            await sendVerificationEmail({ id: userId, name: finalName, email: finalEmail }, req.lang);
+        // The confirmation link goes to the NEW address; until it is followed the account keeps the old one
+        if (emailNeedsConfirmation) {
+            await sendVerificationEmail({ id: userId, name: finalName, email: requestedEmail }, req.lang, requestedEmail);
         }
 
         // 6. Свіжі дані з БД; у сесії — лише id/name/email
@@ -142,6 +145,7 @@ router.post('/update-profile', auth, withImageUpload(imageUpload.single('profile
         res.json({
             success: true,
             message: 'Profile updated successfully',
+            emailConfirmationSent: emailNeedsConfirmation,
             user: payload
         });
 

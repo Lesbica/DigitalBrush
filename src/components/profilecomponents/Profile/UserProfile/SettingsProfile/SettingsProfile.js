@@ -155,6 +155,8 @@ function ProfileSettings({user}) {
             if (response.data.success) {
                 await refresh();
                 toast.success(t('settings.saved'));
+                // The new address only replaces the old one after its owner follows the emailed link
+                if (response.data.emailConfirmationSent) toast.info(t('settings.emailConfirmationSent'));
             }
         } catch (error) {
             console.error("Error updating profile:", error);

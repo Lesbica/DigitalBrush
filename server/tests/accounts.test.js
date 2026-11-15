@@ -125,13 +125,41 @@ describe('roles', () => {
         assert.equal((await call('POST', '/profile/update-profile', { cookie: as.customer, form: formWith({ role: 'boss' }) })).status, 400);
     });
 
-    test('changing the email requires confirming the new address', async () => {
+    test('a changed email is not bound to the account until its owner confirms it', async () => {
         const newEmail = `${f.tag}-changed@example.test`;
         const r = await call('POST', '/profile/update-profile', { cookie: as.artist, form: formWith({ email: newEmail }) });
         assert.equal(r.status, 200);
-        assert.equal(r.data.user.emailVerified, false);
-        assert.ok(tokenFrom(newEmail, 'verify-email'));
+        assert.equal(r.data.emailConfirmationSent, true);
+        // the account keeps its old, verified address: nothing is bound to the unproven one
+        assert.equal(r.data.user.email, f.artist.email);
+        assert.equal(r.data.user.emailVerified, true);
+        const [[unbound]] = await db.query('SELECT COUNT(*) AS n FROM creators WHERE Email = ?', [newEmail]);
+        assert.equal(unbound.n, 0);
+        // so neither password recovery nor registration can be steered through it
+        const mailsBefore = sent.length;
+        await call('POST', '/auth/forgot-password', { json: { email: newEmail } });
+        assert.ok(!sent.slice(mailsBefore).some((m) => m.to === newEmail), 'no reset mail for an unconfirmed address');
+
+        const token = tokenFrom(newEmail, 'verify-email');
+        assert.equal((await call('POST', '/auth/verify-email', { json: { token } })).status, 200);
+        const [[row]] = await db.query('SELECT Email, Email_Verified FROM creators WHERE Creator_ID = ?', [f.artist.id]);
+        assert.equal(row.Email, newEmail);
+        assert.equal(row.Email_Verified, 1);
+        assert.equal((await call('POST', '/auth/verify-email', { json: { token } })).status, 400);
         // keep the fixture cleanup (by tag) working: the address still starts with the tag
+    });
+
+    test('if somebody else confirmed the same address first, the later confirmation is refused', async () => {
+        const shared = `${f.tag}-shared@example.test`;
+        await call('POST', '/profile/update-profile', { cookie: as.customer, form: formWith({ email: shared }) });
+        const customerToken = tokenFrom(shared, 'verify-email');
+        await call('POST', '/profile/update-profile', { cookie: as.artist, form: formWith({ email: shared }) });
+        const artistToken = tokenFrom(shared, 'verify-email');
+
+        assert.equal((await call('POST', '/auth/verify-email', { json: { token: artistToken } })).status, 200);
+        assert.equal((await call('POST', '/auth/verify-email', { json: { token: customerToken } })).status, 409);
+        const [[loser]] = await db.query('SELECT Email FROM creators WHERE Creator_ID = ?', [f.customer.id]);
+        assert.equal(loser.Email, f.customer.email);
     });
 
     test('only artist accounts are listed on the artists page', async () => {

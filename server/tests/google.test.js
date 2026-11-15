@@ -80,6 +80,21 @@ describe('sign in with Google', () => {
         assert.equal((await call('GET', '/auth/check-session', { cookie: again.cookie })).data.user.id, f.artist.id);
     });
 
+    test('linking to an unconfirmed pre-registered account discards the password set before the mailbox was proven', async () => {
+        const email = `${f.tag}-pre@example.test`;
+        f.extraEmails.push(email);
+        const reg = await call('POST', '/auth/register', { json: { username: 'pre', email, password: 'attacker-pass1' } });
+        assert.equal(reg.status, 201);
+
+        const { cookie } = await signIn(claimsFor(email, `${f.tag}-sub-pre`));
+        assert.equal((await call('GET', '/auth/check-session', { cookie })).data.loggedIn, true);
+        const [[row]] = await db.query('SELECT Email_Verified FROM creators WHERE Email = ?', [email]);
+        assert.equal(row.Email_Verified, 1);
+        // the registrant's password no longer opens the now-confirmed account
+        const login = await call('POST', '/auth/login', { json: { email, password: 'attacker-pass1' } });
+        assert.equal(login.status, 401);
+    });
+
     test('a forged state, an unconfirmed email or a token for another app is refused', async () => {
         const email = `${f.tag}-refused@example.test`;
         const cases = [

@@ -408,6 +408,7 @@
   },
   "settings": {
     "saved": "Profile updated!",
+    "emailConfirmationSent": "We sent a confirmation link to the new email. Your address changes once you follow it.",
     "saveFailed": "Failed to update the profile. Please try again.",
     "artistAccount": "artist account",
     "name": "Name",

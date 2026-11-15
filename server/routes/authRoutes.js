@@ -3,7 +3,7 @@ const logger = require('../utils/logger');
 const bcrypt = require('bcrypt');
 const db = require('../config/db');
 const { DEFAULT_AVATAR_BUFFER, toUserPayload, loadUserPayload, toSessionUser } = require('../utils/userProfile');
-const { consumeToken, sendVerificationEmail, sendPasswordResetEmail } = require('../services/accountTokens');
+const { consumeToken, consumeTokenDetails, sendVerificationEmail, sendPasswordResetEmail } = require('../services/accountTokens');
 const router = express.Router();
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -72,9 +72,23 @@ router.post('/register', async (req, res) => {
 // POST /api/auth/verify-email { token }
 router.post('/verify-email', async (req, res) => {
     try {
-        const userId = await consumeToken(req.body?.token, 'verify_email');
-        if (!userId) return res.status(400).json({ success: false, message: 'The link is invalid or has expired' });
-        await db.query('UPDATE creators SET Email_Verified = 1 WHERE Creator_ID = ?', [userId]);
+        const details = await consumeTokenDetails(req.body?.token, 'verify_email');
+        if (!details) return res.status(400).json({ success: false, message: 'The link is invalid or has expired' });
+        const { userId, newEmail } = details;
+        if (newEmail) {
+            // Email change: the address becomes the account's only now that its owner followed the link.
+            // The UNIQUE key decides if somebody else took it in the meantime.
+            try {
+                await db.query('UPDATE creators SET Email = ?, Email_Verified = 1 WHERE Creator_ID = ?', [newEmail, userId]);
+            } catch (err) {
+                if (err && err.code === 'ER_DUP_ENTRY') {
+                    return res.status(409).json({ success: false, message: 'This email is already registered.' });
+                }
+                throw err;
+            }
+        } else {
+            await db.query('UPDATE creators SET Email_Verified = 1 WHERE Creator_ID = ?', [userId]);
+        }
         res.json({ success: true, message: 'Email confirmed. You can log in now.' });
     } catch (err) {
         logger.error('verify-email error:', err);
